@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -10,11 +10,13 @@
 
   <ItemGroup>
     <Folder Include="Data\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Raw ADO.NET provider used by every MySql*Repository class in /Repositories -->
     <PackageReference Include="MySqlConnector" Version="2.6.2" />
+    <!-- Password hashing used by AuthService - see Services/AuthService.cs -->
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 
 </Project>

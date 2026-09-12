@@ -1,4 +1,4 @@
-﻿namespace DentalClinicSystem
+namespace DentalClinicSystem
 {
     partial class frmLogin
     {
