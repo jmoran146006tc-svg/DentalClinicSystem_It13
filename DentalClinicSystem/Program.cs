@@ -1,17 +1,40 @@
+using DentalClinicSystem.Forms;
+using DentalClinicSystem.Repositories;
+using DentalClinicSystem.Services;
+
 namespace DentalClinicSystem
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new frmLogin());
+
+            // ---- Composition root ---------------------------------------------
+            // Every MySql*Repository is built exactly once, right here, and handed
+            // to its matching service. Nothing past this point - no form, no user
+            // control - ever constructs a repository or touches MySqlConnector.
+            IPatientRepository patientRepository = new MySqlPatientRepository();
+            IDentistRepository dentistRepository = new MySqlDentistRepository();
+            IAppointmentRepository appointmentRepository = new MySqlAppointmentRepository();
+            ITreatmentRepository treatmentRepository = new MySqlTreatmentRepository();
+            ITreatmentTypeRepository treatmentTypeRepository = new MySqlTreatmentTypeRepository();
+            IUserRepository userRepository = new MySqlUserRepository();
+
+            IPatientService patientService = new PatientService(patientRepository);
+            IDentistService dentistService = new DentistService(dentistRepository);
+            IAppointmentService appointmentService = new AppointmentService(appointmentRepository);
+            ITreatmentService treatmentService = new TreatmentService(treatmentRepository);
+            ITreatmentTypeService treatmentTypeService = new TreatmentTypeService(treatmentTypeRepository);
+            IAuthService authService = new AuthService(userRepository);
+            // ---------------------------------------------------------------------
+
+            var loginForm = new frmLogin(
+                authService, patientService, dentistService,
+                appointmentService, treatmentService, treatmentTypeService);
+
+            Application.Run(loginForm);
         }
     }
 }
