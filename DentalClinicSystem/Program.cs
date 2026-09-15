@@ -28,6 +28,7 @@ namespace DentalClinicSystem
             ITreatmentService treatmentService = new TreatmentService(treatmentRepository);
             ITreatmentTypeService treatmentTypeService = new TreatmentTypeService(treatmentTypeRepository);
             IAuthService authService = new AuthService(userRepository);
+            IUserService userService = new UserService(userRepository);
             // ---------------------------------------------------------------------
 
             var loginForm = new frmLogin(

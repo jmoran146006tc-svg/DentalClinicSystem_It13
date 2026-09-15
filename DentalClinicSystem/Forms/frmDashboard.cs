@@ -66,5 +66,10 @@ namespace DentalClinicSystem.Forms
             loginForm.Show();
             Close();
         }
+
+        private void btnLogout_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -48,5 +48,20 @@ namespace DentalClinicSystem
             dashboard.Show();
             Hide();
         }
+
+        private void btnLogin_Click(object sender, EventArgs e)
+        {
+          OnLoginAttempt(txtUsername.Text, txtPassword.Text);
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void frmLogin_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

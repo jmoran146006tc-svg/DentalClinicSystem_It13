@@ -59,6 +59,25 @@ namespace DentalClinicSystem.Repositories
             await cmd.ExecuteNonQueryAsync();
         }
 
+        public async Task<IReadOnlyList<User>> GetAllAsync()
+        {
+            // Deliberately does NOT filter WHERE IsActive = 1, unlike Patients/Dentists -
+            // an admin managing accounts needs to see deactivated ones too, in case
+            // someone needs to be reactivated later.
+            List<User> users = [];
+
+            await using var conn = await DbConnectionHelper.GetOpenConnectionAsync();
+            await using var cmd = new MySqlCommand($"{SelectColumns} ORDER BY Username", conn);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                users.Add(MapUser(reader));
+            }
+
+            return users;
+        }
+
         private static void AddUserParameters(MySqlCommand cmd, User user)
         {
             cmd.Parameters.AddWithValue("@username", user.Username);

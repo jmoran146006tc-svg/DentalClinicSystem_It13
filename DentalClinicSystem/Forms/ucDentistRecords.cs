@@ -11,5 +11,10 @@ namespace DentalClinicSystem.Forms
             InitializeComponent();
             _dentistService = dentistService;
         }
+
+        private void ucDentistRecords_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

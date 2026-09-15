@@ -12,5 +12,10 @@ namespace DentalClinicSystem.Forms
             InitializeComponent();
             _patientService = patientService;
         }
+
+        private void ucPatientRecords_Load(object sender, EventArgs e)
+        {
+            dtpDateOfBirth.MaxDate = DateTime.Today;
+        }
     }
 }

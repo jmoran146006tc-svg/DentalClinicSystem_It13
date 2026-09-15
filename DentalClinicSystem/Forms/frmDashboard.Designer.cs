@@ -24,140 +24,141 @@
 
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.pnlSidebar = new System.Windows.Forms.Panel();
-            this.btnDashboard = new System.Windows.Forms.Button();
-            this.btnPatients = new System.Windows.Forms.Button();
-            this.btnDentists = new System.Windows.Forms.Button();
-            this.btnAppointments = new System.Windows.Forms.Button();
-            this.btnTreatments = new System.Windows.Forms.Button();
-            this.btnLogout = new System.Windows.Forms.Button();
-            this.pnlContent = new System.Windows.Forms.Panel();
-            this.lblWelcome = new System.Windows.Forms.Label();
-            this.pnlSidebar.SuspendLayout();
-            this.SuspendLayout();
-            //
+            pnlSidebar = new Panel();
+            btnDashboard = new Button();
+            btnPatients = new Button();
+            btnDentists = new Button();
+            btnAppointments = new Button();
+            btnTreatments = new Button();
+            btnLogout = new Button();
+            pnlContent = new Panel();
+            lblWelcome = new Label();
+            pnlSidebar.SuspendLayout();
+            SuspendLayout();
+            // 
             // pnlSidebar
-            //
-            this.pnlSidebar.BackColor = System.Drawing.Color.FromArgb(230, 236, 245);
-            this.pnlSidebar.Controls.Add(this.btnDashboard);
-            this.pnlSidebar.Controls.Add(this.btnPatients);
-            this.pnlSidebar.Controls.Add(this.btnDentists);
-            this.pnlSidebar.Controls.Add(this.btnAppointments);
-            this.pnlSidebar.Controls.Add(this.btnTreatments);
-            this.pnlSidebar.Controls.Add(this.btnLogout);
-            this.pnlSidebar.Dock = System.Windows.Forms.DockStyle.Left;
-            this.pnlSidebar.Location = new System.Drawing.Point(0, 0);
-            this.pnlSidebar.Name = "pnlSidebar";
-            this.pnlSidebar.Size = new System.Drawing.Size(200, 650);
-            this.pnlSidebar.TabIndex = 0;
-            //
+            // 
+            pnlSidebar.BackColor = Color.FromArgb(230, 236, 245);
+            pnlSidebar.Controls.Add(btnDashboard);
+            pnlSidebar.Controls.Add(btnPatients);
+            pnlSidebar.Controls.Add(btnDentists);
+            pnlSidebar.Controls.Add(btnAppointments);
+            pnlSidebar.Controls.Add(btnTreatments);
+            pnlSidebar.Controls.Add(btnLogout);
+            pnlSidebar.Dock = DockStyle.Left;
+            pnlSidebar.Location = new Point(0, 0);
+            pnlSidebar.Name = "pnlSidebar";
+            pnlSidebar.Size = new Size(200, 650);
+            pnlSidebar.TabIndex = 0;
+            // 
             // btnDashboard
-            //
-            this.btnDashboard.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnDashboard.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnDashboard.Location = new System.Drawing.Point(0, 0);
-            this.btnDashboard.Name = "btnDashboard";
-            this.btnDashboard.Padding = new System.Windows.Forms.Padding(15, 0, 0, 0);
-            this.btnDashboard.Size = new System.Drawing.Size(200, 45);
-            this.btnDashboard.TabIndex = 0;
-            this.btnDashboard.Text = "Dashboard";
-            this.btnDashboard.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnDashboard.UseVisualStyleBackColor = true;
-            //
+            // 
+            btnDashboard.FlatStyle = FlatStyle.Flat;
+            btnDashboard.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnDashboard.Location = new Point(0, 0);
+            btnDashboard.Name = "btnDashboard";
+            btnDashboard.Padding = new Padding(15, 0, 0, 0);
+            btnDashboard.Size = new Size(200, 45);
+            btnDashboard.TabIndex = 0;
+            btnDashboard.Text = "Dashboard";
+            btnDashboard.TextAlign = ContentAlignment.MiddleLeft;
+            btnDashboard.UseVisualStyleBackColor = true;
+            // 
             // btnPatients
-            //
-            this.btnPatients.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnPatients.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnPatients.Location = new System.Drawing.Point(0, 50);
-            this.btnPatients.Name = "btnPatients";
-            this.btnPatients.Padding = new System.Windows.Forms.Padding(15, 0, 0, 0);
-            this.btnPatients.Size = new System.Drawing.Size(200, 45);
-            this.btnPatients.TabIndex = 1;
-            this.btnPatients.Text = "Patients";
-            this.btnPatients.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnPatients.UseVisualStyleBackColor = true;
-            //
+            // 
+            btnPatients.FlatStyle = FlatStyle.Flat;
+            btnPatients.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnPatients.Location = new Point(0, 50);
+            btnPatients.Name = "btnPatients";
+            btnPatients.Padding = new Padding(15, 0, 0, 0);
+            btnPatients.Size = new Size(200, 45);
+            btnPatients.TabIndex = 1;
+            btnPatients.Text = "Patients";
+            btnPatients.TextAlign = ContentAlignment.MiddleLeft;
+            btnPatients.UseVisualStyleBackColor = true;
+            // 
             // btnDentists
-            //
-            this.btnDentists.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnDentists.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnDentists.Location = new System.Drawing.Point(0, 100);
-            this.btnDentists.Name = "btnDentists";
-            this.btnDentists.Padding = new System.Windows.Forms.Padding(15, 0, 0, 0);
-            this.btnDentists.Size = new System.Drawing.Size(200, 45);
-            this.btnDentists.TabIndex = 2;
-            this.btnDentists.Text = "Dentists";
-            this.btnDentists.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnDentists.UseVisualStyleBackColor = true;
-            //
+            // 
+            btnDentists.FlatStyle = FlatStyle.Flat;
+            btnDentists.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnDentists.Location = new Point(0, 100);
+            btnDentists.Name = "btnDentists";
+            btnDentists.Padding = new Padding(15, 0, 0, 0);
+            btnDentists.Size = new Size(200, 45);
+            btnDentists.TabIndex = 2;
+            btnDentists.Text = "Dentists";
+            btnDentists.TextAlign = ContentAlignment.MiddleLeft;
+            btnDentists.UseVisualStyleBackColor = true;
+            // 
             // btnAppointments
-            //
-            this.btnAppointments.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAppointments.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnAppointments.Location = new System.Drawing.Point(0, 150);
-            this.btnAppointments.Name = "btnAppointments";
-            this.btnAppointments.Padding = new System.Windows.Forms.Padding(15, 0, 0, 0);
-            this.btnAppointments.Size = new System.Drawing.Size(200, 45);
-            this.btnAppointments.TabIndex = 3;
-            this.btnAppointments.Text = "Appointments";
-            this.btnAppointments.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnAppointments.UseVisualStyleBackColor = true;
-            //
+            // 
+            btnAppointments.FlatStyle = FlatStyle.Flat;
+            btnAppointments.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnAppointments.Location = new Point(0, 150);
+            btnAppointments.Name = "btnAppointments";
+            btnAppointments.Padding = new Padding(15, 0, 0, 0);
+            btnAppointments.Size = new Size(200, 45);
+            btnAppointments.TabIndex = 3;
+            btnAppointments.Text = "Appointments";
+            btnAppointments.TextAlign = ContentAlignment.MiddleLeft;
+            btnAppointments.UseVisualStyleBackColor = true;
+            // 
             // btnTreatments
-            //
-            this.btnTreatments.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnTreatments.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnTreatments.Location = new System.Drawing.Point(0, 200);
-            this.btnTreatments.Name = "btnTreatments";
-            this.btnTreatments.Padding = new System.Windows.Forms.Padding(15, 0, 0, 0);
-            this.btnTreatments.Size = new System.Drawing.Size(200, 45);
-            this.btnTreatments.TabIndex = 4;
-            this.btnTreatments.Text = "Treatments";
-            this.btnTreatments.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnTreatments.UseVisualStyleBackColor = true;
-            //
+            // 
+            btnTreatments.FlatStyle = FlatStyle.Flat;
+            btnTreatments.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnTreatments.Location = new Point(0, 200);
+            btnTreatments.Name = "btnTreatments";
+            btnTreatments.Padding = new Padding(15, 0, 0, 0);
+            btnTreatments.Size = new Size(200, 45);
+            btnTreatments.TabIndex = 4;
+            btnTreatments.Text = "Treatments";
+            btnTreatments.TextAlign = ContentAlignment.MiddleLeft;
+            btnTreatments.UseVisualStyleBackColor = true;
+            // 
             // btnLogout
-            //
-            this.btnLogout.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnLogout.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnLogout.Location = new System.Drawing.Point(0, 250);
-            this.btnLogout.Name = "btnLogout";
-            this.btnLogout.Padding = new System.Windows.Forms.Padding(15, 0, 0, 0);
-            this.btnLogout.Size = new System.Drawing.Size(200, 45);
-            this.btnLogout.TabIndex = 5;
-            this.btnLogout.Text = "Logout";
-            this.btnLogout.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnLogout.UseVisualStyleBackColor = true;
-            //
+            // 
+            btnLogout.FlatStyle = FlatStyle.Flat;
+            btnLogout.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLogout.Location = new Point(0, 605);
+            btnLogout.Name = "btnLogout";
+            btnLogout.Padding = new Padding(15, 0, 0, 0);
+            btnLogout.Size = new Size(200, 45);
+            btnLogout.TabIndex = 5;
+            btnLogout.Text = "Logout";
+            btnLogout.TextAlign = ContentAlignment.MiddleLeft;
+            btnLogout.UseVisualStyleBackColor = true;
+            btnLogout.Click += btnLogout_Click;
+            // 
             // pnlContent
-            //
-            this.pnlContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlContent.Location = new System.Drawing.Point(200, 0);
-            this.pnlContent.Name = "pnlContent";
-            this.pnlContent.Size = new System.Drawing.Size(800, 650);
-            this.pnlContent.TabIndex = 1;
-            //
+            // 
+            pnlContent.Dock = DockStyle.Fill;
+            pnlContent.Location = new Point(200, 0);
+            pnlContent.Name = "pnlContent";
+            pnlContent.Size = new Size(800, 650);
+            pnlContent.TabIndex = 1;
+            // 
             // lblWelcome
-            //
-            this.lblWelcome.AutoSize = true;
-            this.lblWelcome.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic);
-            this.lblWelcome.Location = new System.Drawing.Point(30, 30);
-            this.lblWelcome.Name = "lblWelcome";
-            this.lblWelcome.Size = new System.Drawing.Size(0, 32);
-            this.lblWelcome.TabIndex = 0;
-            //
+            // 
+            lblWelcome.AutoSize = true;
+            lblWelcome.Font = new Font("Segoe UI", 18F, FontStyle.Bold | FontStyle.Italic);
+            lblWelcome.Location = new Point(30, 30);
+            lblWelcome.Name = "lblWelcome";
+            lblWelcome.Size = new Size(0, 32);
+            lblWelcome.TabIndex = 0;
+            // 
             // frmDashboard
-            //
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1000, 650);
-            this.Controls.Add(this.pnlContent);
-            this.Controls.Add(this.pnlSidebar);
-            this.Name = "frmDashboard";
-            this.Text = "Dental Clinic Management System";
-            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
-            this.pnlSidebar.ResumeLayout(false);
-            this.ResumeLayout(false);
+            // 
+            AutoScaleDimensions = new SizeF(10F, 25F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1000, 650);
+            Controls.Add(pnlContent);
+            Controls.Add(pnlSidebar);
+            Name = "frmDashboard";
+            Text = "Dental Clinic Management System";
+            WindowState = FormWindowState.Maximized;
+            pnlSidebar.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
         #endregion

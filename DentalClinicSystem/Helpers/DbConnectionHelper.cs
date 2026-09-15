@@ -15,7 +15,7 @@ namespace DentalClinicSystem.Helpers
         // belongs in an App.config/appsettings.json file instead of hard-coded source,
         // but for a project this size a single constant is a reasonable starting point.
         private const string ConnectionString =
-            "Server=localhost;Database=dentalclinicdb;User=root;Password=yourpassword;";
+            "Server=localhost;Database=dentalclinicdb;User=root;Password=;";
 
         /// <summary>
         /// Returns an already-open MySqlConnection. Callers are responsible for
