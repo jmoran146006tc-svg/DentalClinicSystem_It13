@@ -59,97 +59,97 @@
             // 
             // txtFirstName
             // 
-            txtFirstName.Location = new Point(180, 225);
+            txtFirstName.Location = new Point(45, 223);
             txtFirstName.Name = "txtFirstName";
-            txtFirstName.Size = new Size(150, 31);
+            txtFirstName.Size = new Size(285, 31);
             txtFirstName.TabIndex = 1;
             // 
             // txtEmail
             // 
-            txtEmail.Location = new Point(180, 291);
+            txtEmail.Location = new Point(45, 292);
             txtEmail.Name = "txtEmail";
-            txtEmail.Size = new Size(150, 31);
+            txtEmail.Size = new Size(285, 31);
             txtEmail.TabIndex = 2;
             // 
             // txtAddress
             // 
-            txtAddress.Location = new Point(156, 366);
+            txtAddress.Location = new Point(45, 369);
             txtAddress.Name = "txtAddress";
             txtAddress.Size = new Size(518, 31);
             txtAddress.TabIndex = 4;
             // 
             // txtContactNumber
             // 
-            txtContactNumber.Location = new Point(524, 291);
+            txtContactNumber.Location = new Point(359, 292);
             txtContactNumber.Name = "txtContactNumber";
-            txtContactNumber.Size = new Size(150, 31);
+            txtContactNumber.Size = new Size(315, 31);
             txtContactNumber.TabIndex = 3;
             // 
             // txtLastName
             // 
-            txtLastName.Location = new Point(524, 225);
+            txtLastName.Location = new Point(359, 225);
             txtLastName.Name = "txtLastName";
-            txtLastName.Size = new Size(150, 31);
+            txtLastName.Size = new Size(315, 31);
             txtLastName.TabIndex = 5;
             // 
             // label1
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label1.Location = new Point(45, 230);
+            label1.Location = new Point(45, 200);
             label1.Name = "label1";
-            label1.Size = new Size(133, 22);
+            label1.Size = new Size(122, 22);
             label1.TabIndex = 6;
-            label1.Text = "FIRST NAME: ";
+            label1.Text = "First Name: ";
             // 
             // label2
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label2.Location = new Point(398, 232);
+            label2.Location = new Point(358, 200);
             label2.Name = "label2";
-            label2.Size = new Size(126, 22);
+            label2.Size = new Size(112, 22);
             label2.TabIndex = 7;
-            label2.Text = "LAST NAME: ";
+            label2.Text = "Last Name:";
             // 
             // label3
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label3.Location = new Point(45, 296);
+            label3.Location = new Point(45, 267);
             label3.Name = "label3";
-            label3.Size = new Size(78, 22);
+            label3.Size = new Size(66, 22);
             label3.TabIndex = 8;
-            label3.Text = "EMAIL: ";
+            label3.Text = "Email:";
             // 
             // label4
             // 
             label4.AutoSize = true;
             label4.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label4.Location = new Point(398, 296);
+            label4.Location = new Point(358, 267);
             label4.Name = "label4";
-            label4.Size = new Size(111, 22);
+            label4.Size = new Size(102, 22);
             label4.TabIndex = 9;
-            label4.Text = "PHONE NO.";
+            label4.Text = "Phone No.";
             // 
             // label5
             // 
             label5.AutoSize = true;
             label5.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label5.Location = new Point(45, 371);
+            label5.Location = new Point(45, 344);
             label5.Name = "label5";
-            label5.Size = new Size(108, 22);
+            label5.Size = new Size(90, 22);
             label5.TabIndex = 10;
-            label5.Text = "ADDRESS: ";
+            label5.Text = "Address:";
             // 
             // dtpDateOfBirth
             // 
             dtpDateOfBirth.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
             dtpDateOfBirth.Format = DateTimePickerFormat.Short;
-            dtpDateOfBirth.Location = new Point(156, 432);
+            dtpDateOfBirth.Location = new Point(45, 448);
             dtpDateOfBirth.MaxDate = new DateTime(2026, 9, 15, 13, 9, 7, 0);
             dtpDateOfBirth.Name = "dtpDateOfBirth";
-            dtpDateOfBirth.Size = new Size(174, 29);
+            dtpDateOfBirth.Size = new Size(257, 29);
             dtpDateOfBirth.TabIndex = 11;
             dtpDateOfBirth.Value = new DateTime(2026, 9, 15, 0, 0, 0, 0);
             // 
@@ -157,16 +157,16 @@
             // 
             label6.AutoSize = true;
             label6.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label6.Location = new Point(42, 437);
+            label6.Location = new Point(45, 414);
             label6.Name = "label6";
-            label6.Size = new Size(60, 22);
+            label6.Size = new Size(133, 22);
             label6.TabIndex = 12;
-            label6.Text = "DOB: ";
+            label6.Text = "Date of Birth:";
             // 
             // btnAdd
             // 
             btnAdd.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnAdd.Location = new Point(45, 523);
+            btnAdd.Location = new Point(36, 518);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new Size(112, 34);
             btnAdd.TabIndex = 13;
@@ -176,7 +176,7 @@
             // btnUpdate
             // 
             btnUpdate.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnUpdate.Location = new Point(218, 523);
+            btnUpdate.Location = new Point(209, 518);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(112, 34);
             btnUpdate.TabIndex = 14;
@@ -186,7 +186,7 @@
             // btnDelete
             // 
             btnDelete.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnDelete.Location = new Point(388, 523);
+            btnDelete.Location = new Point(379, 518);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(112, 34);
             btnDelete.TabIndex = 15;
@@ -196,7 +196,7 @@
             // btnClear
             // 
             btnClear.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnClear.Location = new Point(562, 523);
+            btnClear.Location = new Point(553, 518);
             btnClear.Name = "btnClear";
             btnClear.Size = new Size(112, 34);
             btnClear.TabIndex = 16;
@@ -207,6 +207,7 @@
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(243, 248, 249);
             Controls.Add(btnClear);
             Controls.Add(btnDelete);
             Controls.Add(btnUpdate);

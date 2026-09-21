@@ -49,7 +49,7 @@
             // dgvDentists
             // 
             dgvDentists.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvDentists.Location = new Point(51, 39);
+            dgvDentists.Location = new Point(51, 41);
             dgvDentists.Name = "dgvDentists";
             dgvDentists.RowHeadersWidth = 62;
             dgvDentists.Size = new Size(629, 142);
@@ -59,131 +59,134 @@
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label2.Location = new Point(405, 234);
+            label2.Location = new Point(399, 213);
             label2.Name = "label2";
-            label2.Size = new Size(126, 22);
+            label2.Size = new Size(112, 22);
             label2.TabIndex = 11;
-            label2.Text = "LAST NAME: ";
+            label2.Text = "Last Name:";
             // 
             // label1
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label1.Location = new Point(52, 232);
+            label1.Location = new Point(52, 213);
             label1.Name = "label1";
-            label1.Size = new Size(133, 22);
+            label1.Size = new Size(128, 22);
             label1.TabIndex = 10;
-            label1.Text = "FIRST NAME: ";
+            label1.Text = " First Name: ";
+            label1.Click += label1_Click;
             // 
             // txtLastName
             // 
-            txtLastName.Location = new Point(531, 227);
+            txtLastName.Location = new Point(399, 238);
             txtLastName.Name = "txtLastName";
-            txtLastName.Size = new Size(150, 31);
+            txtLastName.Size = new Size(258, 31);
             txtLastName.TabIndex = 9;
             // 
             // txtFirstName
             // 
-            txtFirstName.Location = new Point(187, 227);
+            txtFirstName.Location = new Point(52, 238);
             txtFirstName.Name = "txtFirstName";
-            txtFirstName.Size = new Size(150, 31);
+            txtFirstName.Size = new Size(251, 31);
             txtFirstName.TabIndex = 8;
             // 
             // label3
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label3.Location = new Point(394, 300);
+            label3.Location = new Point(399, 283);
             label3.Name = "label3";
-            label3.Size = new Size(131, 22);
+            label3.Size = new Size(115, 22);
             label3.TabIndex = 15;
-            label3.Text = "CONTACT NO.";
+            label3.Text = "Contact No:";
             // 
             // label4
             // 
             label4.AutoSize = true;
             label4.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label4.Location = new Point(52, 300);
+            label4.Location = new Point(51, 283);
             label4.Name = "label4";
-            label4.Size = new Size(166, 22);
+            label4.Size = new Size(150, 22);
             label4.TabIndex = 14;
-            label4.Text = "SPECIALIZATION:";
+            label4.Text = "Specialization: ";
             // 
             // txtContactNumber
             // 
-            txtContactNumber.Location = new Point(531, 295);
+            txtContactNumber.Location = new Point(399, 308);
             txtContactNumber.Name = "txtContactNumber";
-            txtContactNumber.Size = new Size(150, 31);
+            txtContactNumber.Size = new Size(258, 31);
             txtContactNumber.TabIndex = 13;
+            txtContactNumber.TextChanged += txtContactNumber_TextChanged;
             // 
             // txtSpecialization
             // 
-            txtSpecialization.Location = new Point(224, 297);
+            txtSpecialization.Location = new Point(52, 308);
             txtSpecialization.Name = "txtSpecialization";
-            txtSpecialization.Size = new Size(150, 31);
+            txtSpecialization.Size = new Size(251, 31);
             txtSpecialization.TabIndex = 12;
             // 
             // label5
             // 
             label5.AutoSize = true;
             label5.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            label5.Location = new Point(52, 367);
+            label5.Location = new Point(51, 367);
             label5.Name = "label5";
-            label5.Size = new Size(180, 22);
+            label5.Size = new Size(168, 22);
             label5.TabIndex = 17;
-            label5.Text = "LICENSE NUMBER:";
+            label5.Text = "License Number: ";
             // 
             // txtLicenseNumber
             // 
-            txtLicenseNumber.Location = new Point(238, 362);
+            txtLicenseNumber.Location = new Point(52, 392);
             txtLicenseNumber.Name = "txtLicenseNumber";
-            txtLicenseNumber.Size = new Size(150, 31);
+            txtLicenseNumber.Size = new Size(251, 31);
             txtLicenseNumber.TabIndex = 16;
             // 
             // btnClear
             // 
             btnClear.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnClear.Location = new Point(568, 505);
+            btnClear.Location = new Point(545, 471);
             btnClear.Name = "btnClear";
             btnClear.Size = new Size(112, 34);
             btnClear.TabIndex = 21;
-            btnClear.Text = "CLEAR";
+            btnClear.Text = "Clear";
             btnClear.UseVisualStyleBackColor = true;
             // 
             // btnDelete
             // 
             btnDelete.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnDelete.Location = new Point(394, 505);
+            btnDelete.Location = new Point(395, 471);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(112, 34);
             btnDelete.TabIndex = 20;
-            btnDelete.Text = "DELETE";
+            btnDelete.Text = "Delete";
             btnDelete.UseVisualStyleBackColor = true;
             // 
             // btnUpdate
             // 
             btnUpdate.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnUpdate.Location = new Point(224, 505);
+            btnUpdate.Location = new Point(235, 471);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(112, 34);
             btnUpdate.TabIndex = 19;
-            btnUpdate.Text = "UPDATE";
+            btnUpdate.Text = "Update";
             btnUpdate.UseVisualStyleBackColor = true;
             // 
             // btnAdd
             // 
             btnAdd.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnAdd.Location = new Point(51, 505);
+            btnAdd.Location = new Point(68, 471);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new Size(112, 34);
             btnAdd.TabIndex = 18;
-            btnAdd.Text = "ADD";
+            btnAdd.Text = "Add";
             btnAdd.UseVisualStyleBackColor = true;
             // 
             // ucDentistRecords
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(243, 248, 249);
             Controls.Add(btnClear);
             Controls.Add(btnDelete);
             Controls.Add(btnUpdate);

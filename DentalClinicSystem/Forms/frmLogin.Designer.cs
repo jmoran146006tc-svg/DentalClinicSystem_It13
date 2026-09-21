@@ -35,8 +35,8 @@ namespace DentalClinicSystem
             txtPassword = new TextBox();
             btnLogin = new Button();
             panel1 = new Panel();
-            pictureBox1 = new PictureBox();
             label3 = new Label();
+            pictureBox1 = new PictureBox();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
@@ -79,7 +79,7 @@ namespace DentalClinicSystem
             // 
             // btnLogin
             // 
-            btnLogin.BackColor = Color.LightBlue;
+            btnLogin.BackColor = Color.FromArgb(66, 202, 207);
             btnLogin.Font = new Font("Cooper Black", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnLogin.ForeColor = SystemColors.ActiveCaptionText;
             btnLogin.Location = new Point(128, 307);
@@ -105,6 +105,18 @@ namespace DentalClinicSystem
             panel1.TabIndex = 5;
             panel1.Paint += panel1_Paint;
             // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.BackColor = SystemColors.Window;
+            label3.Font = new Font("Cooper Black", 12F, FontStyle.Italic, GraphicsUnit.Point, 0);
+            label3.ForeColor = SystemColors.ControlText;
+            label3.Location = new Point(29, 60);
+            label3.Name = "label3";
+            label3.Size = new Size(342, 27);
+            label3.TabIndex = 7;
+            label3.Text = "LOG IN TO DENTAL CARE.";
+            // 
             // pictureBox1
             // 
             pictureBox1.BackColor = SystemColors.Window;
@@ -116,18 +128,6 @@ namespace DentalClinicSystem
             pictureBox1.Size = new Size(451, 447);
             pictureBox1.TabIndex = 6;
             pictureBox1.TabStop = false;
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.BackColor = SystemColors.Window;
-            label3.Font = new Font("Cooper Black", 11F, FontStyle.Italic, GraphicsUnit.Point, 0);
-            label3.ForeColor = SystemColors.ActiveCaptionText;
-            label3.Location = new Point(47, 60);
-            label3.Name = "label3";
-            label3.Size = new Size(314, 25);
-            label3.TabIndex = 7;
-            label3.Text = "LOG IN TO DENTAL CARE.";
             // 
             // frmLogin
             // 

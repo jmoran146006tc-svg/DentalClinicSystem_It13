@@ -113,5 +113,10 @@ namespace DentalClinicSystem.Forms
 
             await RefreshGridAsync();
         }
+
+        private void lblPatient_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -139,5 +139,15 @@ namespace DentalClinicSystem.Forms
             btnUpdate.Enabled = false;
             btnDelete.Enabled = false;
         }
+
+        private void txtContactNumber_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

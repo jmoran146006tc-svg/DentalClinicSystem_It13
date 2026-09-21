@@ -119,5 +119,10 @@ namespace DentalClinicSystem.Forms
             public int AppointmentId { get; init; }
             public string Display { get; init; } = string.Empty;
         }
+
+        private void lblNotes_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
