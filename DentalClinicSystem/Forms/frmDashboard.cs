@@ -12,6 +12,7 @@ namespace DentalClinicSystem.Forms
         private readonly IAppointmentService _appointmentService;
         private readonly ITreatmentService _treatmentService;
         private readonly ITreatmentTypeService _treatmentTypeService;
+        private readonly IUserService _userService;
 
         public frmDashboard(
             User currentUser,
@@ -20,7 +21,8 @@ namespace DentalClinicSystem.Forms
             IDentistService dentistService,
             IAppointmentService appointmentService,
             ITreatmentService treatmentService,
-            ITreatmentTypeService treatmentTypeService)
+            ITreatmentTypeService treatmentTypeService,
+            IUserService userService)
         {
             InitializeComponent();
 
@@ -31,6 +33,7 @@ namespace DentalClinicSystem.Forms
             _appointmentService = appointmentService;
             _treatmentService = treatmentService;
             _treatmentTypeService = treatmentTypeService;
+            _userService = userService;
 
             btnDashboard.Click += (_, _) => ShowDashboardHome();
             btnPatients.Click += (_, _) => ShowPage(new ucPatientRecords(_patientService));
@@ -39,7 +42,10 @@ namespace DentalClinicSystem.Forms
                 new ucAppointmentScheduler(_appointmentService, _patientService, _dentistService));
             btnTreatments.Click += (_, _) => ShowPage(
                 new ucTreatmentRecords(_treatmentService, _appointmentService, _treatmentTypeService));
-            btnLogout.Click += (_, _) => Logout();
+            btnUsers.Click += (_, _) => ShowPage(new ucUserManagement(_userService, _dentistService, _currentUser)); btnLogout.Click += (_, _) => Logout();
+
+            // Only an Admin account manages other accounts - Receptionists/Dentists never see this button.
+            btnUsers.Visible = _currentUser.Role == "Admin";
 
             Load += (_, _) => ShowDashboardHome();
         }
@@ -62,7 +68,7 @@ namespace DentalClinicSystem.Forms
         {
             var loginForm = new frmLogin(
                 _authService, _patientService, _dentistService,
-                _appointmentService, _treatmentService, _treatmentTypeService);
+                _appointmentService, _treatmentService, _treatmentTypeService, _userService);
             loginForm.Show();
             Close();
         }

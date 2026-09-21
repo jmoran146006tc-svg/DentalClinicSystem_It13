@@ -12,9 +12,6 @@ namespace DentalClinicSystem
             ApplicationConfiguration.Initialize();
 
             // ---- Composition root ---------------------------------------------
-            // Every MySql*Repository is built exactly once, right here, and handed
-            // to its matching service. Nothing past this point - no form, no user
-            // control - ever constructs a repository or touches MySqlConnector.
             IPatientRepository patientRepository = new MySqlPatientRepository();
             IDentistRepository dentistRepository = new MySqlDentistRepository();
             IAppointmentRepository appointmentRepository = new MySqlAppointmentRepository();
@@ -33,7 +30,7 @@ namespace DentalClinicSystem
 
             var loginForm = new frmLogin(
                 authService, patientService, dentistService,
-                appointmentService, treatmentService, treatmentTypeService);
+                appointmentService, treatmentService, treatmentTypeService, userService);
 
             Application.Run(loginForm);
         }

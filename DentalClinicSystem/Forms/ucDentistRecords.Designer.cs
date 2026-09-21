@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            dgvPatients = new DataGridView();
+            dgvDentists = new DataGridView();
             label2 = new Label();
             label1 = new Label();
             txtLastName = new TextBox();
@@ -43,17 +43,17 @@
             btnDelete = new Button();
             btnUpdate = new Button();
             btnAdd = new Button();
-            ((System.ComponentModel.ISupportInitialize)dgvPatients).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgvDentists).BeginInit();
             SuspendLayout();
             // 
-            // dgvPatients
+            // dgvDentists
             // 
-            dgvPatients.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvPatients.Location = new Point(51, 39);
-            dgvPatients.Name = "dgvPatients";
-            dgvPatients.RowHeadersWidth = 62;
-            dgvPatients.Size = new Size(629, 142);
-            dgvPatients.TabIndex = 1;
+            dgvDentists.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvDentists.Location = new Point(51, 39);
+            dgvDentists.Name = "dgvDentists";
+            dgvDentists.RowHeadersWidth = 62;
+            dgvDentists.Size = new Size(629, 142);
+            dgvDentists.TabIndex = 1;
             // 
             // label2
             // 
@@ -198,18 +198,18 @@
             Controls.Add(label1);
             Controls.Add(txtLastName);
             Controls.Add(txtFirstName);
-            Controls.Add(dgvPatients);
+            Controls.Add(dgvDentists);
             Name = "ucDentistRecords";
             Size = new Size(729, 586);
             Load += ucDentistRecords_Load;
-            ((System.ComponentModel.ISupportInitialize)dgvPatients).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgvDentists).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
-        private DataGridView dgvPatients;
+        private DataGridView dgvDentists;
         private Label label2;
         private Label label1;
         private TextBox txtLastName;

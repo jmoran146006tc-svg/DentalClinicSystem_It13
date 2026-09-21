@@ -12,6 +12,7 @@ namespace DentalClinicSystem
         private readonly IAppointmentService _appointmentService;
         private readonly ITreatmentService _treatmentService;
         private readonly ITreatmentTypeService _treatmentTypeService;
+        private readonly IUserService _userService;
 
         public frmLogin(
             IAuthService authService,
@@ -19,7 +20,8 @@ namespace DentalClinicSystem
             IDentistService dentistService,
             IAppointmentService appointmentService,
             ITreatmentService treatmentService,
-            ITreatmentTypeService treatmentTypeService)
+            ITreatmentTypeService treatmentTypeService,
+            IUserService userService)
         {
             InitializeComponent();
             _authService = authService;
@@ -28,10 +30,9 @@ namespace DentalClinicSystem
             _appointmentService = appointmentService;
             _treatmentService = treatmentService;
             _treatmentTypeService = treatmentTypeService;
+            _userService = userService;
         }
 
-        // TODO: call this from btnLogin.Click once txtUsername/txtPassword/btnLogin
-        // exist on the form.
         private async void OnLoginAttempt(string username, string password)
         {
             var result = await _authService.LoginAsync(username, password);
@@ -44,14 +45,14 @@ namespace DentalClinicSystem
 
             var dashboard = new frmDashboard(
                 result.Data, _authService, _patientService, _dentistService,
-                _appointmentService, _treatmentService, _treatmentTypeService);
+                _appointmentService, _treatmentService, _treatmentTypeService, _userService);
             dashboard.Show();
             Hide();
         }
 
         private void btnLogin_Click(object sender, EventArgs e)
         {
-          OnLoginAttempt(txtUsername.Text, txtPassword.Text);
+            OnLoginAttempt(txtUsername.Text, txtPassword.Text);
         }
 
         private void label1_Click(object sender, EventArgs e)

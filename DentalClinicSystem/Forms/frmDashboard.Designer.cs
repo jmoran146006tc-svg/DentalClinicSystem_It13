@@ -19,6 +19,7 @@
         private System.Windows.Forms.Button btnDentists;
         private System.Windows.Forms.Button btnAppointments;
         private System.Windows.Forms.Button btnTreatments;
+        private System.Windows.Forms.Button btnUsers;
         private System.Windows.Forms.Button btnLogout;
         private System.Windows.Forms.Label lblWelcome;
 
@@ -30,6 +31,7 @@
             btnDentists = new Button();
             btnAppointments = new Button();
             btnTreatments = new Button();
+            btnUsers = new Button();
             btnLogout = new Button();
             pnlContent = new Panel();
             lblWelcome = new Label();
@@ -44,6 +46,7 @@
             pnlSidebar.Controls.Add(btnDentists);
             pnlSidebar.Controls.Add(btnAppointments);
             pnlSidebar.Controls.Add(btnTreatments);
+            pnlSidebar.Controls.Add(btnUsers);
             pnlSidebar.Controls.Add(btnLogout);
             pnlSidebar.Dock = DockStyle.Left;
             pnlSidebar.Location = new Point(0, 0);
@@ -116,6 +119,19 @@
             btnTreatments.TextAlign = ContentAlignment.MiddleLeft;
             btnTreatments.UseVisualStyleBackColor = true;
             // 
+            // btnUsers
+            // 
+            btnUsers.FlatStyle = FlatStyle.Flat;
+            btnUsers.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnUsers.Location = new Point(0, 250);
+            btnUsers.Name = "btnUsers";
+            btnUsers.Padding = new Padding(15, 0, 0, 0);
+            btnUsers.Size = new Size(200, 45);
+            btnUsers.TabIndex = 5;
+            btnUsers.Text = "Users";
+            btnUsers.TextAlign = ContentAlignment.MiddleLeft;
+            btnUsers.UseVisualStyleBackColor = true;
+            // 
             // btnLogout
             // 
             btnLogout.FlatStyle = FlatStyle.Flat;
@@ -124,7 +140,7 @@
             btnLogout.Name = "btnLogout";
             btnLogout.Padding = new Padding(15, 0, 0, 0);
             btnLogout.Size = new Size(200, 45);
-            btnLogout.TabIndex = 5;
+            btnLogout.TabIndex = 6;
             btnLogout.Text = "Logout";
             btnLogout.TextAlign = ContentAlignment.MiddleLeft;
             btnLogout.UseVisualStyleBackColor = true;
