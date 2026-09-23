@@ -43,18 +43,20 @@ namespace DentalClinicSystem
             // 
             // txtUsername
             // 
-            txtUsername.Location = new Point(175, 129);
+            txtUsername.Location = new Point(140, 103);
+            txtUsername.Margin = new Padding(2, 2, 2, 2);
             txtUsername.Name = "txtUsername";
-            txtUsername.Size = new Size(166, 31);
+            txtUsername.Size = new Size(134, 27);
             txtUsername.TabIndex = 0;
             // 
             // label1
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Cooper Black", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label1.Location = new Point(29, 135);
+            label1.Location = new Point(23, 108);
+            label1.Margin = new Padding(2, 0, 2, 0);
             label1.Name = "label1";
-            label1.Size = new Size(131, 21);
+            label1.Size = new Size(108, 17);
             label1.TabIndex = 1;
             label1.Text = "USERNAME: ";
             label1.Click += label1_Click;
@@ -63,17 +65,19 @@ namespace DentalClinicSystem
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Cooper Black", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label2.Location = new Point(28, 225);
+            label2.Location = new Point(22, 180);
+            label2.Margin = new Padding(2, 0, 2, 0);
             label2.Name = "label2";
-            label2.Size = new Size(132, 21);
+            label2.Size = new Size(111, 17);
             label2.TabIndex = 3;
             label2.Text = "PASSWORD: ";
             // 
             // txtPassword
             // 
-            txtPassword.Location = new Point(175, 219);
+            txtPassword.Location = new Point(140, 175);
+            txtPassword.Margin = new Padding(2, 2, 2, 2);
             txtPassword.Name = "txtPassword";
-            txtPassword.Size = new Size(166, 31);
+            txtPassword.Size = new Size(134, 27);
             txtPassword.TabIndex = 2;
             txtPassword.UseSystemPasswordChar = true;
             // 
@@ -82,9 +86,10 @@ namespace DentalClinicSystem
             btnLogin.BackColor = Color.FromArgb(66, 202, 207);
             btnLogin.Font = new Font("Cooper Black", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnLogin.ForeColor = SystemColors.ActiveCaptionText;
-            btnLogin.Location = new Point(128, 307);
+            btnLogin.Location = new Point(102, 246);
+            btnLogin.Margin = new Padding(2, 2, 2, 2);
             btnLogin.Name = "btnLogin";
-            btnLogin.Size = new Size(148, 47);
+            btnLogin.Size = new Size(118, 38);
             btnLogin.TabIndex = 4;
             btnLogin.Text = "LOGIN";
             btnLogin.UseVisualStyleBackColor = false;
@@ -99,9 +104,10 @@ namespace DentalClinicSystem
             panel1.Controls.Add(txtUsername);
             panel1.Controls.Add(label2);
             panel1.Controls.Add(txtPassword);
-            panel1.Location = new Point(72, 85);
+            panel1.Location = new Point(58, 68);
+            panel1.Margin = new Padding(2, 2, 2, 2);
             panel1.Name = "panel1";
-            panel1.Size = new Size(417, 447);
+            panel1.Size = new Size(334, 358);
             panel1.TabIndex = 5;
             panel1.Paint += panel1_Paint;
             // 
@@ -111,36 +117,41 @@ namespace DentalClinicSystem
             label3.BackColor = SystemColors.Window;
             label3.Font = new Font("Cooper Black", 12F, FontStyle.Italic, GraphicsUnit.Point, 0);
             label3.ForeColor = SystemColors.ControlText;
-            label3.Location = new Point(29, 60);
+            label3.Location = new Point(23, 48);
+            label3.Margin = new Padding(2, 0, 2, 0);
             label3.Name = "label3";
-            label3.Size = new Size(342, 27);
+            label3.Size = new Size(288, 23);
             label3.TabIndex = 7;
             label3.Text = "LOG IN TO DENTAL CARE.";
             // 
             // pictureBox1
             // 
             pictureBox1.BackColor = SystemColors.Window;
-            pictureBox1.BackgroundImage = (Image)resources.GetObject("pictureBox1.BackgroundImage");
             pictureBox1.BackgroundImageLayout = ImageLayout.Stretch;
             pictureBox1.ErrorImage = null;
-            pictureBox1.Location = new Point(482, 85);
+            pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
+            pictureBox1.Location = new Point(386, 68);
+            pictureBox1.Margin = new Padding(2, 2, 2, 2);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(451, 447);
+            pictureBox1.Size = new Size(361, 358);
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 6;
             pictureBox1.TabStop = false;
+            pictureBox1.Click += pictureBox1_Click;
             // 
             // frmLogin
             // 
-            AutoScaleDimensions = new SizeF(10F, 25F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             AutoSize = true;
             BackColor = SystemColors.ActiveCaption;
             BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = ImageLayout.Stretch;
-            ClientSize = new Size(1031, 600);
+            ClientSize = new Size(825, 480);
             Controls.Add(pictureBox1);
             Controls.Add(panel1);
             Icon = (Icon)resources.GetObject("$this.Icon");
+            Margin = new Padding(2, 2, 2, 2);
             Name = "frmLogin";
             Text = "Dental Clinic Management System - Login";
             Load += frmLogin_Load;
