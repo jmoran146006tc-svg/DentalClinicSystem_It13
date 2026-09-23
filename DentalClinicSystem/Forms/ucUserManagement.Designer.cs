@@ -38,13 +38,13 @@ namespace DentalClinicSystem.Forms
             // 
             dgvUsers.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             dgvUsers.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvUsers.Location = new Point(45, 20);
+            dgvUsers.Location = new Point(24, 14);
             dgvUsers.MultiSelect = false;
             dgvUsers.Name = "dgvUsers";
             dgvUsers.ReadOnly = true;
             dgvUsers.RowHeadersWidth = 62;
             dgvUsers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvUsers.Size = new Size(650, 170);
+            dgvUsers.Size = new Size(664, 170);
             dgvUsers.TabIndex = 0;
             // 
             // lblUsername
@@ -59,16 +59,16 @@ namespace DentalClinicSystem.Forms
             // 
             // txtUsername
             // 
-            txtUsername.Location = new Point(170, 206);
+            txtUsername.Location = new Point(45, 235);
             txtUsername.Name = "txtUsername";
-            txtUsername.Size = new Size(180, 31);
+            txtUsername.Size = new Size(245, 31);
             txtUsername.TabIndex = 11;
             // 
             // lblPassword
             // 
             lblPassword.AutoSize = true;
             lblPassword.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            lblPassword.Location = new Point(400, 210);
+            lblPassword.Location = new Point(347, 210);
             lblPassword.Name = "lblPassword";
             lblPassword.Size = new Size(116, 22);
             lblPassword.TabIndex = 10;
@@ -76,9 +76,9 @@ namespace DentalClinicSystem.Forms
             // 
             // txtPassword
             // 
-            txtPassword.Location = new Point(520, 206);
+            txtPassword.Location = new Point(348, 235);
             txtPassword.Name = "txtPassword";
-            txtPassword.Size = new Size(180, 31);
+            txtPassword.Size = new Size(252, 31);
             txtPassword.TabIndex = 9;
             txtPassword.UseSystemPasswordChar = true;
             // 
@@ -86,7 +86,7 @@ namespace DentalClinicSystem.Forms
             // 
             lblRole.AutoSize = true;
             lblRole.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            lblRole.Location = new Point(45, 260);
+            lblRole.Location = new Point(45, 279);
             lblRole.Name = "lblRole";
             lblRole.Size = new Size(64, 22);
             lblRole.TabIndex = 8;
@@ -95,16 +95,16 @@ namespace DentalClinicSystem.Forms
             // cboRole
             // 
             cboRole.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboRole.Location = new Point(170, 256);
+            cboRole.Location = new Point(45, 304);
             cboRole.Name = "cboRole";
-            cboRole.Size = new Size(150, 33);
+            cboRole.Size = new Size(245, 33);
             cboRole.TabIndex = 7;
             // 
             // lblDentist
             // 
             lblDentist.AutoSize = true;
             lblDentist.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            lblDentist.Location = new Point(400, 260);
+            lblDentist.Location = new Point(348, 279);
             lblDentist.Name = "lblDentist";
             lblDentist.Size = new Size(92, 22);
             lblDentist.TabIndex = 6;
@@ -114,15 +114,15 @@ namespace DentalClinicSystem.Forms
             // 
             cboDentist.DropDownStyle = ComboBoxStyle.DropDownList;
             cboDentist.Enabled = false;
-            cboDentist.Location = new Point(520, 256);
+            cboDentist.Location = new Point(348, 304);
             cboDentist.Name = "cboDentist";
-            cboDentist.Size = new Size(180, 33);
+            cboDentist.Size = new Size(260, 33);
             cboDentist.TabIndex = 5;
             // 
             // btnAdd
             // 
             btnAdd.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnAdd.Location = new Point(45, 320);
+            btnAdd.Location = new Point(24, 384);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new Size(112, 34);
             btnAdd.TabIndex = 4;
@@ -132,7 +132,7 @@ namespace DentalClinicSystem.Forms
             // btnUpdate
             // 
             btnUpdate.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnUpdate.Location = new Point(218, 320);
+            btnUpdate.Location = new Point(197, 384);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(112, 34);
             btnUpdate.TabIndex = 3;
@@ -142,7 +142,7 @@ namespace DentalClinicSystem.Forms
             // btnDeactivate
             // 
             btnDeactivate.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnDeactivate.Location = new Point(391, 320);
+            btnDeactivate.Location = new Point(370, 384);
             btnDeactivate.Name = "btnDeactivate";
             btnDeactivate.Size = new Size(137, 34);
             btnDeactivate.TabIndex = 2;
@@ -152,7 +152,7 @@ namespace DentalClinicSystem.Forms
             // btnClear
             // 
             btnClear.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnClear.Location = new Point(570, 320);
+            btnClear.Location = new Point(549, 384);
             btnClear.Name = "btnClear";
             btnClear.Size = new Size(112, 34);
             btnClear.TabIndex = 1;
@@ -164,7 +164,7 @@ namespace DentalClinicSystem.Forms
             lblAdminOnly.AutoSize = true;
             lblAdminOnly.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold | FontStyle.Italic);
             lblAdminOnly.ForeColor = Color.Firebrick;
-            lblAdminOnly.Location = new Point(45, 385);
+            lblAdminOnly.Location = new Point(24, 373);
             lblAdminOnly.Name = "lblAdminOnly";
             lblAdminOnly.Size = new Size(0, 22);
             lblAdminOnly.TabIndex = 0;
@@ -174,6 +174,7 @@ namespace DentalClinicSystem.Forms
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(243, 248, 249);
             Controls.Add(lblAdminOnly);
             Controls.Add(btnClear);
             Controls.Add(btnDeactivate);
@@ -189,7 +190,7 @@ namespace DentalClinicSystem.Forms
             Controls.Add(lblUsername);
             Controls.Add(dgvUsers);
             Name = "ucUserManagement";
-            Size = new Size(733, 440);
+            Size = new Size(723, 484);
             Load += ucUserManagement_Load;
             ((System.ComponentModel.ISupportInitialize)dgvUsers).EndInit();
             ResumeLayout(false);

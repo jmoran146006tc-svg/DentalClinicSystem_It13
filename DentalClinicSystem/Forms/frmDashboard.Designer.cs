@@ -25,6 +25,7 @@ namespace DentalClinicSystem.Forms
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmDashboard));
             pnlSidebar = new Panel();
             btnDashboard = new Button();
             btnPatients = new Button();
@@ -56,8 +57,10 @@ namespace DentalClinicSystem.Forms
             // 
             // btnDashboard
             // 
+            btnDashboard.BackColor = Color.FromArgb(66, 202, 207);
             btnDashboard.FlatStyle = FlatStyle.Flat;
             btnDashboard.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnDashboard.ForeColor = Color.White;
             btnDashboard.Location = new Point(0, 0);
             btnDashboard.Name = "btnDashboard";
             btnDashboard.Padding = new Padding(15, 0, 0, 0);
@@ -65,12 +68,14 @@ namespace DentalClinicSystem.Forms
             btnDashboard.TabIndex = 0;
             btnDashboard.Text = "Dashboard";
             btnDashboard.TextAlign = ContentAlignment.MiddleLeft;
-            btnDashboard.UseVisualStyleBackColor = true;
+            btnDashboard.UseVisualStyleBackColor = false;
             // 
             // btnPatients
             // 
+            btnPatients.BackColor = Color.FromArgb(66, 202, 207);
             btnPatients.FlatStyle = FlatStyle.Flat;
             btnPatients.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnPatients.ForeColor = Color.White;
             btnPatients.Location = new Point(0, 50);
             btnPatients.Name = "btnPatients";
             btnPatients.Padding = new Padding(15, 0, 0, 0);
@@ -78,12 +83,14 @@ namespace DentalClinicSystem.Forms
             btnPatients.TabIndex = 1;
             btnPatients.Text = "Patients";
             btnPatients.TextAlign = ContentAlignment.MiddleLeft;
-            btnPatients.UseVisualStyleBackColor = true;
+            btnPatients.UseVisualStyleBackColor = false;
             // 
             // btnDentists
             // 
+            btnDentists.BackColor = Color.FromArgb(66, 202, 207);
             btnDentists.FlatStyle = FlatStyle.Flat;
             btnDentists.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnDentists.ForeColor = Color.White;
             btnDentists.Location = new Point(0, 100);
             btnDentists.Name = "btnDentists";
             btnDentists.Padding = new Padding(15, 0, 0, 0);
@@ -91,12 +98,14 @@ namespace DentalClinicSystem.Forms
             btnDentists.TabIndex = 2;
             btnDentists.Text = "Dentists";
             btnDentists.TextAlign = ContentAlignment.MiddleLeft;
-            btnDentists.UseVisualStyleBackColor = true;
+            btnDentists.UseVisualStyleBackColor = false;
             // 
             // btnAppointments
             // 
+            btnAppointments.BackColor = Color.FromArgb(66, 202, 207);
             btnAppointments.FlatStyle = FlatStyle.Flat;
             btnAppointments.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnAppointments.ForeColor = Color.White;
             btnAppointments.Location = new Point(0, 150);
             btnAppointments.Name = "btnAppointments";
             btnAppointments.Padding = new Padding(15, 0, 0, 0);
@@ -104,12 +113,14 @@ namespace DentalClinicSystem.Forms
             btnAppointments.TabIndex = 3;
             btnAppointments.Text = "Appointments";
             btnAppointments.TextAlign = ContentAlignment.MiddleLeft;
-            btnAppointments.UseVisualStyleBackColor = true;
+            btnAppointments.UseVisualStyleBackColor = false;
             // 
             // btnTreatments
             // 
+            btnTreatments.BackColor = Color.FromArgb(66, 202, 207);
             btnTreatments.FlatStyle = FlatStyle.Flat;
             btnTreatments.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnTreatments.ForeColor = Color.White;
             btnTreatments.Location = new Point(0, 200);
             btnTreatments.Name = "btnTreatments";
             btnTreatments.Padding = new Padding(15, 0, 0, 0);
@@ -117,12 +128,14 @@ namespace DentalClinicSystem.Forms
             btnTreatments.TabIndex = 4;
             btnTreatments.Text = "Treatments";
             btnTreatments.TextAlign = ContentAlignment.MiddleLeft;
-            btnTreatments.UseVisualStyleBackColor = true;
+            btnTreatments.UseVisualStyleBackColor = false;
             // 
             // btnUsers
             // 
+            btnUsers.BackColor = Color.FromArgb(66, 202, 207);
             btnUsers.FlatStyle = FlatStyle.Flat;
             btnUsers.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnUsers.ForeColor = Color.White;
             btnUsers.Location = new Point(0, 250);
             btnUsers.Name = "btnUsers";
             btnUsers.Padding = new Padding(15, 0, 0, 0);
@@ -130,12 +143,14 @@ namespace DentalClinicSystem.Forms
             btnUsers.TabIndex = 5;
             btnUsers.Text = "Users";
             btnUsers.TextAlign = ContentAlignment.MiddleLeft;
-            btnUsers.UseVisualStyleBackColor = true;
+            btnUsers.UseVisualStyleBackColor = false;
             // 
             // btnLogout
             // 
+            btnLogout.BackColor = Color.FromArgb(66, 202, 207);
             btnLogout.FlatStyle = FlatStyle.Flat;
             btnLogout.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnLogout.ForeColor = Color.White;
             btnLogout.Location = new Point(0, 605);
             btnLogout.Name = "btnLogout";
             btnLogout.Padding = new Padding(15, 0, 0, 0);
@@ -143,16 +158,18 @@ namespace DentalClinicSystem.Forms
             btnLogout.TabIndex = 6;
             btnLogout.Text = "Logout";
             btnLogout.TextAlign = ContentAlignment.MiddleLeft;
-            btnLogout.UseVisualStyleBackColor = true;
+            btnLogout.UseVisualStyleBackColor = false;
             btnLogout.Click += btnLogout_Click;
             // 
             // pnlContent
             // 
+            pnlContent.BackColor = Color.FromArgb(243, 248, 249);
             pnlContent.Dock = DockStyle.Fill;
             pnlContent.Location = new Point(200, 0);
             pnlContent.Name = "pnlContent";
             pnlContent.Size = new Size(800, 650);
             pnlContent.TabIndex = 1;
+            pnlContent.Paint += pnlContent_Paint;
             // 
             // lblWelcome
             // 
@@ -170,8 +187,9 @@ namespace DentalClinicSystem.Forms
             ClientSize = new Size(1000, 650);
             Controls.Add(pnlContent);
             Controls.Add(pnlSidebar);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "frmDashboard";
-            Text = "Dental Clinic Management System";
+            Text = "Dental Clinic Management System - Dashboard";
             WindowState = FormWindowState.Maximized;
             pnlSidebar.ResumeLayout(false);
             ResumeLayout(false);
