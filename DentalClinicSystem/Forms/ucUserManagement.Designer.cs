@@ -1,4 +1,4 @@
-﻿namespace DentalClinicSystem.Forms
+namespace DentalClinicSystem.Forms
 {
     partial class ucUserManagement
     {

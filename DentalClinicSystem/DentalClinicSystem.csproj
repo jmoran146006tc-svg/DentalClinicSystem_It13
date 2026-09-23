@@ -9,13 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Data\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Raw ADO.NET provider used by every MySql*Repository class in /Repositories -->
+    <!-- Raw ADO.NET provider used by every MySql*Repository class in /DBContent -->
     <PackageReference Include="MySqlConnector" Version="2.6.2" />
-    <!-- Password hashing used by AuthService - see Services/AuthService.cs -->
+    <!-- Password hashing used by AuthService and DatabaseInitializer's seeded admin login -->
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 

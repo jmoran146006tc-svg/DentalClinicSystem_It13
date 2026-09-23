@@ -93,7 +93,7 @@ namespace DentalClinicSystem
             Controls.Add(label1);
             Controls.Add(txtUsername);
             Name = "frmLogin";
-            Text = "Form1";
+            Text = "Dental Clinic - Login";
             Load += frmLogin_Load;
             ResumeLayout(false);
             PerformLayout();

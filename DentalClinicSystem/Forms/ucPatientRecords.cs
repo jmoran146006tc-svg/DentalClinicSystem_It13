@@ -1,18 +1,20 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
+using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
-using DentalClinicSystem.Services;
 
 namespace DentalClinicSystem.Forms
 {
     public partial class ucPatientRecords : UserControl
     {
         private readonly IPatientService _patientService;
+        private readonly bool _canEdit;
         private int? _selectedPatientId;
 
-        public ucPatientRecords(IPatientService patientService)
+        public ucPatientRecords(IPatientService patientService, bool canEdit = true)
         {
             InitializeComponent();
             _patientService = patientService;
+            _canEdit = canEdit;
         }
 
         private async void ucPatientRecords_Load(object sender, EventArgs e)
@@ -24,6 +26,13 @@ namespace DentalClinicSystem.Forms
             btnUpdate.Click += btnUpdate_Click;
             btnDelete.Click += btnDelete_Click;
             btnClear.Click += (_, _) => ClearForm();
+
+            // Dentist gets this tab to look patients up, not to change their records -
+            // hide the mutating buttons rather than just disabling them, so it reads
+            // as "you can't do this here" instead of "something's wrong."
+            btnAdd.Visible = _canEdit;
+            btnUpdate.Visible = _canEdit;
+            btnDelete.Visible = _canEdit;
 
             btnUpdate.Enabled = false;
             btnDelete.Enabled = false;
@@ -53,8 +62,8 @@ namespace DentalClinicSystem.Forms
             txtAddress.Text = patient.Address;
             dtpDateOfBirth.Value = patient.DateOfBirth;
 
-            btnUpdate.Enabled = true;
-            btnDelete.Enabled = true;
+            btnUpdate.Enabled = _canEdit;
+            btnDelete.Enabled = _canEdit;
         }
 
         private async void btnAdd_Click(object sender, EventArgs e)

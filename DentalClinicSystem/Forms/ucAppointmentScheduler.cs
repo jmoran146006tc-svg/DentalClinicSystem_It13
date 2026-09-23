@@ -1,6 +1,6 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
+using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
-using DentalClinicSystem.Services;
 
 namespace DentalClinicSystem.Forms
 {
@@ -11,6 +11,8 @@ namespace DentalClinicSystem.Forms
         private readonly IDentistService _dentistService;
 
         private int? _selectedAppointmentId;
+        private Dictionary<int, string> _patientNamesById = [];
+        private Dictionary<int, string> _dentistNamesById = [];
 
         public ucAppointmentScheduler(
             IAppointmentService appointmentService,
@@ -38,30 +40,45 @@ namespace DentalClinicSystem.Forms
             cboPatient.DataSource = patients.ToList();
             cboPatient.DisplayMember = nameof(Patient.FullName);
             cboPatient.ValueMember = nameof(Patient.PatientId);
+            _patientNamesById = patients.ToDictionary(p => p.PatientId, p => p.FullName);
 
             var dentists = await _dentistService.GetAllDentistsAsync();
             cboDentist.DataSource = dentists.ToList();
             cboDentist.DisplayMember = nameof(Dentist.FullName);
             cboDentist.ValueMember = nameof(Dentist.DentistId);
+            _dentistNamesById = dentists.ToDictionary(d => d.DentistId, d => d.FullName);
         }
 
         private async Task RefreshGridAsync()
         {
             var appointments = await _appointmentService.GetAllAppointmentsAsync();
-            dgvAppointments.DataSource = new BindingList<Appointment>(appointments.ToList());
+
+            // Show patient/dentist names instead of raw PatientId/DentistId - the grid
+            // used to bind directly to Appointment and show bare numbers for both.
+            var rows = appointments.Select(a => new AppointmentRow
+            {
+                AppointmentId = a.AppointmentId,
+                Patient = _patientNamesById.TryGetValue(a.PatientId, out var pn) ? pn : $"#{a.PatientId}",
+                Dentist = _dentistNamesById.TryGetValue(a.DentistId, out var dn) ? dn : $"#{a.DentistId}",
+                AppointmentDateTime = a.AppointmentDateTime,
+                Status = a.Status,
+                Reason = a.Reason
+            }).ToList();
+
+            dgvAppointments.DataSource = new BindingList<AppointmentRow>(rows);
         }
 
         private void dgvAppointments_SelectionChanged(object sender, EventArgs e)
         {
-            if (dgvAppointments.CurrentRow?.DataBoundItem is not Appointment appointment)
+            if (dgvAppointments.CurrentRow?.DataBoundItem is not AppointmentRow row)
             {
                 _selectedAppointmentId = null;
                 btnUpdateStatus.Enabled = false;
                 return;
             }
 
-            _selectedAppointmentId = appointment.AppointmentId;
-            cboStatus.SelectedItem = appointment.Status;
+            _selectedAppointmentId = row.AppointmentId;
+            cboStatus.SelectedItem = row.Status;
             btnUpdateStatus.Enabled = true;
         }
 
@@ -112,6 +129,18 @@ namespace DentalClinicSystem.Forms
             }
 
             await RefreshGridAsync();
+        }
+
+        // Display wrapper for dgvAppointments - shows patient/dentist names instead of
+        // the raw foreign-key ints Appointment itself stores.
+        private sealed class AppointmentRow
+        {
+            public int AppointmentId { get; init; }
+            public string Patient { get; init; } = string.Empty;
+            public string Dentist { get; init; } = string.Empty;
+            public DateTime AppointmentDateTime { get; init; }
+            public string Status { get; init; } = string.Empty;
+            public string? Reason { get; init; }
         }
     }
 }

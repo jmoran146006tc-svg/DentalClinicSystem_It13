@@ -1,0 +1,13 @@
+using DentalClinicSystem.Models;
+
+namespace DentalClinicSystem.Interfaces
+{
+    public interface IUserRepository
+    {
+        Task<IReadOnlyList<User>> GetAllAsync();
+        Task<User?> GetByIdAsync(int userId);
+        Task<User?> GetByUsernameAsync(string username);
+        Task AddAsync(User user);
+        Task UpdateAsync(User user);
+    }
+}

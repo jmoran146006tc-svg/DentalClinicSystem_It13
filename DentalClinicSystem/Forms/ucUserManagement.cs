@@ -1,6 +1,6 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
+using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
-using DentalClinicSystem.Services;
 
 namespace DentalClinicSystem.Forms
 {
@@ -22,7 +22,7 @@ namespace DentalClinicSystem.Forms
 
         private async void ucUserManagement_Load(object sender, EventArgs e)
         {
-            // Defense in depth: frmDashboard already hides the Users button for
+            // frmDashboard already hides the Users button for
             // non-admins, but if this control is ever reached another way, lock
             // it down here too rather than trusting the caller.
             if (_currentUser.Role != "Admin")

@@ -1,6 +1,6 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
+using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
-using DentalClinicSystem.Services;
 
 namespace DentalClinicSystem.Forms
 {
@@ -9,18 +9,22 @@ namespace DentalClinicSystem.Forms
         private readonly ITreatmentService _treatmentService;
         private readonly IAppointmentService _appointmentService;
         private readonly ITreatmentTypeService _treatmentTypeService;
+        private readonly bool _canEdit;
 
         private Dictionary<int, TreatmentType> _treatmentTypesById = [];
+        private Dictionary<int, string> _appointmentLabelsById = [];
 
         public ucTreatmentRecords(
             ITreatmentService treatmentService,
             IAppointmentService appointmentService,
-            ITreatmentTypeService treatmentTypeService)
+            ITreatmentTypeService treatmentTypeService,
+            bool canEdit = true)
         {
             InitializeComponent();
             _treatmentService = treatmentService;
             _appointmentService = appointmentService;
             _treatmentTypeService = treatmentTypeService;
+            _canEdit = canEdit;
         }
 
         private async void ucTreatmentRecords_Load(object sender, EventArgs e)
@@ -28,6 +32,17 @@ namespace DentalClinicSystem.Forms
             dtpDatePerformed.MaxDate = DateTime.Today;
             cboTreatmentType.SelectedIndexChanged += cboTreatmentType_SelectedIndexChanged;
             btnAddTreatment.Click += btnAddTreatment_Click;
+
+            // Receptionist gets this tab to see cost/history for checkout, not to
+            // enter clinical records - grey out the entry row instead of hiding it,
+            // so the fields are still there to read.
+            cboAppointment.Enabled = _canEdit;
+            cboTreatmentType.Enabled = _canEdit;
+            txtToothNumber.Enabled = _canEdit;
+            txtCost.Enabled = _canEdit;
+            dtpDatePerformed.Enabled = _canEdit;
+            txtNotes.Enabled = _canEdit;
+            btnAddTreatment.Visible = _canEdit;
 
             await LoadLookupsAsync();
             await RefreshGridAsync();
@@ -47,6 +62,7 @@ namespace DentalClinicSystem.Forms
             cboAppointment.DataSource = options;
             cboAppointment.DisplayMember = nameof(AppointmentOption.Display);
             cboAppointment.ValueMember = nameof(AppointmentOption.AppointmentId);
+            _appointmentLabelsById = options.ToDictionary(o => o.AppointmentId, o => o.Display);
 
             var treatmentTypes = await _treatmentTypeService.GetAllTreatmentTypesAsync();
             _treatmentTypesById = treatmentTypes.ToDictionary(t => t.TreatmentTypeId);
@@ -59,7 +75,21 @@ namespace DentalClinicSystem.Forms
         private async Task RefreshGridAsync()
         {
             var treatments = await _treatmentService.GetAllTreatmentsAsync();
-            dgvTreatments.DataSource = new BindingList<Treatment>(treatments.ToList());
+
+            // Show readable labels instead of raw AppointmentId/TreatmentTypeId - the
+            // grid used to bind directly to Treatment and show bare numbers for both.
+            var rows = treatments.Select(t => new TreatmentRow
+            {
+                TreatmentId = t.TreatmentId,
+                Appointment = _appointmentLabelsById.TryGetValue(t.AppointmentId, out var label) ? label : $"#{t.AppointmentId}",
+                TreatmentType = _treatmentTypesById.TryGetValue(t.TreatmentTypeId, out var type) ? type.Name : $"#{t.TreatmentTypeId}",
+                ToothNumber = t.ToothNumber,
+                Cost = t.Cost,
+                DatePerformed = t.DatePerformed,
+                Notes = t.Notes
+            }).ToList();
+
+            dgvTreatments.DataSource = new BindingList<TreatmentRow>(rows);
         }
 
         private void cboTreatmentType_SelectedIndexChanged(object sender, EventArgs e)
@@ -113,11 +143,25 @@ namespace DentalClinicSystem.Forms
 
         // Lightweight display wrapper - Appointment itself has no "show me a readable
         // label" property, so this pairs an AppointmentId with a human-readable string
-        // for cboAppointment's DisplayMember/ValueMember, without touching Models.cs.
+        // for cboAppointment's DisplayMember/ValueMember, without touching Models/.
         private sealed class AppointmentOption
         {
             public int AppointmentId { get; init; }
             public string Display { get; init; } = string.Empty;
+        }
+
+        // Display wrapper for dgvTreatments - shows the appointment's readable label
+        // and the treatment type's name instead of the raw foreign-key ints Treatment
+        // itself stores.
+        private sealed class TreatmentRow
+        {
+            public int TreatmentId { get; init; }
+            public string Appointment { get; init; } = string.Empty;
+            public string TreatmentType { get; init; } = string.Empty;
+            public string? ToothNumber { get; init; }
+            public decimal Cost { get; init; }
+            public DateTime DatePerformed { get; init; }
+            public string? Notes { get; init; }
         }
     }
 }

@@ -1,5 +1,5 @@
-﻿using DentalClinicSystem.Models;
-using DentalClinicSystem.Services;
+using DentalClinicSystem.Interfaces;
+using DentalClinicSystem.Models;
 
 namespace DentalClinicSystem.Forms
 {
@@ -36,15 +36,20 @@ namespace DentalClinicSystem.Forms
             _userService = userService;
 
             btnDashboard.Click += (_, _) => ShowDashboardHome();
-            btnPatients.Click += (_, _) => ShowPage(new ucPatientRecords(_patientService));
+            btnPatients.Click += (_, _) => ShowPage(new ucPatientRecords(_patientService, canEdit: _currentUser.Role != "Dentist"));
             btnDentists.Click += (_, _) => ShowPage(new ucDentistRecords(_dentistService));
             btnAppointments.Click += (_, _) => ShowPage(
                 new ucAppointmentScheduler(_appointmentService, _patientService, _dentistService));
             btnTreatments.Click += (_, _) => ShowPage(
-                new ucTreatmentRecords(_treatmentService, _appointmentService, _treatmentTypeService));
-            btnUsers.Click += (_, _) => ShowPage(new ucUserManagement(_userService, _dentistService, _currentUser)); btnLogout.Click += (_, _) => Logout();
+                new ucTreatmentRecords(_treatmentService, _appointmentService, _treatmentTypeService, canEdit: _currentUser.Role != "Receptionist"));
+            btnUsers.Click += (_, _) => ShowPage(new ucUserManagement(_userService, _dentistService, _currentUser));
+            btnLogout.Click += (_, _) => Logout();
 
-            // Only an Admin account manages other accounts - Receptionists/Dentists never see this button.
+            // Admin sees every tab. Receptionist sees Patients/Appointments/Treatments
+            // (Treatments is view-only for them - see ucTreatmentRecords). Dentist sees
+            // Patients (view-only)/Appointments/Treatments, not Dentists or Users.
+            btnPatients.Visible = true;
+            btnDentists.Visible = _currentUser.Role == "Admin";
             btnUsers.Visible = _currentUser.Role == "Admin";
 
             Load += (_, _) => ShowDashboardHome();
