@@ -28,68 +28,75 @@
             pnlHeader.SuspendLayout();
             pnlFooter.SuspendLayout();
             SuspendLayout();
-            //
+            // 
             // pnlHeader
-            //
+            // 
             pnlHeader.BackColor = Color.FromArgb(66, 202, 207);
             pnlHeader.Controls.Add(lblTitle);
             pnlHeader.Dock = DockStyle.Top;
             pnlHeader.Location = new Point(0, 0);
+            pnlHeader.Margin = new Padding(2, 2, 2, 2);
             pnlHeader.Name = "pnlHeader";
-            pnlHeader.Size = new Size(723, 48);
+            pnlHeader.Size = new Size(578, 38);
             pnlHeader.TabIndex = 0;
-            //
+            pnlHeader.Paint += pnlHeader_Paint;
+            // 
             // lblTitle
-            //
+            // 
             lblTitle.AutoSize = true;
             lblTitle.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
             lblTitle.ForeColor = Color.White;
-            lblTitle.Location = new Point(20, 11);
+            lblTitle.Location = new Point(16, 9);
+            lblTitle.Margin = new Padding(2, 0, 2, 0);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(184, 25);
+            lblTitle.Size = new Size(213, 28);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "USER MANAGEMENT";
-            //
+            // 
             // pnlHost
-            //
+            // 
             pnlHost.BackColor = Color.FromArgb(243, 248, 249);
             pnlHost.Dock = DockStyle.Fill;
-            pnlHost.Location = new Point(0, 48);
+            pnlHost.Location = new Point(0, 38);
+            pnlHost.Margin = new Padding(2, 2, 2, 2);
             pnlHost.Name = "pnlHost";
-            pnlHost.Size = new Size(723, 484);
+            pnlHost.Size = new Size(578, 388);
             pnlHost.TabIndex = 1;
-            //
+            // 
             // pnlFooter
-            //
+            // 
             pnlFooter.BackColor = Color.FromArgb(230, 236, 245);
             pnlFooter.Controls.Add(btnClose);
             pnlFooter.Dock = DockStyle.Bottom;
-            pnlFooter.Location = new Point(0, 532);
+            pnlFooter.Location = new Point(0, 426);
+            pnlFooter.Margin = new Padding(2, 2, 2, 2);
             pnlFooter.Name = "pnlFooter";
-            pnlFooter.Size = new Size(723, 58);
+            pnlFooter.Size = new Size(578, 46);
             pnlFooter.TabIndex = 2;
-            //
+            // 
             // btnClose
-            //
+            // 
             btnClose.Anchor = AnchorStyles.Right;
             btnClose.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
-            btnClose.Location = new Point(587, 12);
+            btnClose.Location = new Point(470, 10);
+            btnClose.Margin = new Padding(2, 2, 2, 2);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(112, 34);
+            btnClose.Size = new Size(90, 27);
             btnClose.TabIndex = 0;
             btnClose.Text = "CLOSE";
             btnClose.UseVisualStyleBackColor = true;
             btnClose.Click += btnClose_Click;
-            //
+            // 
             // frmUserManagement
-            //
-            AutoScaleDimensions = new SizeF(10F, 25F);
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(723, 590);
+            ClientSize = new Size(578, 472);
             Controls.Add(pnlHost);
             Controls.Add(pnlFooter);
             Controls.Add(pnlHeader);
             FormBorderStyle = FormBorderStyle.FixedDialog;
+            Margin = new Padding(2, 2, 2, 2);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "frmUserManagement";

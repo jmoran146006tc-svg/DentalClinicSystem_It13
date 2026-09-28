@@ -148,7 +148,7 @@ namespace DentalClinicSystem.DBContent
                 DentistId INT NOT NULL,
                 AppointmentDateTime DATETIME NOT NULL,
                 Status VARCHAR(20) NOT NULL DEFAULT 'Scheduled',
-                Reason VARCHAR(255) NULL,
+                Reason VARCHAR(255) NOT NULL,
                 CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT FK_Appointments_Patient FOREIGN KEY (PatientId) REFERENCES Patients(PatientId),
                 CONSTRAINT FK_Appointments_Dentist FOREIGN KEY (DentistId) REFERENCES Dentists(DentistId),
@@ -162,7 +162,7 @@ namespace DentalClinicSystem.DBContent
                 ToothNumber VARCHAR(10) NULL,
                 Cost DECIMAL(10,2) NOT NULL,
                 DatePerformed DATE NOT NULL,
-                Notes VARCHAR(500) NULL,
+                Notes VARCHAR(500) NOT NULL,
                 CONSTRAINT FK_Treatments_Appointment FOREIGN KEY (AppointmentId) REFERENCES Appointments(AppointmentId),
                 CONSTRAINT FK_Treatments_TreatmentType FOREIGN KEY (TreatmentTypeId) REFERENCES TreatmentTypes(TreatmentTypeId)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;",

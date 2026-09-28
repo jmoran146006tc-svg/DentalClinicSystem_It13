@@ -163,5 +163,10 @@ namespace DentalClinicSystem.Forms
             public DateTime DatePerformed { get; init; }
             public string? Notes { get; init; }
         }
+
+        private void cboAppointment_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

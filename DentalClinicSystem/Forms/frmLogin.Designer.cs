@@ -44,7 +44,7 @@ namespace DentalClinicSystem
             // txtUsername
             // 
             txtUsername.Location = new Point(140, 103);
-            txtUsername.Margin = new Padding(2, 2, 2, 2);
+            txtUsername.Margin = new Padding(2);
             txtUsername.Name = "txtUsername";
             txtUsername.Size = new Size(134, 27);
             txtUsername.TabIndex = 0;
@@ -75,11 +75,12 @@ namespace DentalClinicSystem
             // txtPassword
             // 
             txtPassword.Location = new Point(140, 175);
-            txtPassword.Margin = new Padding(2, 2, 2, 2);
+            txtPassword.Margin = new Padding(2);
             txtPassword.Name = "txtPassword";
             txtPassword.Size = new Size(134, 27);
             txtPassword.TabIndex = 2;
             txtPassword.UseSystemPasswordChar = true;
+            txtPassword.TextChanged += txtPassword_TextChanged;
             // 
             // btnLogin
             // 
@@ -87,7 +88,7 @@ namespace DentalClinicSystem
             btnLogin.Font = new Font("Cooper Black", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             btnLogin.ForeColor = SystemColors.ActiveCaptionText;
             btnLogin.Location = new Point(102, 246);
-            btnLogin.Margin = new Padding(2, 2, 2, 2);
+            btnLogin.Margin = new Padding(2);
             btnLogin.Name = "btnLogin";
             btnLogin.Size = new Size(118, 38);
             btnLogin.TabIndex = 4;
@@ -105,7 +106,7 @@ namespace DentalClinicSystem
             panel1.Controls.Add(label2);
             panel1.Controls.Add(txtPassword);
             panel1.Location = new Point(58, 68);
-            panel1.Margin = new Padding(2, 2, 2, 2);
+            panel1.Margin = new Padding(2);
             panel1.Name = "panel1";
             panel1.Size = new Size(334, 358);
             panel1.TabIndex = 5;
@@ -131,7 +132,7 @@ namespace DentalClinicSystem
             pictureBox1.ErrorImage = null;
             pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
             pictureBox1.Location = new Point(386, 68);
-            pictureBox1.Margin = new Padding(2, 2, 2, 2);
+            pictureBox1.Margin = new Padding(2);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(361, 358);
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -151,7 +152,7 @@ namespace DentalClinicSystem
             Controls.Add(pictureBox1);
             Controls.Add(panel1);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            Margin = new Padding(2, 2, 2, 2);
+            Margin = new Padding(2);
             Name = "frmLogin";
             Text = "Dental Clinic Management System - Login";
             Load += frmLogin_Load;

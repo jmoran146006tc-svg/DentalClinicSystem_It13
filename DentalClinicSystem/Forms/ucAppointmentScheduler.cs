@@ -142,5 +142,15 @@ namespace DentalClinicSystem.Forms
             public string Status { get; init; } = string.Empty;
             public string? Reason { get; init; }
         }
+
+        private void txtReason_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void dgvAppointments_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
     }
 }

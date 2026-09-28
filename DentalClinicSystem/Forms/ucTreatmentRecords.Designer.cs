@@ -39,7 +39,7 @@ namespace DentalClinicSystem.Forms
             dgvTreatments.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             dgvTreatments.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvTreatments.Location = new Point(36, 16);
-            dgvTreatments.Margin = new Padding(2, 2, 2, 2);
+            dgvTreatments.Margin = new Padding(2);
             dgvTreatments.MultiSelect = false;
             dgvTreatments.Name = "dgvTreatments";
             dgvTreatments.ReadOnly = true;
@@ -62,11 +62,13 @@ namespace DentalClinicSystem.Forms
             // cboAppointment
             // 
             cboAppointment.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboAppointment.Items.AddRange(new object[] { "Fluoride Application", "Tooth Restoration", "Tooth Extraction", "Teeth Whitening ", "Veeners", "Braces & Retainers", "Dentures", "Crown & Fixed Bridge", "Root Canal", "Odontectomy", "Gingivectomy / Gum Contouring" });
             cboAppointment.Location = new Point(36, 180);
-            cboAppointment.Margin = new Padding(2, 2, 2, 2);
+            cboAppointment.Margin = new Padding(2);
             cboAppointment.Name = "cboAppointment";
             cboAppointment.Size = new Size(225, 28);
             cboAppointment.TabIndex = 11;
+            cboAppointment.SelectedIndexChanged += cboAppointment_SelectedIndexChanged;
             // 
             // lblTreatmentType
             // 
@@ -83,7 +85,7 @@ namespace DentalClinicSystem.Forms
             // 
             cboTreatmentType.DropDownStyle = ComboBoxStyle.DropDownList;
             cboTreatmentType.Location = new Point(310, 180);
-            cboTreatmentType.Margin = new Padding(2, 2, 2, 2);
+            cboTreatmentType.Margin = new Padding(2);
             cboTreatmentType.Name = "cboTreatmentType";
             cboTreatmentType.Size = new Size(218, 28);
             cboTreatmentType.TabIndex = 9;
@@ -102,7 +104,7 @@ namespace DentalClinicSystem.Forms
             // txtToothNumber
             // 
             txtToothNumber.Location = new Point(114, 221);
-            txtToothNumber.Margin = new Padding(2, 2, 2, 2);
+            txtToothNumber.Margin = new Padding(2);
             txtToothNumber.Name = "txtToothNumber";
             txtToothNumber.Size = new Size(81, 27);
             txtToothNumber.TabIndex = 7;
@@ -121,7 +123,7 @@ namespace DentalClinicSystem.Forms
             // txtCost
             // 
             txtCost.Location = new Point(265, 221);
-            txtCost.Margin = new Padding(2, 2, 2, 2);
+            txtCost.Margin = new Padding(2);
             txtCost.Name = "txtCost";
             txtCost.Size = new Size(97, 27);
             txtCost.TabIndex = 5;
@@ -141,7 +143,7 @@ namespace DentalClinicSystem.Forms
             // 
             dtpDatePerformed.Format = DateTimePickerFormat.Short;
             dtpDatePerformed.Location = new Point(434, 221);
-            dtpDatePerformed.Margin = new Padding(2, 2, 2, 2);
+            dtpDatePerformed.Margin = new Padding(2);
             dtpDatePerformed.Name = "dtpDatePerformed";
             dtpDatePerformed.Size = new Size(129, 27);
             dtpDatePerformed.TabIndex = 3;
@@ -160,7 +162,7 @@ namespace DentalClinicSystem.Forms
             // txtNotes
             // 
             txtNotes.Location = new Point(36, 290);
-            txtNotes.Margin = new Padding(2, 2, 2, 2);
+            txtNotes.Margin = new Padding(2);
             txtNotes.Multiline = true;
             txtNotes.Name = "txtNotes";
             txtNotes.Size = new Size(437, 98);
@@ -172,7 +174,7 @@ namespace DentalClinicSystem.Forms
             btnAddTreatment.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
             btnAddTreatment.ForeColor = Color.FromArgb(243, 248, 249);
             btnAddTreatment.Location = new Point(36, 400);
-            btnAddTreatment.Margin = new Padding(2, 2, 2, 2);
+            btnAddTreatment.Margin = new Padding(2);
             btnAddTreatment.Name = "btnAddTreatment";
             btnAddTreatment.Size = new Size(181, 27);
             btnAddTreatment.TabIndex = 0;
@@ -199,7 +201,7 @@ namespace DentalClinicSystem.Forms
             Controls.Add(cboAppointment);
             Controls.Add(lblAppointment);
             Controls.Add(dgvTreatments);
-            Margin = new Padding(2, 2, 2, 2);
+            Margin = new Padding(2);
             Name = "ucTreatmentRecords";
             Size = new Size(648, 470);
             Load += ucTreatmentRecords_Load;

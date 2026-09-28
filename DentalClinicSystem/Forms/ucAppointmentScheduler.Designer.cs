@@ -25,11 +25,11 @@ namespace DentalClinicSystem.Forms
             lblDateTime = new Label();
             dtpAppointmentDateTime = new DateTimePicker();
             lblReason = new Label();
-            txtReason = new TextBox();
             btnSchedule = new Button();
             lblStatus = new Label();
             cboStatus = new ComboBox();
             btnUpdateStatus = new Button();
+            cmbReason = new ComboBox();
             ((System.ComponentModel.ISupportInitialize)dgvAppointments).BeginInit();
             SuspendLayout();
             // 
@@ -38,14 +38,15 @@ namespace DentalClinicSystem.Forms
             dgvAppointments.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             dgvAppointments.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvAppointments.Location = new Point(36, 16);
-            dgvAppointments.Margin = new Padding(2, 2, 2, 2);
+            dgvAppointments.Margin = new Padding(2);
             dgvAppointments.MultiSelect = false;
             dgvAppointments.Name = "dgvAppointments";
             dgvAppointments.ReadOnly = true;
             dgvAppointments.RowHeadersWidth = 62;
             dgvAppointments.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvAppointments.Size = new Size(631, 136);
+            dgvAppointments.Size = new Size(853, 136);
             dgvAppointments.TabIndex = 0;
+            dgvAppointments.CellContentClick += dgvAppointments_CellContentClick;
             // 
             // lblPatient
             // 
@@ -62,7 +63,7 @@ namespace DentalClinicSystem.Forms
             // 
             cboPatient.DropDownStyle = ComboBoxStyle.DropDownList;
             cboPatient.Location = new Point(36, 191);
-            cboPatient.Margin = new Padding(2, 2, 2, 2);
+            cboPatient.Margin = new Padding(2);
             cboPatient.Name = "cboPatient";
             cboPatient.Size = new Size(215, 28);
             cboPatient.TabIndex = 10;
@@ -82,7 +83,7 @@ namespace DentalClinicSystem.Forms
             // 
             cboDentist.DropDownStyle = ComboBoxStyle.DropDownList;
             cboDentist.Location = new Point(354, 191);
-            cboDentist.Margin = new Padding(2, 2, 2, 2);
+            cboDentist.Margin = new Padding(2);
             cboDentist.Name = "cboDentist";
             cboDentist.Size = new Size(190, 28);
             cboDentist.TabIndex = 8;
@@ -103,7 +104,7 @@ namespace DentalClinicSystem.Forms
             dtpAppointmentDateTime.CustomFormat = "MM/dd/yyyy hh:mm tt";
             dtpAppointmentDateTime.Format = DateTimePickerFormat.Custom;
             dtpAppointmentDateTime.Location = new Point(36, 243);
-            dtpAppointmentDateTime.Margin = new Padding(2, 2, 2, 2);
+            dtpAppointmentDateTime.Margin = new Padding(2);
             dtpAppointmentDateTime.Name = "dtpAppointmentDateTime";
             dtpAppointmentDateTime.ShowUpDown = true;
             dtpAppointmentDateTime.Size = new Size(215, 27);
@@ -120,21 +121,13 @@ namespace DentalClinicSystem.Forms
             lblReason.TabIndex = 5;
             lblReason.Text = "Reason for visit:";
             // 
-            // txtReason
-            // 
-            txtReason.Location = new Point(354, 245);
-            txtReason.Margin = new Padding(2, 2, 2, 2);
-            txtReason.Name = "txtReason";
-            txtReason.Size = new Size(190, 27);
-            txtReason.TabIndex = 4;
-            // 
             // btnSchedule
             // 
             btnSchedule.BackColor = Color.FromArgb(66, 202, 207);
             btnSchedule.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
             btnSchedule.ForeColor = Color.FromArgb(243, 248, 249);
             btnSchedule.Location = new Point(36, 290);
-            btnSchedule.Margin = new Padding(2, 2, 2, 2);
+            btnSchedule.Margin = new Padding(2);
             btnSchedule.Name = "btnSchedule";
             btnSchedule.Size = new Size(205, 27);
             btnSchedule.TabIndex = 3;
@@ -156,8 +149,9 @@ namespace DentalClinicSystem.Forms
             // cboStatus
             // 
             cboStatus.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboStatus.Items.AddRange(new object[] { "Scheduled", "Cancelled", "No Show" });
             cboStatus.Location = new Point(36, 356);
-            cboStatus.Margin = new Padding(2, 2, 2, 2);
+            cboStatus.Margin = new Padding(2);
             cboStatus.Name = "cboStatus";
             cboStatus.Size = new Size(275, 28);
             cboStatus.TabIndex = 1;
@@ -169,7 +163,7 @@ namespace DentalClinicSystem.Forms
             btnUpdateStatus.Font = new Font("Bahnschrift Light", 9F, FontStyle.Bold);
             btnUpdateStatus.ForeColor = Color.FromArgb(66, 202, 207);
             btnUpdateStatus.Location = new Point(354, 356);
-            btnUpdateStatus.Margin = new Padding(2, 2, 2, 2);
+            btnUpdateStatus.Margin = new Padding(2);
             btnUpdateStatus.Name = "btnUpdateStatus";
             btnUpdateStatus.Size = new Size(72, 27);
             btnUpdateStatus.TabIndex = 0;
@@ -177,16 +171,25 @@ namespace DentalClinicSystem.Forms
             btnUpdateStatus.UseVisualStyleBackColor = false;
             btnUpdateStatus.Click += btnUpdateStatus_Click;
             // 
+            // cmbReason
+            // 
+            cmbReason.FormattingEnabled = true;
+            cmbReason.Items.AddRange(new object[] { "Oral Prophylaxis Package", "Consultation & Check up", "Promo Bundles" });
+            cmbReason.Location = new Point(354, 245);
+            cmbReason.Name = "cmbReason";
+            cmbReason.Size = new Size(190, 28);
+            cmbReason.TabIndex = 12;
+            // 
             // ucAppointmentScheduler
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(243, 248, 249);
+            Controls.Add(cmbReason);
             Controls.Add(btnUpdateStatus);
             Controls.Add(cboStatus);
             Controls.Add(lblStatus);
             Controls.Add(btnSchedule);
-            Controls.Add(txtReason);
             Controls.Add(lblReason);
             Controls.Add(dtpAppointmentDateTime);
             Controls.Add(lblDateTime);
@@ -195,9 +198,9 @@ namespace DentalClinicSystem.Forms
             Controls.Add(cboPatient);
             Controls.Add(lblPatient);
             Controls.Add(dgvAppointments);
-            Margin = new Padding(2, 2, 2, 2);
+            Margin = new Padding(2);
             Name = "ucAppointmentScheduler";
-            Size = new Size(698, 446);
+            Size = new Size(920, 568);
             Load += ucAppointmentScheduler_Load;
             ((System.ComponentModel.ISupportInitialize)dgvAppointments).EndInit();
             ResumeLayout(false);
@@ -214,10 +217,10 @@ namespace DentalClinicSystem.Forms
         private Label lblDateTime;
         private DateTimePicker dtpAppointmentDateTime;
         private Label lblReason;
-        private TextBox txtReason;
         private Button btnSchedule;
         private Label lblStatus;
         private ComboBox cboStatus;
         private Button btnUpdateStatus;
+        private ComboBox cmbReason;
     }
 }
