@@ -1,6 +1,7 @@
-using System.ComponentModel;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
+using DentalClinicSystem.Service;
+using System.ComponentModel;
 
 namespace DentalClinicSystem.Forms
 {
@@ -96,7 +97,7 @@ namespace DentalClinicSystem.Forms
                 PatientId = patientId,
                 DentistId = dentistId,
                 AppointmentDateTime = dtpAppointmentDateTime.Value,
-                Reason = string.IsNullOrWhiteSpace(txtReason.Text) ? null : txtReason.Text.Trim()
+                Reason = string.IsNullOrWhiteSpace(cmbReason.Text) ? null : cmbReason.Text.Trim()
             };
 
             var result = await _appointmentService.ScheduleAppointmentAsync(appointment);
@@ -108,7 +109,8 @@ namespace DentalClinicSystem.Forms
             }
 
             await RefreshGridAsync();
-            txtReason.Clear();
+            cmbReason.SelectedIndex = -1;
+            cmbReason.Text = string.Empty;
         }
 
         private async void btnUpdateStatus_Click(object sender, EventArgs e)
@@ -152,5 +154,6 @@ namespace DentalClinicSystem.Forms
         {
 
         }
+
     }
 }
