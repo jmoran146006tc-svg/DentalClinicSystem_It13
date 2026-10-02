@@ -48,6 +48,15 @@ namespace DentalClinicSystem.DBContent
                 "This appointment has treatment records attached and can't be deleted. Cancel it instead.",
                 Parameter("@p_AppointmentId", appointmentId));
 
+        public Task<IReadOnlyList<Appointment>> GetByPatientIdAsync(int patientId)
+            => QueryAsync("sp_Appointment_GetByPatientId", MapAppointment, Parameter("@p_PatientId", patientId));
+
+        public Task<IReadOnlyList<Appointment>> GetByRangeAsync(DateTime from, DateTime to)
+            => QueryAsync("sp_Appointment_GetByRange", MapAppointment, Parameter("@p_From", from), Parameter("@p_To", to));
+
+        public Task<IReadOnlyList<Appointment>> GetByDentistAndRangeAsync(int dentistId, DateTime from, DateTime to)
+            => QueryAsync("sp_Appointment_GetByDentistAndRange", MapAppointment, Parameter("@p_DentistId", dentistId), Parameter("@p_From", from), Parameter("@p_To", to));
+
         private static Appointment MapAppointment(MySqlDataReader reader) => new()
         {
             AppointmentId = (int)reader["AppointmentId"],

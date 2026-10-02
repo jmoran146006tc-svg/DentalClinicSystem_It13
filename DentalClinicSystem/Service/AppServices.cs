@@ -9,5 +9,7 @@ namespace DentalClinicSystem.Service
         IAppointmentService Appointments,
         ITreatmentService Treatments,
         ITreatmentTypeService TreatmentTypes,
-        IUserService Users);
+        IUserService Users,
+        IReportService Reports,
+        IPatientHistoryService PatientHistory);
 }

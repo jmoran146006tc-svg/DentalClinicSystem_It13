@@ -17,12 +17,12 @@ namespace DentalClinicSystem.Service
 
     public sealed class ServiceResult<T> : ServiceResult
     {
-        public T Data { get; }
+        public T? Data { get; }
 
-        private ServiceResult(bool success, string errorMessage, T data) : base(success, errorMessage)
+        private ServiceResult(bool success, string errorMessage, T? data) : base(success, errorMessage)
             => Data = data;
 
         public static ServiceResult<T> Ok(T data) => new(true, string.Empty, data);
-        public static ServiceResult<T> Fail(string message) => new(false, message, default!);
+        public new static ServiceResult<T> Fail(string message) => new(false, message, default);
     }
 }

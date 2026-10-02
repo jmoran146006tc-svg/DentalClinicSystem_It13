@@ -30,6 +30,17 @@ namespace DentalClinicSystem.Service
         public static bool IsAdmin(User actor) => actor.Role == Roles.Admin;
         public static bool CanAccessAppointment(User actor, Appointment appointment) =>
             Can(actor, Permission.ViewAppointments) && (!IsDentist(actor) || actor.DentistId == appointment.DentistId);
+        public static bool CanChangeStatus(User actor, Appointment appointment, string status)
+        {
+            if (!CanAccessAppointment(actor, appointment)) return false;
+            if (IsAdmin(actor)) return true;
+            return status switch
+            {
+                AppointmentStatus.Completed => Can(actor, Permission.MarkAppointmentCompleted),
+                AppointmentStatus.Cancelled or AppointmentStatus.NoShow => Can(actor, Permission.CancelAppointment),
+                _ => false
+            };
+        }
         public static ServiceResult Denied() => ServiceResult.Fail(DeniedMessage);
         public static ServiceResult<T> Denied<T>() => ServiceResult<T>.Fail(DeniedMessage);
     }

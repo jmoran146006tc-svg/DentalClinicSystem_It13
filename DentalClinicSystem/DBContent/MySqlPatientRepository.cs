@@ -39,6 +39,12 @@ namespace DentalClinicSystem.DBContent
             => ExecuteAsync("sp_Patient_Delete",
                 Parameter("@p_PatientId", patientId));
 
+        public Task<IReadOnlyList<Patient>> GetAllIncludingInactiveAsync()
+            => QueryAsync("sp_Patient_GetAllIncludingInactive", MapPatient);
+
+        public Task ReactivateAsync(int patientId)
+            => ExecuteAsync("sp_Patient_Reactivate", Parameter("@p_PatientId", patientId));
+
         private static Patient MapPatient(MySqlDataReader reader) => new()
         {
             PatientId = (int)reader["PatientId"],

@@ -1,5 +1,4 @@
 using DentalClinicSystem.Service;
-using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
 
 namespace DentalClinicSystem.Forms
@@ -43,21 +42,19 @@ namespace DentalClinicSystem.Forms
             FormClosed += (_, _) => { if (!_loggingOut) Application.Exit(); };
 
             btnDashboard.Click += (_, _) => ShowDashboardHome();
-            btnPatients.Click += (_, _) => ShowPage(new ucPatientRecords(_services.Patients, canEdit: _currentUser.Role != Roles.Dentist));
-            btnDentists.Click += (_, _) => ShowPage(new ucDentistRecords(_services.Dentists));
+            btnPatients.Click += (_, _) => ShowPage(new ucPatientRecords(_services.Patients, _currentUser));
+            btnDentists.Click += (_, _) => ShowPage(new ucDentistRecords(_services.Dentists, _currentUser));
             btnAppointments.Click += (_, _) => ShowPage(
-                new ucAppointmentScheduler(_services.Appointments, _services.Patients, _services.Dentists));
+                new ucAppointmentScheduler(_services.Appointments, _services.Patients, _services.Dentists, _currentUser));
             btnTreatments.Click += (_, _) => ShowPage(
-                new ucTreatmentRecords(_services.Treatments, _services.Appointments, _services.TreatmentTypes, canEdit: _currentUser.Role != Roles.Receptionist));
+                new ucTreatmentRecords(_services.Treatments, _services.Appointments, _services.TreatmentTypes, _currentUser));
             btnUsers.Click += (_, _) => ShowPage(new ucUserManagement(_services.Users, _services.Dentists, _currentUser));
             btnLogout.Click += (_, _) => Logout();
 
-            // Admin sees every tab. Receptionist sees Patients/Appointments/Treatments
-            // (Treatments is view-only for them - see ucTreatmentRecords). Dentist sees
-            // Patients (view-only)/Appointments/Treatments, not Dentists or Users.
-            btnPatients.Visible = true;
-            btnDentists.Visible = _currentUser.Role == Roles.Admin;
-            btnUsers.Visible = _currentUser.Role == Roles.Admin;
+            btnPatients.Visible = RoleAccess.Can(_currentUser, Permission.ViewPatients);
+            btnTreatments.Visible = RoleAccess.Can(_currentUser, Permission.ViewTreatments);
+            btnDentists.Visible = RoleAccess.Can(_currentUser, Permission.ViewDentists);
+            btnUsers.Visible = RoleAccess.Can(_currentUser, Permission.ViewUsers);
 
             Load += (_, _) => ShowDashboardHome();
         }

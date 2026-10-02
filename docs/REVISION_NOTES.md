@@ -1,11 +1,21 @@
 # Revision notes
 
+**Scope update:** the user requested stopping after Phase 4. Phases 5-13 are deferred, including the new shell, theme packages, redesigned pages, dashboards, report UI, global logging and committed xUnit suite. The checks below do not represent the Phase 13 audit.
+
 ## Assumptions
 
 - Work is local on `ui-redesign`; the repository's original branch is `master`. No push or changes to that branch.
 - Existing Designer files and embedded image resources are retained. New UI is built in code.
 - The explicit xUnit requirement in Phase 11 permits the test SDK and xUnit test packages despite the general package restriction.
 - Runtime GUI verification is reserved for humans, as requested. Build success is not runtime proof.
+- The application never initializes/migrates/seeds the database. The daily MySQL event and manually callable procedure handle inactivity; neither runs from application startup.
+- Staff with ManagePatients may reactivate patients. The inactive toggle and reactivation button belong to deferred Phase 7; only the service/repository operations are complete here.
+- Appointment Notes is a nullable, separate field. Availability means no booking conflict; there is no days-off table.
+- Dentists may read a patient's full history only through an appointment assigned to them. Normal treatment lists and writes remain restricted to their own appointments. Receptionists cannot read treatment/history/report data.
+- Read APIs now accept the actor and return ServiceResult as well, so unauthorized access fails at the service boundary. Report/history UI is deferred.
+- Treatment-type mutations use ManageTreatments because the supplied matrix has no separate treatment-type permission.
+- Passwords are preserved exactly; other text is trimmed/sanitized. BCrypt inputs are limited to 72 UTF-8 bytes.
+- ReaLTaiizor and ScottPlot were not attempted: their phases are outside the revised scope.
 
 ## Changes by phase
 
@@ -39,12 +49,33 @@
 - Existing async handlers now delegate through UiAction; service errors and binding use shared helpers. Reports/history fields join AppServices when implemented in Phase 4.
 - Build gate: 0 errors, 1 baseline CS0108 warning. Runtime behavior remains unverified.
 
+### Phase 4 - services, validation and permissions
+
+- Implemented the exact RoleAccess matrix and ownership rules; all existing callers now pass the authenticated actor. No role decision in a page creates database access authority.
+- Centralized validation/sanitization for patients, dentists, users, appointments, treatments, treatment types and login. Nullable ServiceResult data replaces the null-forgiving default and removes the baseline warning.
+- Added inactive patient reads/reactivation; removed the manual patient-deactivation service/UI path. Repository soft-delete compatibility remains.
+- Scheduling forces Scheduled, validates active patient/dentist and rejects conflicts within 30 minutes, including across midnight. Status changes enforce completion/cancellation permissions, cancellation reasons, and terminal-state restrictions.
+- Treatment reads/writes enforce privacy and original/destination appointment ownership. Added treatment updates and a separate patient-history service.
+- User services protect self-deactivation and the last active Admin, validate linked active dentists and duplicate usernames. Hashes are omitted from UI-facing user lists and login results.
+- Added report repository/service and four record DTOs with Admin-only reads and date validation. Wired all services in Program/AppServices.
+- Startup connection probing now runs after the WinForms message loop starts, keeping login/control construction on the STA UI thread. No database setup runs. This is a correction to startup wiring, not the deferred global-exception/logging phase.
+- Updated the existing forms only for the new service contracts and necessary permission/error feedback; the data-driven shell and redesigned controls remain deferred. A plain cancellation-reason field keeps the existing inline status editor usable with the required reason rule. Removed the duplicate treatment-add event subscription already present in the Designer.
+- Adjusted the relative-date demo seed to avoid a same-dentist duplicate when first run on a Monday.
+- Corrected README's obsolete automatic-setup claim now, rather than leaving instructions that contradict the application. Broader Phase 12 documentation remains deferred.
+- Added files: Models/{AppointmentDetails,PatientHistory,AppointmentStatusCount,RevenueDay,TopTreatmentType,DentistWorkload}.cs; Interfaces/{IReportRepository,IReportService,IPatientHistoryService}.cs; DBContent/MySqlReportRepository.cs; Service/{ReportService,PatientHistoryService,ServiceOperation}.cs. No files deleted in this phase.
+- Verification: 129 temporary in-memory checks passed for all 42 role/permission combinations, validation, patient access/reactivation, scheduling/conflict boundaries/status rules, treatment ownership/privacy, history access, user protections, authentication, report permissions/date ranges and pure helpers. These are focused smoke checks, not the deferred committed xUnit suite and not MySQL integration tests.
+- Static contract check: all 42 current repository calls match SQL procedure names, parameter names and parameter counts.
+- Final phase build gate: `dotnet build DentalClinicSystem/DentalClinicSystem.csproj` passed with 0 warnings and 0 errors. `git diff --check` passed. The temporary verification project was removed from the system temp directory and was never added to Git or the solution.
+- Focused source scans (Python regex over source excluding bin/obj): 0 MySQL dependencies outside DBContent/Program; 0 UI repository references; 0 application DDL/seed statements; 0 old DeletePatientAsync/canEdit APIs. Original connection constants compared with master and confirmed unchanged.
+
 ## Unverified at runtime
 
 - [ ] Run manual database scripts against a disposable MySQL database and rerun to check idempotence.
 - [ ] Exercise each role, sidebar, validation and privacy boundaries.
-- [ ] Check scheduling, cancellation, completion, history, calendar and reports.
-- [ ] Check inactive patients and reactivation.
+- [ ] Check the existing scheduling/status/treatment screens against a manually prepared database. The new history/report services have no new UI until later phases.
+- [ ] Verify service rules with real foreign keys, decimal/date values, duplicate usernames and inactive records.
+- [ ] Try simultaneous bookings/admin changes from multiple clients: validation checks and repository writes are separate operations, so cross-client concurrency protection is not established by the in-memory checks.
+- [ ] Check the SQL inactivity procedure/event and patient-reactivation service; the corresponding new controls are deferred.
 - [ ] Check logout, window close, resizing and Visual Studio Designer compatibility.
 
 ## Open questions for the adviser
@@ -56,4 +87,4 @@
 
 ## Principles audit results
 
-Pending Phase 13.
+Phase 13 is deferred at the user-requested Phase 4 stopping point. Focused boundary checks are recorded under Phase 4; no full principles audit or production-readiness claim is made.

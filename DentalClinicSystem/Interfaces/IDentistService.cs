@@ -5,10 +5,10 @@ namespace DentalClinicSystem.Interfaces
 {
     public interface IDentistService
     {
-        Task<IReadOnlyList<Dentist>> GetAllDentistsAsync();
-        Task<Dentist?> GetDentistByIdAsync(int dentistId);
-        Task<ServiceResult> AddDentistAsync(Dentist dentist);
-        Task<ServiceResult> UpdateDentistAsync(Dentist dentist);
-        Task<ServiceResult> DeleteDentistAsync(int dentistId);
+        Task<ServiceResult<IReadOnlyList<Dentist>>> GetAllDentistsAsync(User actor);
+        Task<ServiceResult<Dentist>> GetDentistByIdAsync(User actor, int dentistId);
+        Task<ServiceResult> AddDentistAsync(User actor, Dentist dentist);
+        Task<ServiceResult> UpdateDentistAsync(User actor, Dentist dentist);
+        Task<ServiceResult> DeleteDentistAsync(User actor, int dentistId);
     }
 }

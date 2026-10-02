@@ -3,87 +3,64 @@ using DentalClinicSystem.Models;
 
 namespace DentalClinicSystem.Service
 {
-    public class UserService : IUserService
+    public class UserService(IUserRepository repository, IDentistRepository dentists) : IUserService
     {
-        private static readonly string[] ValidRoles = [Roles.Admin, Roles.Receptionist, Roles.Dentist];
-
-        private readonly IUserRepository _repository;
-
-        public UserService(IUserRepository repository) => _repository = repository;
-
-        public Task<IReadOnlyList<User>> GetAllUsersAsync() => _repository.GetAllAsync();
-
-        public Task<User?> GetUserByIdAsync(int userId) => _repository.GetByIdAsync(userId);
-
-        public async Task<ServiceResult> AddUserAsync(User user, string password)
+        public async Task<ServiceResult<IReadOnlyList<User>>> GetAllUsersAsync(User actor)
         {
-            var validation = Validate(user, password, isNewUser: true);
-            if (!validation.Success)
-                return validation;
-
-            var existing = await _repository.GetByUsernameAsync(user.Username);
-            if (existing is not null)
-                return ServiceResult.Fail("That username is already taken.");
-
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
-            await _repository.AddAsync(user);
-            return ServiceResult.Ok();
-        }
-
-        public async Task<ServiceResult> UpdateUserAsync(User user, string? newPassword)
-        {
-            var validation = Validate(user, newPassword, isNewUser: false);
-            if (!validation.Success)
-                return validation;
-
-            var existing = await _repository.GetByIdAsync(user.UserId);
-            if (existing is null)
-                return ServiceResult.Fail("User not found.");
-
-            if (!string.Equals(existing.Username, user.Username, StringComparison.OrdinalIgnoreCase))
+            if (!RoleAccess.Can(actor, Permission.ViewUsers)) return RoleAccess.Denied<IReadOnlyList<User>>();
+            return ServiceResult<IReadOnlyList<User>>.Ok((await repository.GetAllAsync()).Select(u => new User
             {
-                var usernameOwner = await _repository.GetByUsernameAsync(user.Username);
-                if (usernameOwner is not null && usernameOwner.UserId != user.UserId)
-                    return ServiceResult.Fail("That username is already taken.");
-            }
-
-            user.PasswordHash = string.IsNullOrWhiteSpace(newPassword)
-                ? existing.PasswordHash
-                : BCrypt.Net.BCrypt.HashPassword(newPassword);
-
-            await _repository.UpdateAsync(user);
+                UserId = u.UserId, Username = u.Username, Role = u.Role, DentistId = u.DentistId, IsActive = u.IsActive
+            }).ToList());
+        }
+        public async Task<ServiceResult> AddUserAsync(User actor, User user, string password)
+        {
+            if (!RoleAccess.Can(actor, Permission.ManageUsers)) return RoleAccess.Denied();
+            var validation = await ValidateAsync(user, password, true);
+            if (!validation.Success) return validation;
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
+            return await ServiceOperation.SaveAsync(() => repository.AddAsync(user));
+        }
+        public async Task<ServiceResult> UpdateUserAsync(User actor, User user, string? newPassword)
+        {
+            if (!RoleAccess.Can(actor, Permission.ManageUsers)) return RoleAccess.Denied();
+            var existing = await repository.GetByIdAsync(user.UserId);
+            if (existing is null) return ServiceResult.Fail("User not found.");
+            var validation = await ValidateAsync(user, newPassword, false);
+            if (!validation.Success) return validation;
+            var protection = await ProtectAdminAsync(actor, existing, user);
+            if (!protection.Success) return protection;
+            user.PasswordHash = string.IsNullOrEmpty(newPassword) ? existing.PasswordHash : BCrypt.Net.BCrypt.HashPassword(newPassword);
+            return await ServiceOperation.SaveAsync(() => repository.UpdateAsync(user));
+        }
+        public async Task<ServiceResult> DeactivateUserAsync(User actor, int userId)
+        {
+            if (!RoleAccess.Can(actor, Permission.ManageUsers)) return RoleAccess.Denied();
+            var existing = await repository.GetByIdAsync(userId);
+            if (existing is null) return ServiceResult.Fail("User not found.");
+            var updated = new User { UserId = existing.UserId, Username = existing.Username, Role = existing.Role,
+                DentistId = existing.DentistId, PasswordHash = existing.PasswordHash, IsActive = false };
+            var protection = await ProtectAdminAsync(actor, existing, updated);
+            if (!protection.Success) return protection;
+            return await ServiceOperation.SaveAsync(() => repository.UpdateAsync(updated));
+        }
+        private async Task<ServiceResult> ValidateAsync(User user, string? password, bool isNew)
+        {
+            var validation = Validator.User(user, password, isNew);
+            if (!validation.Success) return validation;
+            var duplicate = await repository.GetByUsernameAsync(user.Username);
+            if (duplicate is not null && (isNew || duplicate.UserId != user.UserId)) return ServiceResult.Fail("That username is already taken.");
+            if (RoleAccess.RequiresDentist(user.Role) &&
+                (user.DentistId is not int id || await dentists.GetByIdAsync(id) is not { IsActive: true }))
+                return ServiceResult.Fail("Link this account to an active dentist.");
             return ServiceResult.Ok();
         }
-
-        public async Task<ServiceResult> DeactivateUserAsync(int userId)
+        private async Task<ServiceResult> ProtectAdminAsync(User actor, User existing, User updated)
         {
-            var user = await _repository.GetByIdAsync(userId);
-            if (user is null)
-                return ServiceResult.Fail("User not found.");
-
-            // Soft delete, same reasoning as Patients/Dentists.
-            user.IsActive = false;
-            await _repository.UpdateAsync(user);
-            return ServiceResult.Ok();
-        }
-
-        private static ServiceResult Validate(User user, string? password, bool isNewUser)
-        {
-            if (string.IsNullOrWhiteSpace(user.Username))
-                return ServiceResult.Fail("Username is required.");
-
-            if (!ValidRoles.Contains(user.Role))
-                return ServiceResult.Fail($"Role must be one of: {string.Join(", ", ValidRoles)}.");
-
-            if (user.Role == Roles.Dentist && user.DentistId is null)
-                return ServiceResult.Fail("A Dentist-role account must be linked to a dentist record.");
-
-            if (isNewUser && string.IsNullOrWhiteSpace(password))
-                return ServiceResult.Fail("Password is required for a new account.");
-
-            if (!string.IsNullOrEmpty(password) && password.Length < 6)
-                return ServiceResult.Fail("Password must be at least 6 characters.");
-
+            if (actor.UserId == updated.UserId && !updated.IsActive) return ServiceResult.Fail("You cannot deactivate your own account.");
+            if (existing.IsActive && RoleAccess.IsAdmin(existing) && (!updated.IsActive || !RoleAccess.IsAdmin(updated)) &&
+                (await repository.GetAllAsync()).Count(u => u.IsActive && RoleAccess.IsAdmin(u)) <= 1)
+                return ServiceResult.Fail("The last active Admin cannot be deactivated or demoted.");
             return ServiceResult.Ok();
         }
     }

@@ -4,6 +4,12 @@ namespace DentalClinicSystem.Helpers
 {
     public static class UiMessages
     {
+        public static IReadOnlyList<T> Items<T>(ServiceResult<IReadOnlyList<T>> result)
+        {
+            if (!result.Success) ShowError(result);
+            return result.Data ?? Array.Empty<T>();
+        }
+
         public static void ShowError(ServiceResult result) =>
             MessageBox.Show(result.ErrorMessage, "Dental clinic", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         public static void ShowInfo(string text) =>

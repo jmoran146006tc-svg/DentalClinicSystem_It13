@@ -1,4 +1,3 @@
-using DentalClinicSystem.Models;
 namespace DentalClinicSystem.Models
 {
     public class Appointment

@@ -1,11 +1,11 @@
 using DentalClinicSystem.Models;
+using DentalClinicSystem.Service;
 
 namespace DentalClinicSystem.Helpers
 {
     public sealed record CalendarSlot(Appointment Appointment, int Column, int Columns);
     public static class CalendarLayout
     {
-        public const int DurationMinutes = 30;
         public static IReadOnlyList<CalendarSlot> Arrange(IEnumerable<Appointment> appointments)
         {
             List<CalendarSlot> result = [];
@@ -23,7 +23,7 @@ namespace DentalClinicSystem.Helpers
                     }
                     var column = ends.FindIndex(end => end <= appointment.AppointmentDateTime);
                     if (column < 0) { column = ends.Count; ends.Add(DateTime.MinValue); }
-                    ends[column] = appointment.AppointmentDateTime.AddMinutes(DurationMinutes);
+                    ends[column] = appointment.AppointmentDateTime.AddMinutes(AppointmentService.ConflictMinutes);
                     group.Add((appointment, column));
                 }
                 result.AddRange(group.Select(item => new CalendarSlot(item.Appointment, item.Column, ends.Count)));

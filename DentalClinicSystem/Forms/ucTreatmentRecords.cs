@@ -1,3 +1,4 @@
+using DentalClinicSystem.Service;
 using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
@@ -9,7 +10,7 @@ namespace DentalClinicSystem.Forms
         private readonly ITreatmentService _treatmentService;
         private readonly IAppointmentService _appointmentService;
         private readonly ITreatmentTypeService _treatmentTypeService;
-        private readonly bool _canEdit;
+        private readonly User _currentUser;
 
         private Dictionary<int, TreatmentType> _treatmentTypesById = [];
         private Dictionary<int, string> _appointmentLabelsById = [];
@@ -18,13 +19,13 @@ namespace DentalClinicSystem.Forms
             ITreatmentService treatmentService,
             IAppointmentService appointmentService,
             ITreatmentTypeService treatmentTypeService,
-            bool canEdit = true)
+            User currentUser)
         {
             InitializeComponent();
             _treatmentService = treatmentService;
             _appointmentService = appointmentService;
             _treatmentTypeService = treatmentTypeService;
-            _canEdit = canEdit;
+            _currentUser = currentUser;
         }
 
         private async void ucTreatmentRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, ucTreatmentRecords_LoadAsync);
@@ -33,18 +34,14 @@ namespace DentalClinicSystem.Forms
         {
             dtpDatePerformed.MaxDate = DateTime.Today;
             cboTreatmentType.SelectedIndexChanged += cboTreatmentType_SelectedIndexChanged;
-            btnAddTreatment.Click += btnAddTreatment_Click;
 
-            // Receptionist gets this tab to see cost/history for checkout, not to
-            // enter clinical records - grey out the entry row instead of hiding it,
-            // so the fields are still there to read.
-            cboAppointment.Enabled = _canEdit;
-            cboTreatmentType.Enabled = _canEdit;
-            txtToothNumber.Enabled = _canEdit;
-            txtCost.Enabled = _canEdit;
-            dtpDatePerformed.Enabled = _canEdit;
-            txtNotes.Enabled = _canEdit;
-            btnAddTreatment.Visible = _canEdit;
+            cboAppointment.Enabled = RoleAccess.Can(_currentUser, Permission.ManageTreatments);
+            cboTreatmentType.Enabled = RoleAccess.Can(_currentUser, Permission.ManageTreatments);
+            txtToothNumber.Enabled = RoleAccess.Can(_currentUser, Permission.ManageTreatments);
+            txtCost.Enabled = RoleAccess.Can(_currentUser, Permission.ManageTreatments);
+            dtpDatePerformed.Enabled = RoleAccess.Can(_currentUser, Permission.ManageTreatments);
+            txtNotes.Enabled = RoleAccess.Can(_currentUser, Permission.ManageTreatments);
+            btnAddTreatment.Visible = RoleAccess.Can(_currentUser, Permission.ManageTreatments);
 
             await LoadLookupsAsync();
             await RefreshGridAsync();
@@ -52,7 +49,7 @@ namespace DentalClinicSystem.Forms
 
         private async Task LoadLookupsAsync()
         {
-            var appointments = await _appointmentService.GetAllAppointmentsAsync();
+            var appointments = UiMessages.Items(await _appointmentService.GetAllAppointmentsAsync(_currentUser));
             var options = appointments
                 .Select(a => new AppointmentOption
                 {
@@ -66,7 +63,7 @@ namespace DentalClinicSystem.Forms
             cboAppointment.ValueMember = nameof(AppointmentOption.AppointmentId);
             _appointmentLabelsById = options.ToDictionary(o => o.AppointmentId, o => o.Display);
 
-            var treatmentTypes = await _treatmentTypeService.GetAllTreatmentTypesAsync();
+            var treatmentTypes = UiMessages.Items(await _treatmentTypeService.GetAllTreatmentTypesAsync(_currentUser));
             _treatmentTypesById = treatmentTypes.ToDictionary(t => t.TreatmentTypeId);
 
             cboTreatmentType.DataSource = treatmentTypes.ToList();
@@ -76,7 +73,7 @@ namespace DentalClinicSystem.Forms
 
         private async Task RefreshGridAsync()
         {
-            var treatments = await _treatmentService.GetAllTreatmentsAsync();
+            var treatments = UiMessages.Items(await _treatmentService.GetAllTreatmentsAsync(_currentUser));
 
             // Show readable labels instead of raw AppointmentId/TreatmentTypeId - the
             // grid used to bind directly to Treatment and show bare numbers for both.
@@ -132,7 +129,7 @@ namespace DentalClinicSystem.Forms
                 Notes = string.IsNullOrWhiteSpace(txtNotes.Text) ? null : txtNotes.Text.Trim()
             };
 
-            var result = await _treatmentService.AddTreatmentAsync(treatment);
+            var result = await _treatmentService.AddTreatmentAsync(_currentUser, treatment);
             if (!result.Success)
             {
                 UiMessages.ShowError(result);

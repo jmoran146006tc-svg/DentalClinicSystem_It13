@@ -3,56 +3,24 @@ using DentalClinicSystem.Models;
 
 namespace DentalClinicSystem.Service
 {
-    public class TreatmentTypeService : ITreatmentTypeService
+    public class TreatmentTypeService(ITreatmentTypeRepository repository) : ITreatmentTypeService
     {
-        private readonly ITreatmentTypeRepository _repository;
-
-        public TreatmentTypeService(ITreatmentTypeRepository repository) => _repository = repository;
-
-        public Task<IReadOnlyList<TreatmentType>> GetAllTreatmentTypesAsync() => _repository.GetAllAsync();
-
-        public async Task<ServiceResult> AddTreatmentTypeAsync(TreatmentType treatmentType)
+        public async Task<ServiceResult<IReadOnlyList<TreatmentType>>> GetAllTreatmentTypesAsync(User actor)
         {
-            var validation = Validate(treatmentType);
-            if (!validation.Success)
-                return validation;
-
-            await _repository.AddAsync(treatmentType);
-            return ServiceResult.Ok();
+            if (!RoleAccess.Can(actor, Permission.ViewTreatments)) return RoleAccess.Denied<IReadOnlyList<TreatmentType>>();
+            return ServiceResult<IReadOnlyList<TreatmentType>>.Ok(await repository.GetAllAsync());
         }
-
-        public async Task<ServiceResult> UpdateTreatmentTypeAsync(TreatmentType treatmentType)
+        public Task<ServiceResult> AddTreatmentTypeAsync(User actor, TreatmentType type) => SaveAsync(actor, type, false);
+        public Task<ServiceResult> UpdateTreatmentTypeAsync(User actor, TreatmentType type) => SaveAsync(actor, type, true);
+        private async Task<ServiceResult> SaveAsync(User actor, TreatmentType type, bool update)
         {
-            var validation = Validate(treatmentType);
-            if (!validation.Success)
-                return validation;
-
-            await _repository.UpdateAsync(treatmentType);
-            return ServiceResult.Ok();
+            if (!RoleAccess.Can(actor, Permission.ManageTreatments)) return RoleAccess.Denied();
+            var validation = Validator.TreatmentType(type);
+            if (!validation.Success) return validation;
+            return await ServiceOperation.SaveAsync(() => update ? repository.UpdateAsync(type) : repository.AddAsync(type));
         }
-
-        public async Task<ServiceResult> DeleteTreatmentTypeAsync(int treatmentTypeId)
-        {
-            try
-            {
-                await _repository.DeleteAsync(treatmentTypeId);
-                return ServiceResult.Ok();
-            }
-            catch (RepositoryConstraintException ex)
-            {
-                return ServiceResult.Fail(ex.Message);
-            }
-        }
-
-        private static ServiceResult Validate(TreatmentType treatmentType)
-        {
-            if (string.IsNullOrWhiteSpace(treatmentType.Name))
-                return ServiceResult.Fail("Treatment type name is required.");
-
-            if (treatmentType.DefaultCost < 0)
-                return ServiceResult.Fail("Default cost cannot be negative.");
-
-            return ServiceResult.Ok();
-        }
+        public Task<ServiceResult> DeleteTreatmentTypeAsync(User actor, int treatmentTypeId) =>
+            !RoleAccess.Can(actor, Permission.ManageTreatments) ? Task.FromResult(RoleAccess.Denied())
+                : ServiceOperation.SaveAsync(() => repository.DeleteAsync(treatmentTypeId));
     }
 }

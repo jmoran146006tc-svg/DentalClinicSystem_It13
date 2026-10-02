@@ -3,55 +3,40 @@ using DentalClinicSystem.Models;
 
 namespace DentalClinicSystem.Service
 {
-    public class PatientService : IPatientService
+    public class PatientService(IPatientRepository repository) : IPatientService
     {
-        private readonly IPatientRepository _repository;
-
-        public PatientService(IPatientRepository repository) => _repository = repository;
-
-        public Task<IReadOnlyList<Patient>> GetAllPatientsAsync() => _repository.GetAllAsync();
-
-        public Task<Patient?> GetPatientByIdAsync(int patientId) => _repository.GetByIdAsync(patientId);
-
-        public async Task<ServiceResult> AddPatientAsync(Patient patient)
+        public async Task<ServiceResult<IReadOnlyList<Patient>>> GetAllPatientsAsync(User actor)
         {
-            var validation = Validate(patient);
-            if (!validation.Success)
-                return validation;
-
-            await _repository.AddAsync(patient);
-            return ServiceResult.Ok();
+            if (!RoleAccess.Can(actor, Permission.ViewPatients)) return RoleAccess.Denied<IReadOnlyList<Patient>>();
+            return ServiceResult<IReadOnlyList<Patient>>.Ok(await repository.GetAllAsync());
         }
-
-        public async Task<ServiceResult> UpdatePatientAsync(Patient patient)
+        public async Task<ServiceResult<IReadOnlyList<Patient>>> GetAllIncludingInactiveAsync(User actor)
         {
-            var validation = Validate(patient);
-            if (!validation.Success)
-                return validation;
-
-            await _repository.UpdateAsync(patient);
-            return ServiceResult.Ok();
+            if (!RoleAccess.Can(actor, Permission.ViewPatients)) return RoleAccess.Denied<IReadOnlyList<Patient>>();
+            return ServiceResult<IReadOnlyList<Patient>>.Ok(await repository.GetAllIncludingInactiveAsync());
         }
-
-        public async Task<ServiceResult> DeletePatientAsync(int patientId)
+        public async Task<ServiceResult<Patient>> GetPatientByIdAsync(User actor, int patientId)
         {
-            await _repository.DeleteAsync(patientId);
-            return ServiceResult.Ok();
+            if (!RoleAccess.Can(actor, Permission.ViewPatients)) return RoleAccess.Denied<Patient>();
+            var patient = await repository.GetByIdAsync(patientId);
+            return patient is null ? ServiceResult<Patient>.Fail("Patient not found.") : ServiceResult<Patient>.Ok(patient);
         }
+        public Task<ServiceResult> AddPatientAsync(User actor, Patient patient) => SaveAsync(actor, patient, false);
+        public Task<ServiceResult> UpdatePatientAsync(User actor, Patient patient) => SaveAsync(actor, patient, true);
 
-        // Shared by AddPatientAsync and UpdatePatientAsync so these rules live in one place.
-        private static ServiceResult Validate(Patient patient)
+        private async Task<ServiceResult> SaveAsync(User actor, Patient patient, bool update)
         {
-            if (string.IsNullOrWhiteSpace(patient.FirstName) || string.IsNullOrWhiteSpace(patient.LastName))
-                return ServiceResult.Fail("First and last name are required.");
-
-            if (string.IsNullOrWhiteSpace(patient.ContactNumber))
-                return ServiceResult.Fail("Contact number is required.");
-
-            if (patient.DateOfBirth > DateTime.Today)
-                return ServiceResult.Fail("Date of birth cannot be in the future.");
-
-            return ServiceResult.Ok();
+            if (!RoleAccess.Can(actor, Permission.ManagePatients)) return RoleAccess.Denied();
+            var validation = Validator.Patient(patient);
+            if (!validation.Success) return validation;
+            if (update && await repository.GetByIdAsync(patient.PatientId) is null) return ServiceResult.Fail("Patient not found.");
+            return await ServiceOperation.SaveAsync(() => update ? repository.UpdateAsync(patient) : repository.AddAsync(patient));
+        }
+        public async Task<ServiceResult> ReactivatePatientAsync(User actor, int patientId)
+        {
+            if (!RoleAccess.Can(actor, Permission.ManagePatients)) return RoleAccess.Denied();
+            if (await repository.GetByIdAsync(patientId) is null) return ServiceResult.Fail("Patient not found.");
+            return await ServiceOperation.SaveAsync(() => repository.ReactivateAsync(patientId));
         }
     }
 }

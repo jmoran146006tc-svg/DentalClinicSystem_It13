@@ -7,9 +7,11 @@ namespace DentalClinicSystem.Forms
 {
     public partial class ucAppointmentScheduler : UserControl
     {
+        private readonly User _currentUser;
         private readonly IAppointmentService _appointmentService;
         private readonly IPatientService _patientService;
         private readonly IDentistService _dentistService;
+        private readonly TextBox _cancellationReason = new() { Width = 280, MaxLength = FieldLimits.Reason };
 
         private int? _selectedAppointmentId;
         private Dictionary<int, string> _patientNamesById = [];
@@ -18,12 +20,17 @@ namespace DentalClinicSystem.Forms
         public ucAppointmentScheduler(
             IAppointmentService appointmentService,
             IPatientService patientService,
-            IDentistService dentistService)
+            IDentistService dentistService, User currentUser)
         {
             InitializeComponent();
+            _currentUser = currentUser;
             _appointmentService = appointmentService;
             _patientService = patientService;
             _dentistService = dentistService;
+            var reasonRow = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, Padding = new Padding(12) };
+            reasonRow.Controls.Add(new Label { Text = "Cancellation / no-show reason:", AutoSize = true });
+            reasonRow.Controls.Add(_cancellationReason);
+            Controls.Add(reasonRow);
         }
 
         private async void ucAppointmentScheduler_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, ucAppointmentScheduler_LoadAsync);
@@ -43,13 +50,14 @@ namespace DentalClinicSystem.Forms
 
         private async Task LoadLookupsAsync()
         {
-            var patients = await _patientService.GetAllPatientsAsync();
+            var patients = RoleAccess.Can(_currentUser, Permission.ViewPatients)
+                ? UiMessages.Items(await _patientService.GetAllPatientsAsync(_currentUser)) : Array.Empty<Patient>();
             cboPatient.DataSource = patients.ToList();
             cboPatient.DisplayMember = nameof(Patient.FullName);
             cboPatient.ValueMember = nameof(Patient.PatientId);
             _patientNamesById = patients.ToDictionary(p => p.PatientId, p => p.FullName);
 
-            var dentists = await _dentistService.GetAllDentistsAsync();
+            var dentists = UiMessages.Items(await _dentistService.GetAllDentistsAsync(_currentUser));
             cboDentist.DataSource = dentists.ToList();
             cboDentist.DisplayMember = nameof(Dentist.FullName);
             cboDentist.ValueMember = nameof(Dentist.DentistId);
@@ -58,10 +66,13 @@ namespace DentalClinicSystem.Forms
 
         private async Task RefreshGridAsync()
         {
-            var appointments = await _appointmentService.GetAllAppointmentsAsync();
+            var appointments = UiMessages.Items(await _appointmentService.GetAllAppointmentsAsync(_currentUser));
 
-            // Show patient/dentist names instead of raw PatientId/DentistId - the grid
-            // used to bind directly to Appointment and show bare numbers for both.
+            foreach (var appointment in appointments.Where(a => !_patientNamesById.ContainsKey(a.PatientId)))
+            {
+                var details = await _appointmentService.GetDetailsAsync(_currentUser, appointment.AppointmentId);
+                if (details.Data is { } data) _patientNamesById[data.Patient.PatientId] = data.Patient.FullName;
+            }
             var rows = appointments.Select(a => new AppointmentRow
             {
                 AppointmentId = a.AppointmentId,
@@ -108,7 +119,7 @@ namespace DentalClinicSystem.Forms
                 Reason = string.IsNullOrWhiteSpace(cmbReason.Text) ? null : cmbReason.Text.Trim()
             };
 
-            var result = await _appointmentService.ScheduleAppointmentAsync(appointment);
+            var result = await _appointmentService.ScheduleAppointmentAsync(_currentUser, appointment);
             if (!result.Success)
             {
                 UiMessages.ShowError(result);
@@ -131,7 +142,8 @@ namespace DentalClinicSystem.Forms
                 return;
             }
 
-            var result = await _appointmentService.UpdateAppointmentStatusAsync(_selectedAppointmentId.Value, status);
+            var reason = status is AppointmentStatus.Cancelled or AppointmentStatus.NoShow ? _cancellationReason.Text : null;
+            var result = await _appointmentService.UpdateAppointmentStatusAsync(_currentUser, _selectedAppointmentId.Value, status, reason);
             if (!result.Success)
             {
                 UiMessages.ShowError(result);
@@ -139,6 +151,7 @@ namespace DentalClinicSystem.Forms
             }
 
             await RefreshGridAsync();
+            _cancellationReason.Clear();
         }
 
         // Display wrapper for dgvAppointments - shows patient/dentist names instead of

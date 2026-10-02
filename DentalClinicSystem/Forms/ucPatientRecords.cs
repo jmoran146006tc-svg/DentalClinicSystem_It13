@@ -1,3 +1,4 @@
+using DentalClinicSystem.Service;
 using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
@@ -7,14 +8,15 @@ namespace DentalClinicSystem.Forms
     public partial class ucPatientRecords : UserControl
     {
         private readonly IPatientService _patientService;
-        private readonly bool _canEdit;
+        private readonly User _currentUser;
         private int? _selectedPatientId;
 
-        public ucPatientRecords(IPatientService patientService, bool canEdit = true)
+        public ucPatientRecords(IPatientService patientService, User currentUser)
         {
             InitializeComponent();
             _patientService = patientService;
-            _canEdit = canEdit;
+            _currentUser = currentUser;
+            btnDelete.Dispose();
         }
 
         private async void ucPatientRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, ucPatientRecords_LoadAsync);
@@ -26,25 +28,19 @@ namespace DentalClinicSystem.Forms
             dgvPatients.SelectionChanged += dgvPatients_SelectionChanged;
             btnAdd.Click += btnAdd_Click;
             btnUpdate.Click += btnUpdate_Click;
-            btnDelete.Click += btnDelete_Click;
             btnClear.Click += (_, _) => ClearForm();
 
-            // Dentist gets this tab to look patients up, not to change their records -
-            // hide the mutating buttons rather than just disabling them, so it reads
-            // as "you can't do this here" instead of "something's wrong."
-            btnAdd.Visible = _canEdit;
-            btnUpdate.Visible = _canEdit;
-            btnDelete.Visible = _canEdit;
+            btnAdd.Visible = RoleAccess.Can(_currentUser, Permission.ManagePatients);
+            btnUpdate.Visible = RoleAccess.Can(_currentUser, Permission.ManagePatients);
 
             btnUpdate.Enabled = false;
-            btnDelete.Enabled = false;
 
             await RefreshGridAsync();
         }
 
         private async Task RefreshGridAsync()
         {
-            var patients = await _patientService.GetAllPatientsAsync();
+            var patients = UiMessages.Items(await _patientService.GetAllPatientsAsync(_currentUser));
             GridHelper.Bind(dgvPatients, patients.ToList());
 
             if (dgvPatients.Columns["IsActive"] is { } isActiveCol) isActiveCol.Visible = false;
@@ -64,8 +60,7 @@ namespace DentalClinicSystem.Forms
             txtAddress.Text = patient.Address;
             dtpDateOfBirth.Value = patient.DateOfBirth;
 
-            btnUpdate.Enabled = _canEdit;
-            btnDelete.Enabled = _canEdit;
+            btnUpdate.Enabled = RoleAccess.Can(_currentUser, Permission.ManagePatients);
         }
 
         private async void btnAdd_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnAdd_ClickAsync);
@@ -82,7 +77,7 @@ namespace DentalClinicSystem.Forms
                 Address = string.IsNullOrWhiteSpace(txtAddress.Text) ? null : txtAddress.Text.Trim()
             };
 
-            var result = await _patientService.AddPatientAsync(patient);
+            var result = await _patientService.AddPatientAsync(_currentUser, patient);
             if (!result.Success)
             {
                 UiMessages.ShowError(result);
@@ -115,35 +110,13 @@ namespace DentalClinicSystem.Forms
                 Address = string.IsNullOrWhiteSpace(txtAddress.Text) ? null : txtAddress.Text.Trim()
             };
 
-            var result = await _patientService.UpdatePatientAsync(patient);
+            var result = await _patientService.UpdatePatientAsync(_currentUser, patient);
             if (!result.Success)
             {
                 UiMessages.ShowError(result);
                 return;
             }
 
-            await RefreshGridAsync();
-            ClearForm();
-        }
-
-        private async void btnDelete_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnDelete_ClickAsync);
-
-        private async Task btnDelete_ClickAsync()
-        {
-            if (_selectedPatientId is null)
-            {
-                MessageBox.Show("Select a patient from the grid first.", "No Patient Selected",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            var confirm = MessageBox.Show(
-                "This deactivates the patient - their appointment and treatment history is kept. Continue?",
-                "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (confirm != DialogResult.Yes)
-                return;
-
-            await _patientService.DeletePatientAsync(_selectedPatientId.Value);
             await RefreshGridAsync();
             ClearForm();
         }
@@ -159,7 +132,6 @@ namespace DentalClinicSystem.Forms
             dtpDateOfBirth.Value = DateTime.Today;
             dgvPatients.ClearSelection();
             btnUpdate.Enabled = false;
-            btnDelete.Enabled = false;
         }
     }
 }

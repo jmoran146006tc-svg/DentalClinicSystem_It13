@@ -8,6 +8,9 @@ namespace DentalClinicSystem.Interfaces
         Task<Patient?> GetByIdAsync(int patientId);
         Task AddAsync(Patient patient);
         Task UpdateAsync(Patient patient);
+        // Retained for SQL compatibility; patient inactivity is handled by the database event.
         Task DeleteAsync(int patientId);
+        Task<IReadOnlyList<Patient>> GetAllIncludingInactiveAsync();
+        Task ReactivateAsync(int patientId);
     }
 }

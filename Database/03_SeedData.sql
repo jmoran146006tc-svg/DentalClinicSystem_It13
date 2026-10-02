@@ -58,7 +58,7 @@ SELECT @juan, @maria, DATE_ADD(DATE_ADD(@week_start, INTERVAL 5 DAY), INTERVAL 1
 INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
 SELECT @ana, @carlos, DATE_ADD(DATE_ADD(@week_start, INTERVAL 6 DAY), INTERVAL 16 HOUR), 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
 INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @juan, @maria, DATE_ADD(CURDATE(), INTERVAL 9 HOUR), 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
+SELECT @juan, @maria, DATE_ADD(CURDATE(), INTERVAL 14 HOUR), 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
 INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
 SELECT @ana, @carlos, DATE_ADD(CURDATE(), INTERVAL 15 HOUR), 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
 

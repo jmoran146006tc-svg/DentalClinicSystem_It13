@@ -5,9 +5,9 @@ namespace DentalClinicSystem.Interfaces
 {
     public interface ITreatmentTypeService
     {
-        Task<IReadOnlyList<TreatmentType>> GetAllTreatmentTypesAsync();
-        Task<ServiceResult> AddTreatmentTypeAsync(TreatmentType treatmentType);
-        Task<ServiceResult> UpdateTreatmentTypeAsync(TreatmentType treatmentType);
-        Task<ServiceResult> DeleteTreatmentTypeAsync(int treatmentTypeId);
+        Task<ServiceResult<IReadOnlyList<TreatmentType>>> GetAllTreatmentTypesAsync(User actor);
+        Task<ServiceResult> AddTreatmentTypeAsync(User actor, TreatmentType treatmentType);
+        Task<ServiceResult> UpdateTreatmentTypeAsync(User actor, TreatmentType treatmentType);
+        Task<ServiceResult> DeleteTreatmentTypeAsync(User actor, int treatmentTypeId);
     }
 }

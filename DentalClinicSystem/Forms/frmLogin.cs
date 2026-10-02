@@ -1,8 +1,6 @@
 using DentalClinicSystem.Service;
 using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Forms;
-using DentalClinicSystem.Interfaces;
-using DentalClinicSystem.Models;
 
 namespace DentalClinicSystem
 {
@@ -21,7 +19,7 @@ namespace DentalClinicSystem
         private async Task OnLoginAttempt(string username, string password)
         {
             var result = await _services.Auth.LoginAsync(username, password);
-            if (!result.Success)
+            if (!result.Success || result.Data is null)
             {
                 UiMessages.ShowError(result);
                 return;

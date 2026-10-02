@@ -6,12 +6,14 @@ namespace DentalClinicSystem.Forms
 {
     public partial class ucDentistRecords : UserControl
     {
+        private readonly User _currentUser;
         private readonly IDentistService _dentistService;
         private int? _selectedDentistId;
 
-        public ucDentistRecords(IDentistService dentistService)
+        public ucDentistRecords(IDentistService dentistService, User currentUser)
         {
             InitializeComponent();
+            _currentUser = currentUser;
             _dentistService = dentistService;
         }
 
@@ -33,7 +35,7 @@ namespace DentalClinicSystem.Forms
 
         private async Task RefreshGridAsync()
         {
-            var dentists = await _dentistService.GetAllDentistsAsync();
+            var dentists = UiMessages.Items(await _dentistService.GetAllDentistsAsync(_currentUser));
             GridHelper.Bind(dgvDentists, dentists.ToList());
 
             if (dgvDentists.Columns["IsActive"] is { } isActiveCol) isActiveCol.Visible = false;
@@ -68,7 +70,7 @@ namespace DentalClinicSystem.Forms
                 LicenseNumber = string.IsNullOrWhiteSpace(txtLicenseNumber.Text) ? null : txtLicenseNumber.Text.Trim()
             };
 
-            var result = await _dentistService.AddDentistAsync(dentist);
+            var result = await _dentistService.AddDentistAsync(_currentUser, dentist);
             if (!result.Success)
             {
                 UiMessages.ShowError(result);
@@ -100,7 +102,7 @@ namespace DentalClinicSystem.Forms
                 LicenseNumber = string.IsNullOrWhiteSpace(txtLicenseNumber.Text) ? null : txtLicenseNumber.Text.Trim()
             };
 
-            var result = await _dentistService.UpdateDentistAsync(dentist);
+            var result = await _dentistService.UpdateDentistAsync(_currentUser, dentist);
             if (!result.Success)
             {
                 UiMessages.ShowError(result);
@@ -128,7 +130,8 @@ namespace DentalClinicSystem.Forms
             if (confirm != DialogResult.Yes)
                 return;
 
-            await _dentistService.DeleteDentistAsync(_selectedDentistId.Value);
+            var result = await _dentistService.DeleteDentistAsync(_currentUser, _selectedDentistId.Value);
+            if (!result.Success) { UiMessages.ShowError(result); return; }
             await RefreshGridAsync();
             ClearForm();
         }

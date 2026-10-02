@@ -44,6 +44,9 @@ namespace DentalClinicSystem.DBContent
             => ExecuteAsync("sp_Treatment_Delete",
                 Parameter("@p_TreatmentId", treatmentId));
 
+        public Task<IReadOnlyList<Treatment>> GetByPatientIdAsync(int patientId)
+            => QueryAsync("sp_Treatment_GetByPatientId", MapTreatment, Parameter("@p_PatientId", patientId));
+
         private static Treatment MapTreatment(MySqlDataReader reader) => new()
         {
             TreatmentId = (int)reader["TreatmentId"],

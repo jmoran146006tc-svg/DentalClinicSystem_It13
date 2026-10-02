@@ -1,3 +1,4 @@
+using DentalClinicSystem.Service;
 using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
@@ -27,7 +28,7 @@ namespace DentalClinicSystem.Forms
             // frmDashboard already hides the Users button for
             // non-admins, but if this control is ever reached another way, lock
             // it down here too rather than trusting the caller.
-            if (_currentUser.Role != Roles.Admin)
+            if (!RoleAccess.Can(_currentUser, Permission.ManageUsers))
             {
                 foreach (Control control in Controls)
                     control.Enabled = false;
@@ -55,7 +56,7 @@ namespace DentalClinicSystem.Forms
 
         private async Task LoadDentistsAsync()
         {
-            var dentists = await _dentistService.GetAllDentistsAsync();
+            var dentists = UiMessages.Items(await _dentistService.GetAllDentistsAsync(_currentUser));
             cboDentist.DataSource = dentists.ToList();
             cboDentist.DisplayMember = nameof(Dentist.FullName);
             cboDentist.ValueMember = nameof(Dentist.DentistId);
@@ -63,7 +64,7 @@ namespace DentalClinicSystem.Forms
 
         private async Task RefreshGridAsync()
         {
-            var users = await _userService.GetAllUsersAsync();
+            var users = UiMessages.Items(await _userService.GetAllUsersAsync(_currentUser));
             GridHelper.Bind(dgvUsers, users.ToList());
 
             // Never display the password hash, even to an admin.
@@ -72,7 +73,7 @@ namespace DentalClinicSystem.Forms
 
         private void cboRole_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            cboDentist.Enabled = cboRole.SelectedItem as string == Roles.Dentist;
+            cboDentist.Enabled = RoleAccess.RequiresDentist(cboRole.SelectedItem as string ?? string.Empty);
         }
 
         private void dgvUsers_SelectionChanged(object? sender, EventArgs e)
@@ -84,7 +85,7 @@ namespace DentalClinicSystem.Forms
             txtUsername.Text = user.Username;
             txtPassword.Clear(); // never show or prefill a password/hash
             cboRole.SelectedItem = user.Role;
-            cboDentist.Enabled = user.Role == Roles.Dentist;
+            cboDentist.Enabled = RoleAccess.RequiresDentist(user.Role);
             if (user.DentistId is int dentistId)
                 cboDentist.SelectedValue = dentistId;
 
@@ -97,10 +98,7 @@ namespace DentalClinicSystem.Forms
         private async Task btnAdd_ClickAsync()
         {
             var user = BuildUserFromForm();
-            if (user is null)
-                return;
-
-            var result = await _userService.AddUserAsync(user, txtPassword.Text);
+            var result = await _userService.AddUserAsync(_currentUser, user, txtPassword.Text);
             if (!result.Success)
             {
                 UiMessages.ShowError(result);
@@ -123,15 +121,13 @@ namespace DentalClinicSystem.Forms
             }
 
             var user = BuildUserFromForm();
-            if (user is null)
-                return;
-
             user.UserId = _selectedUserId.Value;
+            user.IsActive = dgvUsers.CurrentRow?.DataBoundItem is not User selected || selected.IsActive;
 
             // Leave the password box blank to keep the existing password unchanged.
             var newPassword = string.IsNullOrWhiteSpace(txtPassword.Text) ? null : txtPassword.Text;
 
-            var result = await _userService.UpdateUserAsync(user, newPassword);
+            var result = await _userService.UpdateUserAsync(_currentUser, user, newPassword);
             if (!result.Success)
             {
                 UiMessages.ShowError(result);
@@ -166,46 +162,18 @@ namespace DentalClinicSystem.Forms
             if (confirm != DialogResult.Yes)
                 return;
 
-            await _userService.DeactivateUserAsync(_selectedUserId.Value);
+            var result = await _userService.DeactivateUserAsync(_currentUser, _selectedUserId.Value);
+            if (!result.Success) { UiMessages.ShowError(result); return; }
             await RefreshGridAsync();
             ClearForm();
         }
 
-        private User? BuildUserFromForm()
+        private User BuildUserFromForm() => new()
         {
-            if (string.IsNullOrWhiteSpace(txtUsername.Text))
-            {
-                MessageBox.Show("Username is required.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return null;
-            }
-
-            if (cboRole.SelectedItem is not string role)
-            {
-                MessageBox.Show("Pick a role.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return null;
-            }
-
-            int? dentistId = null;
-            if (role == Roles.Dentist)
-            {
-                if (cboDentist.SelectedValue is not int selectedDentistId)
-                {
-                    MessageBox.Show("A Dentist-role account must be linked to a dentist record.",
-                        "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return null;
-                }
-                dentistId = selectedDentistId;
-            }
-
-            return new User
-            {
-                Username = txtUsername.Text.Trim(),
-                Role = role,
-                DentistId = dentistId
-            };
-        }
+            Username = txtUsername.Text.Trim(),
+            Role = cboRole.SelectedItem as string ?? string.Empty,
+            DentistId = cboDentist.SelectedValue is int id ? id : null
+        };
 
         private void ClearForm()
         {
