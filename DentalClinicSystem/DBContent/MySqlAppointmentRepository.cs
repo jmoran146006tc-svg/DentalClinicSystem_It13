@@ -97,6 +97,8 @@ namespace DentalClinicSystem.DBContent
             cmd.Parameters.AddWithValue("@p_AppointmentDateTime", appointment.AppointmentDateTime);
             cmd.Parameters.AddWithValue("@p_Status", appointment.Status);
             cmd.Parameters.AddWithValue("@p_Reason", (object?)appointment.Reason ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@p_CancellationReason", (object?)appointment.CancellationReason ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@p_Notes", (object?)appointment.Notes ?? DBNull.Value);
         }
 
         private static Appointment MapAppointment(MySqlDataReader reader) => new()
@@ -107,6 +109,8 @@ namespace DentalClinicSystem.DBContent
             AppointmentDateTime = (DateTime)reader["AppointmentDateTime"],
             Status = (string)reader["Status"],
             Reason = reader["Reason"] as string,
+            CancellationReason = reader["CancellationReason"] as string,
+            Notes = reader["Notes"] as string,
             CreatedAt = (DateTime)reader["CreatedAt"]
         };
     }

@@ -1,8 +1,4 @@
--- Schema.sql
--- Manual-run reference version of DatabaseInitializer's table creation.
--- The app creates all of this automatically on startup - you do not need to run
--- this by hand unless you want to inspect it directly in MySQL Workbench.
-
+-- Run manually in MySQL Workbench. Existing tables are not migrated.
 CREATE DATABASE IF NOT EXISTS dentalclinicdb CHARACTER SET utf8mb4;
 USE dentalclinicdb;
 
@@ -42,7 +38,11 @@ CREATE TABLE IF NOT EXISTS Appointments (
     AppointmentDateTime DATETIME NOT NULL,
     Status VARCHAR(20) NOT NULL DEFAULT 'Scheduled',
     Reason VARCHAR(255) NULL,
+    CancellationReason VARCHAR(255) NULL,
+    Notes VARCHAR(500) NULL,
     CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX IX_Appointments_DentistId_DateTime (DentistId, AppointmentDateTime),
+    INDEX IX_Appointments_PatientId (PatientId),
     CONSTRAINT FK_Appointments_Patient FOREIGN KEY (PatientId) REFERENCES Patients(PatientId),
     CONSTRAINT FK_Appointments_Dentist FOREIGN KEY (DentistId) REFERENCES Dentists(DentistId),
     CONSTRAINT CK_Appointments_Status CHECK (Status IN ('Scheduled','Completed','Cancelled','NoShow'))
@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS Treatments (
     Cost DECIMAL(10,2) NOT NULL,
     DatePerformed DATE NOT NULL,
     Notes VARCHAR(500) NULL,
+    INDEX IX_Treatments_AppointmentId (AppointmentId),
     CONSTRAINT FK_Treatments_Appointment FOREIGN KEY (AppointmentId) REFERENCES Appointments(AppointmentId),
     CONSTRAINT FK_Treatments_TreatmentType FOREIGN KEY (TreatmentTypeId) REFERENCES TreatmentTypes(TreatmentTypeId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -70,7 +71,3 @@ CREATE TABLE IF NOT EXISTS Users (
     CONSTRAINT FK_Users_Dentist FOREIGN KEY (DentistId) REFERENCES Dentists(DentistId),
     CONSTRAINT CK_Users_Role CHECK (Role IN ('Admin','Receptionist','Dentist'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE INDEX IX_Appointments_DentistId_DateTime ON Appointments(DentistId, AppointmentDateTime);
-CREATE INDEX IX_Appointments_PatientId ON Appointments(PatientId);
-CREATE INDEX IX_Treatments_AppointmentId ON Treatments(AppointmentId);

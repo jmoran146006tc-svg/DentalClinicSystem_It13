@@ -12,21 +12,10 @@ namespace DentalClinicSystem
         {
             ApplicationConfiguration.Initialize();
 
-            try
+            if (!await DbConnectionHelper.CanConnectAsync())
             {
-                // Creates the database, all six tables, and every stored procedure if
-                // they don't already exist yet, then seeds starter data (dentists,
-                // treatment types, a demo patient, and one admin login) only if those
-                // tables are still empty. See DBContent/DatabaseInitializer.cs.
-                await DatabaseInitializer.EnsureDatabaseReadyAsync();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    $"Could not set up the database automatically:\n\n{ex.Message}\n\n" +
-                    "Check DBContent/DbConnectionHelper.cs - the Server/UserId/Password " +
-                    "constants there need to match a MySQL server you can actually reach.",
-                    "Database Setup Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Could not connect to the database. Make sure MySQL is running and that you have run the scripts in the Database folder (see README), then check the connection settings in DBContent/DbConnectionHelper.cs.",
+                    "Database connection", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 

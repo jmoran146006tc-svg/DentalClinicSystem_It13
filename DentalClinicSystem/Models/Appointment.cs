@@ -8,6 +8,8 @@ namespace DentalClinicSystem.Models
         public DateTime AppointmentDateTime { get; set; }
         public string Status { get; set; } = "Scheduled";
         public string? Reason { get; set; }
+        public string? CancellationReason { get; set; }
+        public string? Notes { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

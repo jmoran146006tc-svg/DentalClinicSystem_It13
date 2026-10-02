@@ -1,13 +1,6 @@
--- StoredProcedures.sql
--- Manual-run / Workbench reference version of DatabaseInitializer's stored
--- procedures. The app creates/updates all of these automatically on startup - you
--- do not need to run this by hand unless you want to inspect them directly.
--- Run Schema.sql first if you're setting up by hand instead of just launching the app.
-
 USE dentalclinicdb;
 
 DELIMITER $$
-
 
 DROP PROCEDURE IF EXISTS sp_Patient_GetAll $$
 CREATE PROCEDURE sp_Patient_GetAll()
@@ -52,11 +45,6 @@ BEGIN
     UPDATE Patients SET IsActive = 0 WHERE PatientId = p_PatientId;
 END $$
 
-
-
-
-
-
 DROP PROCEDURE IF EXISTS sp_Dentist_GetAll $$
 CREATE PROCEDURE sp_Dentist_GetAll()
 BEGIN
@@ -100,11 +88,6 @@ BEGIN
     UPDATE Dentists SET IsActive = 0 WHERE DentistId = p_DentistId;
 END $$
 
-
-
-
-
-
 DROP PROCEDURE IF EXISTS sp_TreatmentType_GetAll $$
 CREATE PROCEDURE sp_TreatmentType_GetAll()
 BEGIN
@@ -145,7 +128,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Appointment_GetAll $$
 CREATE PROCEDURE sp_Appointment_GetAll()
 BEGIN
-    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, Status, Reason, CreatedAt
+    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason, Notes, CreatedAt
     FROM Appointments
     ORDER BY AppointmentDateTime;
 END $$
@@ -153,7 +136,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Appointment_GetById $$
 CREATE PROCEDURE sp_Appointment_GetById(IN p_AppointmentId INT)
 BEGIN
-    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, Status, Reason, CreatedAt
+    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason, Notes, CreatedAt
     FROM Appointments
     WHERE AppointmentId = p_AppointmentId;
 END $$
@@ -161,7 +144,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Appointment_GetByDentistAndDate $$
 CREATE PROCEDURE sp_Appointment_GetByDentistAndDate(IN p_DentistId INT, IN p_Date DATE)
 BEGIN
-    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, Status, Reason, CreatedAt
+    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason, Notes, CreatedAt
     FROM Appointments
     WHERE DentistId = p_DentistId
       AND AppointmentDateTime >= p_Date
@@ -172,20 +155,20 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Appointment_Add $$
 CREATE PROCEDURE sp_Appointment_Add(
     IN p_PatientId INT, IN p_DentistId INT, IN p_AppointmentDateTime DATETIME,
-    IN p_Status VARCHAR(20), IN p_Reason VARCHAR(255))
+    IN p_Status VARCHAR(20), IN p_Reason VARCHAR(255), IN p_CancellationReason VARCHAR(255), IN p_Notes VARCHAR(500))
 BEGIN
-    INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason)
-    VALUES (p_PatientId, p_DentistId, p_AppointmentDateTime, p_Status, p_Reason);
+    INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason, Notes)
+    VALUES (p_PatientId, p_DentistId, p_AppointmentDateTime, p_Status, p_Reason, p_CancellationReason, p_Notes);
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Appointment_Update $$
 CREATE PROCEDURE sp_Appointment_Update(
     IN p_AppointmentId INT, IN p_PatientId INT, IN p_DentistId INT, IN p_AppointmentDateTime DATETIME,
-    IN p_Status VARCHAR(20), IN p_Reason VARCHAR(255))
+    IN p_Status VARCHAR(20), IN p_Reason VARCHAR(255), IN p_CancellationReason VARCHAR(255), IN p_Notes VARCHAR(500))
 BEGIN
     UPDATE Appointments
     SET PatientId = p_PatientId, DentistId = p_DentistId, AppointmentDateTime = p_AppointmentDateTime,
-        Status = p_Status, Reason = p_Reason
+        Status = p_Status, Reason = p_Reason, CancellationReason = p_CancellationReason, Notes = p_Notes
     WHERE AppointmentId = p_AppointmentId;
 END $$
 
@@ -194,12 +177,6 @@ CREATE PROCEDURE sp_Appointment_Delete(IN p_AppointmentId INT)
 BEGIN
     DELETE FROM Appointments WHERE AppointmentId = p_AppointmentId;
 END $$
-
-
-
-
-
-
 
 DROP PROCEDURE IF EXISTS sp_Treatment_GetAll $$
 CREATE PROCEDURE sp_Treatment_GetAll()
@@ -251,13 +228,6 @@ BEGIN
     DELETE FROM Treatments WHERE TreatmentId = p_TreatmentId;
 END $$
 
-
-
-
-
-
-
-
 DROP PROCEDURE IF EXISTS sp_User_GetAll $$
 CREATE PROCEDURE sp_User_GetAll()
 BEGIN
@@ -302,4 +272,101 @@ BEGIN
     WHERE UserId = p_UserId;
 END $$
 
+
+DROP PROCEDURE IF EXISTS sp_Patient_GetAllIncludingInactive $$
+CREATE PROCEDURE sp_Patient_GetAllIncludingInactive()
+BEGIN
+    SELECT * FROM Patients ORDER BY LastName, FirstName;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Patient_Reactivate $$
+CREATE PROCEDURE sp_Patient_Reactivate(IN p_PatientId INT)
+BEGIN
+    UPDATE Patients SET IsActive = 1 WHERE PatientId = p_PatientId;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Patient_DeactivateStale $$
+CREATE PROCEDURE sp_Patient_DeactivateStale()
+BEGIN
+    -- Patients with only cancelled appointments use their creation date.
+    UPDATE Patients p
+    LEFT JOIN (SELECT PatientId, MAX(AppointmentDateTime) AS LastVisit FROM Appointments
+               WHERE Status <> 'Cancelled' GROUP BY PatientId) a ON a.PatientId = p.PatientId
+    SET p.IsActive = 0
+    WHERE p.IsActive = 1 AND COALESCE(a.LastVisit, p.CreatedAt) < DATE_SUB(NOW(), INTERVAL 365 DAY);
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Appointment_GetByPatientId $$
+CREATE PROCEDURE sp_Appointment_GetByPatientId(IN p_PatientId INT)
+BEGIN
+    SELECT * FROM Appointments WHERE PatientId = p_PatientId ORDER BY AppointmentDateTime DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Appointment_GetByDentistAndRange $$
+CREATE PROCEDURE sp_Appointment_GetByDentistAndRange(IN p_DentistId INT, IN p_From DATETIME, IN p_To DATETIME)
+BEGIN
+    SELECT * FROM Appointments WHERE DentistId = p_DentistId AND AppointmentDateTime >= p_From AND AppointmentDateTime < p_To ORDER BY AppointmentDateTime;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Appointment_GetByRange $$
+CREATE PROCEDURE sp_Appointment_GetByRange(IN p_From DATETIME, IN p_To DATETIME)
+BEGIN
+    SELECT * FROM Appointments WHERE AppointmentDateTime >= p_From AND AppointmentDateTime < p_To ORDER BY AppointmentDateTime;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Treatment_GetByPatientId $$
+CREATE PROCEDURE sp_Treatment_GetByPatientId(IN p_PatientId INT)
+BEGIN
+    SELECT t.* FROM Treatments t JOIN Appointments a ON a.AppointmentId = t.AppointmentId WHERE a.PatientId = p_PatientId ORDER BY t.DatePerformed DESC;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Report_AppointmentsByStatus $$
+CREATE PROCEDURE sp_Report_AppointmentsByStatus(IN p_From DATE, IN p_To DATE)
+BEGIN
+    SELECT Status, COUNT(*) AS Total FROM Appointments
+    WHERE AppointmentDateTime >= p_From AND AppointmentDateTime < DATE_ADD(p_To, INTERVAL 1 DAY)
+    GROUP BY Status ORDER BY Status;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Report_RevenueByDay $$
+CREATE PROCEDURE sp_Report_RevenueByDay(IN p_From DATE, IN p_To DATE)
+BEGIN
+    SELECT DatePerformed AS Day, SUM(Cost) AS Revenue FROM Treatments
+    WHERE DatePerformed BETWEEN p_From AND p_To GROUP BY DatePerformed ORDER BY DatePerformed;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Report_TopTreatmentTypes $$
+CREATE PROCEDURE sp_Report_TopTreatmentTypes(IN p_From DATE, IN p_To DATE, IN p_Top INT)
+BEGIN
+    SELECT tt.Name, COUNT(*) AS Total, SUM(t.Cost) AS Revenue FROM Treatments t
+    JOIN TreatmentTypes tt ON tt.TreatmentTypeId = t.TreatmentTypeId
+    WHERE t.DatePerformed BETWEEN p_From AND p_To
+    GROUP BY tt.TreatmentTypeId, tt.Name ORDER BY Total DESC, Revenue DESC, tt.Name LIMIT p_Top;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Report_DentistWorkload $$
+CREATE PROCEDURE sp_Report_DentistWorkload(IN p_From DATE, IN p_To DATE)
+BEGIN
+    -- Separate aggregates avoid multiplying appointments with several treatments.
+    SELECT CONCAT('Dr. ', d.FirstName, ' ', d.LastName) AS Dentist,
+           COALESCE(a.Total, 0) AS Total, COALESCE(a.Completed, 0) AS Completed,
+           COALESCE(t.Revenue, 0) AS Revenue
+    FROM Dentists d
+    LEFT JOIN (SELECT DentistId, COUNT(*) AS Total, SUM(Status = 'Completed') AS Completed
+               FROM Appointments WHERE AppointmentDateTime >= p_From AND AppointmentDateTime < DATE_ADD(p_To, INTERVAL 1 DAY)
+               GROUP BY DentistId) a ON a.DentistId = d.DentistId
+    LEFT JOIN (SELECT ap.DentistId, SUM(tr.Cost) AS Revenue FROM Treatments tr
+               JOIN Appointments ap ON ap.AppointmentId = tr.AppointmentId
+               WHERE tr.DatePerformed BETWEEN p_From AND p_To GROUP BY ap.DentistId) t ON t.DentistId = d.DentistId
+    ORDER BY d.LastName, d.FirstName;
+END $$
+
+DROP EVENT IF EXISTS ev_deactivate_stale_patients $$
+CREATE EVENT ev_deactivate_stale_patients
+ON SCHEDULE EVERY 1 DAY STARTS CURRENT_TIMESTAMP + INTERVAL 1 DAY
+DO CALL sp_Patient_DeactivateStale() $$
 DELIMITER ;
+
+-- The event scheduler must be ON for the daily event to run (requires DBA permission).
+-- SET GLOBAL event_scheduler = ON;
+-- Manual alternative: CALL sp_Patient_DeactivateStale();

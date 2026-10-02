@@ -12,10 +12,6 @@ namespace DentalClinicSystem.DBContent
         private static readonly string ConnectionString =
             $"Server={Server};Database={DatabaseName};User={UserId};Password={Password};";
 
-        private static readonly string ServerOnlyConnectionString =
-            $"Server={Server};User={UserId};Password={Password};";
-
-        public static string DatabaseNameValue => DatabaseName;
 
         public static async Task<MySqlConnection> GetOpenConnectionAsync()
         {
@@ -24,11 +20,17 @@ namespace DentalClinicSystem.DBContent
             return connection;
         }
 
-        public static async Task<MySqlConnection> GetOpenServerConnectionAsync()
+        public static async Task<bool> CanConnectAsync()
         {
-            var connection = new MySqlConnection(ServerOnlyConnectionString);
-            await connection.OpenAsync();
-            return connection;
+            try
+            {
+                await using var connection = await GetOpenConnectionAsync();
+                return true;
+            }
+            catch (MySqlException)
+            {
+                return false;
+            }
         }
     }
 }
