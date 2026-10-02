@@ -1,4 +1,4 @@
-using System.ComponentModel;
+using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
 
@@ -20,12 +20,14 @@ namespace DentalClinicSystem.Forms
             _currentUser = currentUser;
         }
 
-        private async void ucUserManagement_Load(object? sender, EventArgs e)
+        private async void ucUserManagement_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, ucUserManagement_LoadAsync);
+
+        private async Task ucUserManagement_LoadAsync()
         {
             // frmDashboard already hides the Users button for
             // non-admins, but if this control is ever reached another way, lock
             // it down here too rather than trusting the caller.
-            if (_currentUser.Role != "Admin")
+            if (_currentUser.Role != Roles.Admin)
             {
                 foreach (Control control in Controls)
                     control.Enabled = false;
@@ -35,7 +37,7 @@ namespace DentalClinicSystem.Forms
                 return;
             }
 
-            cboRole.Items.AddRange(["Admin", "Receptionist", "Dentist"]);
+            cboRole.Items.AddRange([Roles.Admin, Roles.Receptionist, Roles.Dentist]);
             cboRole.SelectedIndexChanged += cboRole_SelectedIndexChanged;
 
             dgvUsers.SelectionChanged += dgvUsers_SelectionChanged;
@@ -62,7 +64,7 @@ namespace DentalClinicSystem.Forms
         private async Task RefreshGridAsync()
         {
             var users = await _userService.GetAllUsersAsync();
-            dgvUsers.DataSource = new BindingList<User>(users.ToList());
+            GridHelper.Bind(dgvUsers, users.ToList());
 
             // Never display the password hash, even to an admin.
             if (dgvUsers.Columns["PasswordHash"] is { } hashCol) hashCol.Visible = false;
@@ -70,7 +72,7 @@ namespace DentalClinicSystem.Forms
 
         private void cboRole_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            cboDentist.Enabled = cboRole.SelectedItem as string == "Dentist";
+            cboDentist.Enabled = cboRole.SelectedItem as string == Roles.Dentist;
         }
 
         private void dgvUsers_SelectionChanged(object? sender, EventArgs e)
@@ -82,7 +84,7 @@ namespace DentalClinicSystem.Forms
             txtUsername.Text = user.Username;
             txtPassword.Clear(); // never show or prefill a password/hash
             cboRole.SelectedItem = user.Role;
-            cboDentist.Enabled = user.Role == "Dentist";
+            cboDentist.Enabled = user.Role == Roles.Dentist;
             if (user.DentistId is int dentistId)
                 cboDentist.SelectedValue = dentistId;
 
@@ -90,7 +92,9 @@ namespace DentalClinicSystem.Forms
             btnDeactivate.Enabled = true;
         }
 
-        private async void btnAdd_Click(object? sender, EventArgs e)
+        private async void btnAdd_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnAdd_ClickAsync);
+
+        private async Task btnAdd_ClickAsync()
         {
             var user = BuildUserFromForm();
             if (user is null)
@@ -99,8 +103,7 @@ namespace DentalClinicSystem.Forms
             var result = await _userService.AddUserAsync(user, txtPassword.Text);
             if (!result.Success)
             {
-                MessageBox.Show(result.ErrorMessage, "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiMessages.ShowError(result);
                 return;
             }
 
@@ -108,7 +111,9 @@ namespace DentalClinicSystem.Forms
             ClearForm();
         }
 
-        private async void btnUpdate_Click(object? sender, EventArgs e)
+        private async void btnUpdate_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnUpdate_ClickAsync);
+
+        private async Task btnUpdate_ClickAsync()
         {
             if (_selectedUserId is null)
             {
@@ -129,8 +134,7 @@ namespace DentalClinicSystem.Forms
             var result = await _userService.UpdateUserAsync(user, newPassword);
             if (!result.Success)
             {
-                MessageBox.Show(result.ErrorMessage, "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiMessages.ShowError(result);
                 return;
             }
 
@@ -138,7 +142,9 @@ namespace DentalClinicSystem.Forms
             ClearForm();
         }
 
-        private async void btnDeactivate_Click(object? sender, EventArgs e)
+        private async void btnDeactivate_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnDeactivate_ClickAsync);
+
+        private async Task btnDeactivate_ClickAsync()
         {
             if (_selectedUserId is null)
             {
@@ -182,7 +188,7 @@ namespace DentalClinicSystem.Forms
             }
 
             int? dentistId = null;
-            if (role == "Dentist")
+            if (role == Roles.Dentist)
             {
                 if (cboDentist.SelectedValue is not int selectedDentistId)
                 {

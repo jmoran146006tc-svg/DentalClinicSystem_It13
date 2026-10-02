@@ -1,3 +1,5 @@
+using DentalClinicSystem.Service;
+using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Forms;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
@@ -6,54 +8,33 @@ namespace DentalClinicSystem
 {
     public partial class frmLogin : Form
     {
-        private readonly IAuthService _authService;
-        private readonly IPatientService _patientService;
-        private readonly IDentistService _dentistService;
-        private readonly IAppointmentService _appointmentService;
-        private readonly ITreatmentService _treatmentService;
-        private readonly ITreatmentTypeService _treatmentTypeService;
-        private readonly IUserService _userService;
+
+        private readonly AppServices _services;
 
         public frmLogin(
-            IAuthService authService,
-            IPatientService patientService,
-            IDentistService dentistService,
-            IAppointmentService appointmentService,
-            ITreatmentService treatmentService,
-            ITreatmentTypeService treatmentTypeService,
-            IUserService userService)
+            AppServices services)
         {
             InitializeComponent();
-            _authService = authService;
-            _patientService = patientService;
-            _dentistService = dentistService;
-            _appointmentService = appointmentService;
-            _treatmentService = treatmentService;
-            _treatmentTypeService = treatmentTypeService;
-            _userService = userService;
+            _services = services;
         }
 
-        private async void OnLoginAttempt(string username, string password)
+        private async Task OnLoginAttempt(string username, string password)
         {
-            var result = await _authService.LoginAsync(username, password);
+            var result = await _services.Auth.LoginAsync(username, password);
             if (!result.Success)
             {
-                MessageBox.Show(result.ErrorMessage, "Login Failed",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiMessages.ShowError(result);
                 return;
             }
 
             var dashboard = new frmDashboard(
-                result.Data, this, _authService, _patientService, _dentistService,
-                _appointmentService, _treatmentService, _treatmentTypeService, _userService);
+                result.Data, this, _services);
             dashboard.Show();
             Hide();
         }
 
-        private void btnLogin_Click(object? sender, EventArgs e)
-        {
-            OnLoginAttempt(txtUsername.Text, txtPassword.Text);
-        }
+        private async void btnLogin_Click(object? sender, EventArgs e) =>
+            await UiAction.RunAsync(this, () => OnLoginAttempt(txtUsername.Text, txtPassword.Text));
 
         public void ShowAfterLogout()
         {

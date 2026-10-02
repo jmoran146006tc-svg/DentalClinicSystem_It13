@@ -31,6 +31,14 @@
 - Build passed: 0 errors, 1 existing CS0108 warning. No local MySQL service/client found; SQL was not executed.
 - Assumptions: date-range repository endpoints are exclusive; reports use inclusive calendar dates. Patients with only cancelled appointments use CreatedAt for inactivity. Manual setup does not migrate old tables; rebuild only after backing up needed data.
 
+### Phase 3 - shared foundations
+
+- Added Roles, AppointmentStatus, FieldLimits, RoleAccess, Validator, StoredProcedureRunner/DataReaderExtensions, UiAction, UiMessages, GridHelper and InputRules.
+- Refactored all six repositories to procedure declarations/parameters/mappers, preserving inactive-user reads and deletion constraint messages.
+- Added AppServices and pure patient filter, appointment labels, shared display option and calendar overlap assignment.
+- Existing async handlers now delegate through UiAction; service errors and binding use shared helpers. Reports/history fields join AppServices when implemented in Phase 4.
+- Build gate: 0 errors, 1 baseline CS0108 warning. Runtime behavior remains unverified.
+
 ## Unverified at runtime
 
 - [ ] Run manual database scripts against a disposable MySQL database and rerun to check idempotence.

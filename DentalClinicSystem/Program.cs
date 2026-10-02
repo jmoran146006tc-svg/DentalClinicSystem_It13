@@ -36,9 +36,9 @@ namespace DentalClinicSystem
             IUserService userService = new UserService(userRepository);
             // ---------------------------------------------------------------------
 
-            var loginForm = new frmLogin(
-                authService, patientService, dentistService,
+            var services = new AppServices(authService, patientService, dentistService,
                 appointmentService, treatmentService, treatmentTypeService, userService);
+            var loginForm = new frmLogin(services);
 
             Application.Run(loginForm);
         }

@@ -5,7 +5,7 @@ namespace DentalClinicSystem.Service
 {
     public class AppointmentService : IAppointmentService
     {
-        private static readonly string[] ValidStatuses = ["Scheduled", "Completed", "Cancelled", "NoShow"];
+        private static readonly string[] ValidStatuses = [AppointmentStatus.Scheduled, AppointmentStatus.Completed, AppointmentStatus.Cancelled, AppointmentStatus.NoShow];
 
         private readonly IAppointmentRepository _appointmentRepository;
 

@@ -1,7 +1,7 @@
+using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
 using DentalClinicSystem.Service;
-using System.ComponentModel;
 
 namespace DentalClinicSystem.Forms
 {
@@ -26,13 +26,15 @@ namespace DentalClinicSystem.Forms
             _dentistService = dentistService;
         }
 
-        private async void ucAppointmentScheduler_Load(object? sender, EventArgs e)
+        private async void ucAppointmentScheduler_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, ucAppointmentScheduler_LoadAsync);
+
+        private async Task ucAppointmentScheduler_LoadAsync()
         {
             cmbReason.DropDownStyle = ComboBoxStyle.DropDown;
             cmbReason.Items.Clear();
             cmbReason.Items.AddRange(["Oral Prophylaxis Package", "Consultation & Check up", "Promo Bundles", "Tooth Extraction", "Filling / Restoration", "Root Canal", "Braces Adjustment", "Dentures", "Teeth Whitening", "Other"]);
             cboStatus.Items.Clear();
-            cboStatus.Items.AddRange(["Scheduled", "Completed", "Cancelled", "NoShow"]);
+            cboStatus.Items.AddRange([AppointmentStatus.Scheduled, AppointmentStatus.Completed, AppointmentStatus.Cancelled, AppointmentStatus.NoShow]);
             dgvAppointments.SelectionChanged += dgvAppointments_SelectionChanged;
 
             await LoadLookupsAsync();
@@ -70,7 +72,7 @@ namespace DentalClinicSystem.Forms
                 Reason = a.Reason
             }).ToList();
 
-            dgvAppointments.DataSource = new BindingList<AppointmentRow>(rows);
+            GridHelper.Bind(dgvAppointments, rows);
         }
 
         private void dgvAppointments_SelectionChanged(object? sender, EventArgs e)
@@ -87,7 +89,9 @@ namespace DentalClinicSystem.Forms
             btnUpdateStatus.Enabled = true;
         }
 
-        private async void btnSchedule_Click(object? sender, EventArgs e)
+        private async void btnSchedule_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnSchedule_ClickAsync);
+
+        private async Task btnSchedule_ClickAsync()
         {
             if (cboPatient.SelectedValue is not int patientId || cboDentist.SelectedValue is not int dentistId)
             {
@@ -107,8 +111,7 @@ namespace DentalClinicSystem.Forms
             var result = await _appointmentService.ScheduleAppointmentAsync(appointment);
             if (!result.Success)
             {
-                MessageBox.Show(result.ErrorMessage, "Scheduling Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiMessages.ShowError(result);
                 return;
             }
 
@@ -117,7 +120,9 @@ namespace DentalClinicSystem.Forms
             cmbReason.Text = string.Empty;
         }
 
-        private async void btnUpdateStatus_Click(object? sender, EventArgs e)
+        private async void btnUpdateStatus_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnUpdateStatus_ClickAsync);
+
+        private async Task btnUpdateStatus_ClickAsync()
         {
             if (_selectedAppointmentId is null || cboStatus.SelectedItem is not string status)
             {
@@ -129,8 +134,7 @@ namespace DentalClinicSystem.Forms
             var result = await _appointmentService.UpdateAppointmentStatusAsync(_selectedAppointmentId.Value, status);
             if (!result.Success)
             {
-                MessageBox.Show(result.ErrorMessage, "Update Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiMessages.ShowError(result);
                 return;
             }
 

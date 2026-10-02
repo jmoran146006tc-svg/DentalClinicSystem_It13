@@ -5,7 +5,7 @@ namespace DentalClinicSystem.Service
 {
     public class UserService : IUserService
     {
-        private static readonly string[] ValidRoles = ["Admin", "Receptionist", "Dentist"];
+        private static readonly string[] ValidRoles = [Roles.Admin, Roles.Receptionist, Roles.Dentist];
 
         private readonly IUserRepository _repository;
 
@@ -75,7 +75,7 @@ namespace DentalClinicSystem.Service
             if (!ValidRoles.Contains(user.Role))
                 return ServiceResult.Fail($"Role must be one of: {string.Join(", ", ValidRoles)}.");
 
-            if (user.Role == "Dentist" && user.DentistId is null)
+            if (user.Role == Roles.Dentist && user.DentistId is null)
                 return ServiceResult.Fail("A Dentist-role account must be linked to a dentist record.");
 
             if (isNewUser && string.IsNullOrWhiteSpace(password))

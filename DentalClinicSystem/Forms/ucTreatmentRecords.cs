@@ -1,4 +1,4 @@
-using System.ComponentModel;
+using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
 
@@ -27,7 +27,9 @@ namespace DentalClinicSystem.Forms
             _canEdit = canEdit;
         }
 
-        private async void ucTreatmentRecords_Load(object? sender, EventArgs e)
+        private async void ucTreatmentRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, ucTreatmentRecords_LoadAsync);
+
+        private async Task ucTreatmentRecords_LoadAsync()
         {
             dtpDatePerformed.MaxDate = DateTime.Today;
             cboTreatmentType.SelectedIndexChanged += cboTreatmentType_SelectedIndexChanged;
@@ -89,7 +91,7 @@ namespace DentalClinicSystem.Forms
                 Notes = t.Notes
             }).ToList();
 
-            dgvTreatments.DataSource = new BindingList<TreatmentRow>(rows);
+            GridHelper.Bind(dgvTreatments, rows);
         }
 
         private void cboTreatmentType_SelectedIndexChanged(object? sender, EventArgs e)
@@ -101,7 +103,9 @@ namespace DentalClinicSystem.Forms
             }
         }
 
-        private async void btnAddTreatment_Click(object? sender, EventArgs e)
+        private async void btnAddTreatment_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnAddTreatment_ClickAsync);
+
+        private async Task btnAddTreatment_ClickAsync()
         {
             if (cboAppointment.SelectedValue is not int appointmentId ||
                 cboTreatmentType.SelectedValue is not int treatmentTypeId)
@@ -131,8 +135,7 @@ namespace DentalClinicSystem.Forms
             var result = await _treatmentService.AddTreatmentAsync(treatment);
             if (!result.Success)
             {
-                MessageBox.Show(result.ErrorMessage, "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiMessages.ShowError(result);
                 return;
             }
 

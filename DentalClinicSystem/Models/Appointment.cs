@@ -1,3 +1,4 @@
+using DentalClinicSystem.Models;
 namespace DentalClinicSystem.Models
 {
     public class Appointment
@@ -6,7 +7,7 @@ namespace DentalClinicSystem.Models
         public int PatientId { get; set; }
         public int DentistId { get; set; }
         public DateTime AppointmentDateTime { get; set; }
-        public string Status { get; set; } = "Scheduled";
+        public string Status { get; set; } = AppointmentStatus.Scheduled;
         public string? Reason { get; set; }
         public string? CancellationReason { get; set; }
         public string? Notes { get; set; }

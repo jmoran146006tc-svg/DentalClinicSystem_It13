@@ -1,4 +1,4 @@
-using System.ComponentModel;
+using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
 
@@ -15,7 +15,9 @@ namespace DentalClinicSystem.Forms
             _dentistService = dentistService;
         }
 
-        private async void ucDentistRecords_Load(object? sender, EventArgs e)
+        private async void ucDentistRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, ucDentistRecords_LoadAsync);
+
+        private async Task ucDentistRecords_LoadAsync()
         {
             dgvDentists.SelectionChanged += dgvDentists_SelectionChanged;
             btnAdd.Click += btnAdd_Click;
@@ -32,7 +34,7 @@ namespace DentalClinicSystem.Forms
         private async Task RefreshGridAsync()
         {
             var dentists = await _dentistService.GetAllDentistsAsync();
-            dgvDentists.DataSource = new BindingList<Dentist>(dentists.ToList());
+            GridHelper.Bind(dgvDentists, dentists.ToList());
 
             if (dgvDentists.Columns["IsActive"] is { } isActiveCol) isActiveCol.Visible = false;
         }
@@ -53,7 +55,9 @@ namespace DentalClinicSystem.Forms
             btnDelete.Enabled = true;
         }
 
-        private async void btnAdd_Click(object? sender, EventArgs e)
+        private async void btnAdd_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnAdd_ClickAsync);
+
+        private async Task btnAdd_ClickAsync()
         {
             var dentist = new Dentist
             {
@@ -67,8 +71,7 @@ namespace DentalClinicSystem.Forms
             var result = await _dentistService.AddDentistAsync(dentist);
             if (!result.Success)
             {
-                MessageBox.Show(result.ErrorMessage, "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiMessages.ShowError(result);
                 return;
             }
 
@@ -76,7 +79,9 @@ namespace DentalClinicSystem.Forms
             ClearForm();
         }
 
-        private async void btnUpdate_Click(object? sender, EventArgs e)
+        private async void btnUpdate_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnUpdate_ClickAsync);
+
+        private async Task btnUpdate_ClickAsync()
         {
             if (_selectedDentistId is null)
             {
@@ -98,8 +103,7 @@ namespace DentalClinicSystem.Forms
             var result = await _dentistService.UpdateDentistAsync(dentist);
             if (!result.Success)
             {
-                MessageBox.Show(result.ErrorMessage, "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiMessages.ShowError(result);
                 return;
             }
 
@@ -107,7 +111,9 @@ namespace DentalClinicSystem.Forms
             ClearForm();
         }
 
-        private async void btnDelete_Click(object? sender, EventArgs e)
+        private async void btnDelete_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnDelete_ClickAsync);
+
+        private async Task btnDelete_ClickAsync()
         {
             if (_selectedDentistId is null)
             {

@@ -1,105 +1,52 @@
-using System.Data;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
 using MySqlConnector;
+using static DentalClinicSystem.DBContent.StoredProcedureRunner;
 
 namespace DentalClinicSystem.DBContent
 {
     public class MySqlAppointmentRepository : IAppointmentRepository
     {
-        public async Task<IReadOnlyList<Appointment>> GetAllAsync()
-        {
-            List<Appointment> appointments = [];
+        public Task<IReadOnlyList<Appointment>> GetAllAsync()
+            => QueryAsync("sp_Appointment_GetAll",
+                MapAppointment);
 
-            await using var conn = await DbConnectionHelper.GetOpenConnectionAsync();
-            await using var cmd = new MySqlCommand("sp_Appointment_GetAll", conn) { CommandType = CommandType.StoredProcedure };
+        public Task<Appointment?> GetByIdAsync(int appointmentId)
+            => QuerySingleAsync("sp_Appointment_GetById",
+                MapAppointment,
+                Parameter("@p_AppointmentId", appointmentId));
 
-            await using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                appointments.Add(MapAppointment(reader));
-            }
+        public Task<IReadOnlyList<Appointment>> GetByDentistAndDateAsync(int dentistId, DateTime date)
+            => QueryAsync("sp_Appointment_GetByDentistAndDate",
+                MapAppointment,
+                Parameter("@p_DentistId", dentistId),
+                Parameter("@p_Date", date.Date));
 
-            return appointments;
-        }
+        public Task AddAsync(Appointment appointment)
+            => ExecuteAsync("sp_Appointment_Add",
+                Parameter("@p_PatientId", appointment.PatientId),
+                Parameter("@p_DentistId", appointment.DentistId),
+                Parameter("@p_AppointmentDateTime", appointment.AppointmentDateTime),
+                Parameter("@p_Status", appointment.Status),
+                Parameter("@p_Reason", appointment.Reason),
+                Parameter("@p_CancellationReason", appointment.CancellationReason),
+                Parameter("@p_Notes", appointment.Notes));
 
-        public async Task<Appointment?> GetByIdAsync(int appointmentId)
-        {
-            await using var conn = await DbConnectionHelper.GetOpenConnectionAsync();
-            await using var cmd = new MySqlCommand("sp_Appointment_GetById", conn) { CommandType = CommandType.StoredProcedure };
-            cmd.Parameters.AddWithValue("@p_AppointmentId", appointmentId);
+        public Task UpdateAsync(Appointment appointment)
+            => ExecuteAsync("sp_Appointment_Update",
+                Parameter("@p_AppointmentId", appointment.AppointmentId),
+                Parameter("@p_PatientId", appointment.PatientId),
+                Parameter("@p_DentistId", appointment.DentistId),
+                Parameter("@p_AppointmentDateTime", appointment.AppointmentDateTime),
+                Parameter("@p_Status", appointment.Status),
+                Parameter("@p_Reason", appointment.Reason),
+                Parameter("@p_CancellationReason", appointment.CancellationReason),
+                Parameter("@p_Notes", appointment.Notes));
 
-            await using var reader = await cmd.ExecuteReaderAsync();
-            return await reader.ReadAsync() ? MapAppointment(reader) : null;
-        }
-
-        public async Task<IReadOnlyList<Appointment>> GetByDentistAndDateAsync(int dentistId, DateTime date)
-        {
-            List<Appointment> appointments = [];
-
-            await using var conn = await DbConnectionHelper.GetOpenConnectionAsync();
-            await using var cmd = new MySqlCommand("sp_Appointment_GetByDentistAndDate", conn) { CommandType = CommandType.StoredProcedure };
-            cmd.Parameters.AddWithValue("@p_DentistId", dentistId);
-            cmd.Parameters.AddWithValue("@p_Date", date.Date);
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                appointments.Add(MapAppointment(reader));
-            }
-
-            return appointments;
-        }
-
-        public async Task AddAsync(Appointment appointment)
-        {
-            await using var conn = await DbConnectionHelper.GetOpenConnectionAsync();
-            await using var cmd = new MySqlCommand("sp_Appointment_Add", conn) { CommandType = CommandType.StoredProcedure };
-            AddAppointmentParameters(cmd, appointment);
-
-            await cmd.ExecuteNonQueryAsync();
-        }
-
-        public async Task UpdateAsync(Appointment appointment)
-        {
-            await using var conn = await DbConnectionHelper.GetOpenConnectionAsync();
-            await using var cmd = new MySqlCommand("sp_Appointment_Update", conn) { CommandType = CommandType.StoredProcedure };
-            cmd.Parameters.AddWithValue("@p_AppointmentId", appointment.AppointmentId);
-            AddAppointmentParameters(cmd, appointment);
-
-            await cmd.ExecuteNonQueryAsync();
-        }
-
-        public async Task DeleteAsync(int appointmentId)
-        {
-            // Prefer AppointmentService.UpdateStatusAsync(id, "Cancelled") over calling
-            // this directly - an appointment with treatments attached can't be hard
-            // deleted anyway (FK from Treatments), and cancelling preserves history.
-            await using var conn = await DbConnectionHelper.GetOpenConnectionAsync();
-            await using var cmd = new MySqlCommand("sp_Appointment_Delete", conn) { CommandType = CommandType.StoredProcedure };
-            cmd.Parameters.AddWithValue("@p_AppointmentId", appointmentId);
-
-            try
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-            catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.RowIsReferenced2)
-            {
-                throw new RepositoryConstraintException(
-                    "This appointment has treatment records attached and can't be deleted. Cancel it instead.", ex);
-            }
-        }
-
-        private static void AddAppointmentParameters(MySqlCommand cmd, Appointment appointment)
-        {
-            cmd.Parameters.AddWithValue("@p_PatientId", appointment.PatientId);
-            cmd.Parameters.AddWithValue("@p_DentistId", appointment.DentistId);
-            cmd.Parameters.AddWithValue("@p_AppointmentDateTime", appointment.AppointmentDateTime);
-            cmd.Parameters.AddWithValue("@p_Status", appointment.Status);
-            cmd.Parameters.AddWithValue("@p_Reason", (object?)appointment.Reason ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@p_CancellationReason", (object?)appointment.CancellationReason ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@p_Notes", (object?)appointment.Notes ?? DBNull.Value);
-        }
+        public Task DeleteAsync(int appointmentId)
+            => ExecuteAsync("sp_Appointment_Delete",
+                "This appointment has treatment records attached and can't be deleted. Cancel it instead.",
+                Parameter("@p_AppointmentId", appointmentId));
 
         private static Appointment MapAppointment(MySqlDataReader reader) => new()
         {
@@ -108,9 +55,9 @@ namespace DentalClinicSystem.DBContent
             DentistId = (int)reader["DentistId"],
             AppointmentDateTime = (DateTime)reader["AppointmentDateTime"],
             Status = (string)reader["Status"],
-            Reason = reader["Reason"] as string,
-            CancellationReason = reader["CancellationReason"] as string,
-            Notes = reader["Notes"] as string,
+            Reason = reader.GetNullableString("Reason"),
+            CancellationReason = reader.GetNullableString("CancellationReason"),
+            Notes = reader.GetNullableString("Notes"),
             CreatedAt = (DateTime)reader["CreatedAt"]
         };
     }
