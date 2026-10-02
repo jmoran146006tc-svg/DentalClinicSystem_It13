@@ -1,4 +1,4 @@
-﻿namespace DentalClinicSystem.Forms
+namespace DentalClinicSystem.Forms
 {
     partial class frmUserManagement
     {
@@ -39,7 +39,6 @@
             pnlHeader.Name = "pnlHeader";
             pnlHeader.Size = new Size(578, 38);
             pnlHeader.TabIndex = 0;
-            pnlHeader.Paint += pnlHeader_Paint;
             // 
             // lblTitle
             // 

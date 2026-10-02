@@ -59,7 +59,6 @@ namespace DentalClinicSystem
             label1.Size = new Size(108, 17);
             label1.TabIndex = 1;
             label1.Text = "USERNAME: ";
-            label1.Click += label1_Click;
             // 
             // label2
             // 
@@ -80,7 +79,6 @@ namespace DentalClinicSystem
             txtPassword.Size = new Size(134, 27);
             txtPassword.TabIndex = 2;
             txtPassword.UseSystemPasswordChar = true;
-            txtPassword.TextChanged += txtPassword_TextChanged;
             // 
             // btnLogin
             // 
@@ -110,7 +108,6 @@ namespace DentalClinicSystem
             panel1.Name = "panel1";
             panel1.Size = new Size(334, 358);
             panel1.TabIndex = 5;
-            panel1.Paint += panel1_Paint;
             // 
             // label3
             // 
@@ -138,7 +135,6 @@ namespace DentalClinicSystem
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 6;
             pictureBox1.TabStop = false;
-            pictureBox1.Click += pictureBox1_Click;
             // 
             // frmLogin
             // 
@@ -155,7 +151,6 @@ namespace DentalClinicSystem
             Margin = new Padding(2);
             Name = "frmLogin";
             Text = "Dental Clinic Management System - Login";
-            Load += frmLogin_Load;
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();

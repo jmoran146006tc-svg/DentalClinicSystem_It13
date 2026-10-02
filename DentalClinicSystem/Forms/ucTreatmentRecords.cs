@@ -27,7 +27,7 @@ namespace DentalClinicSystem.Forms
             _canEdit = canEdit;
         }
 
-        private async void ucTreatmentRecords_Load(object sender, EventArgs e)
+        private async void ucTreatmentRecords_Load(object? sender, EventArgs e)
         {
             dtpDatePerformed.MaxDate = DateTime.Today;
             cboTreatmentType.SelectedIndexChanged += cboTreatmentType_SelectedIndexChanged;
@@ -92,7 +92,7 @@ namespace DentalClinicSystem.Forms
             dgvTreatments.DataSource = new BindingList<TreatmentRow>(rows);
         }
 
-        private void cboTreatmentType_SelectedIndexChanged(object sender, EventArgs e)
+        private void cboTreatmentType_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (cboTreatmentType.SelectedValue is int treatmentTypeId &&
                 _treatmentTypesById.TryGetValue(treatmentTypeId, out var treatmentType))
@@ -101,7 +101,7 @@ namespace DentalClinicSystem.Forms
             }
         }
 
-        private async void btnAddTreatment_Click(object sender, EventArgs e)
+        private async void btnAddTreatment_Click(object? sender, EventArgs e)
         {
             if (cboAppointment.SelectedValue is not int appointmentId ||
                 cboTreatmentType.SelectedValue is not int treatmentTypeId)
@@ -164,9 +164,5 @@ namespace DentalClinicSystem.Forms
             public string? Notes { get; init; }
         }
 
-        private void cboAppointment_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
     }
 }

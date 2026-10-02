@@ -20,7 +20,7 @@ namespace DentalClinicSystem.Forms
             _currentUser = currentUser;
         }
 
-        private async void ucUserManagement_Load(object sender, EventArgs e)
+        private async void ucUserManagement_Load(object? sender, EventArgs e)
         {
             // frmDashboard already hides the Users button for
             // non-admins, but if this control is ever reached another way, lock
@@ -68,12 +68,12 @@ namespace DentalClinicSystem.Forms
             if (dgvUsers.Columns["PasswordHash"] is { } hashCol) hashCol.Visible = false;
         }
 
-        private void cboRole_SelectedIndexChanged(object sender, EventArgs e)
+        private void cboRole_SelectedIndexChanged(object? sender, EventArgs e)
         {
             cboDentist.Enabled = cboRole.SelectedItem as string == "Dentist";
         }
 
-        private void dgvUsers_SelectionChanged(object sender, EventArgs e)
+        private void dgvUsers_SelectionChanged(object? sender, EventArgs e)
         {
             if (dgvUsers.CurrentRow?.DataBoundItem is not User user)
                 return;
@@ -90,7 +90,7 @@ namespace DentalClinicSystem.Forms
             btnDeactivate.Enabled = true;
         }
 
-        private async void btnAdd_Click(object sender, EventArgs e)
+        private async void btnAdd_Click(object? sender, EventArgs e)
         {
             var user = BuildUserFromForm();
             if (user is null)
@@ -108,7 +108,7 @@ namespace DentalClinicSystem.Forms
             ClearForm();
         }
 
-        private async void btnUpdate_Click(object sender, EventArgs e)
+        private async void btnUpdate_Click(object? sender, EventArgs e)
         {
             if (_selectedUserId is null)
             {
@@ -138,7 +138,7 @@ namespace DentalClinicSystem.Forms
             ClearForm();
         }
 
-        private async void btnDeactivate_Click(object sender, EventArgs e)
+        private async void btnDeactivate_Click(object? sender, EventArgs e)
         {
             if (_selectedUserId is null)
             {

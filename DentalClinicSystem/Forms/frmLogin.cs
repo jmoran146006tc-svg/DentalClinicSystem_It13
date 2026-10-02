@@ -44,40 +44,23 @@ namespace DentalClinicSystem
             }
 
             var dashboard = new frmDashboard(
-                result.Data, _authService, _patientService, _dentistService,
+                result.Data, this, _authService, _patientService, _dentistService,
                 _appointmentService, _treatmentService, _treatmentTypeService, _userService);
             dashboard.Show();
             Hide();
         }
 
-        private void btnLogin_Click(object sender, EventArgs e)
+        private void btnLogin_Click(object? sender, EventArgs e)
         {
             OnLoginAttempt(txtUsername.Text, txtPassword.Text);
         }
 
-        private void label1_Click(object sender, EventArgs e)
+        public void ShowAfterLogout()
         {
-
+            txtPassword.Clear();
+            Show();
+            Activate();
         }
 
-        private void frmLogin_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void panel1_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-        private void pictureBox1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtPassword_TextChanged(object sender, EventArgs e)
-        {
-
-        }
     }
 }

@@ -74,7 +74,6 @@ namespace DentalClinicSystem.Forms
             label1.Size = new Size(128, 22);
             label1.TabIndex = 10;
             label1.Text = " First Name: ";
-            label1.Click += label1_Click;
             // 
             // txtLastName
             // 
@@ -116,7 +115,6 @@ namespace DentalClinicSystem.Forms
             txtContactNumber.Name = "txtContactNumber";
             txtContactNumber.Size = new Size(258, 31);
             txtContactNumber.TabIndex = 13;
-            txtContactNumber.TextChanged += txtContactNumber_TextChanged;
             // 
             // txtSpecialization
             // 

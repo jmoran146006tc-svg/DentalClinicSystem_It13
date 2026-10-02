@@ -17,7 +17,7 @@ namespace DentalClinicSystem.Forms
             _canEdit = canEdit;
         }
 
-        private async void ucPatientRecords_Load(object sender, EventArgs e)
+        private async void ucPatientRecords_Load(object? sender, EventArgs e)
         {
             dtpDateOfBirth.MaxDate = DateTime.Today;
 
@@ -49,7 +49,7 @@ namespace DentalClinicSystem.Forms
             if (dgvPatients.Columns["CreatedAt"] is { } createdAtCol) createdAtCol.Visible = false;
         }
 
-        private void dgvPatients_SelectionChanged(object sender, EventArgs e)
+        private void dgvPatients_SelectionChanged(object? sender, EventArgs e)
         {
             if (dgvPatients.CurrentRow?.DataBoundItem is not Patient patient)
                 return;
@@ -66,7 +66,7 @@ namespace DentalClinicSystem.Forms
             btnDelete.Enabled = _canEdit;
         }
 
-        private async void btnAdd_Click(object sender, EventArgs e)
+        private async void btnAdd_Click(object? sender, EventArgs e)
         {
             var patient = new Patient
             {
@@ -90,7 +90,7 @@ namespace DentalClinicSystem.Forms
             ClearForm();
         }
 
-        private async void btnUpdate_Click(object sender, EventArgs e)
+        private async void btnUpdate_Click(object? sender, EventArgs e)
         {
             if (_selectedPatientId is null)
             {
@@ -122,7 +122,7 @@ namespace DentalClinicSystem.Forms
             ClearForm();
         }
 
-        private async void btnDelete_Click(object sender, EventArgs e)
+        private async void btnDelete_Click(object? sender, EventArgs e)
         {
             if (_selectedPatientId is null)
             {

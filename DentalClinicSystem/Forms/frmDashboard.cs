@@ -6,6 +6,9 @@ namespace DentalClinicSystem.Forms
     public partial class frmDashboard : Form
     {
         private readonly User _currentUser;
+        private readonly frmLogin _login;
+        private readonly Panel _contentHost = new() { Dock = DockStyle.Fill };
+        private bool _loggingOut;
         private readonly IAuthService _authService;
         private readonly IPatientService _patientService;
         private readonly IDentistService _dentistService;
@@ -16,6 +19,7 @@ namespace DentalClinicSystem.Forms
 
         public frmDashboard(
             User currentUser,
+            frmLogin login,
             IAuthService authService,
             IPatientService patientService,
             IDentistService dentistService,
@@ -27,6 +31,25 @@ namespace DentalClinicSystem.Forms
             InitializeComponent();
 
             _currentUser = currentUser;
+            _login = login;
+            tableLayoutPanel2.Dispose();
+            lblDateTime.Visible = false;
+            tableLayoutPanel1.Dock = DockStyle.Top;
+            tableLayoutPanel1.Height = 60;
+            lblWc.Text = $"Welcome, {currentUser.Username} ({currentUser.Role})";
+            pnlContent.Controls.Add(_contentHost);
+            _contentHost.BringToFront();
+            timer1_Tick(this, EventArgs.Empty);
+            btnLogout.Dock = DockStyle.Bottom;
+            var navigation = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true };
+            foreach (var button in new[] { btnDashboard, btnPatients, btnDentists, btnAppointments, btnTreatments, btnUsers })
+            {
+                button.Margin = Padding.Empty;
+                navigation.Controls.Add(button);
+            }
+            pnlSidebar.Controls.Add(navigation);
+            navigation.BringToFront();
+            FormClosed += (_, _) => { if (!_loggingOut) Application.Exit(); };
             _authService = authService;
             _patientService = patientService;
             _dentistService = dentistService;
@@ -57,45 +80,27 @@ namespace DentalClinicSystem.Forms
 
         private void ShowPage(Control page)
         {
-            pnlContent.Controls.Clear();
+            foreach (Control previous in _contentHost.Controls.Cast<Control>().ToArray()) previous.Dispose();
             page.Dock = DockStyle.Fill;
-            pnlContent.Controls.Add(page);
+            _contentHost.Controls.Add(page);
         }
 
         private void ShowDashboardHome()
         {
-            pnlContent.Controls.Clear();
-            lblWelcome.Text = $"Welcome, {_currentUser.Username}!";
-            pnlContent.Controls.Add(lblWelcome);
+            ShowPage(new Label { Text = "Dental clinic overview", AutoSize = false });
         }
 
         private void Logout()
         {
-            var loginForm = new frmLogin(
-                _authService, _patientService, _dentistService,
-                _appointmentService, _treatmentService, _treatmentTypeService, _userService);
-            loginForm.Show();
+            _loggingOut = true;
+            _login.ShowAfterLogout();
             Close();
         }
 
-        private void btnLogout_Click(object sender, EventArgs e)
+        private void timer1_Tick(object? sender, EventArgs e)
         {
-
+            _lblClock.Text = DateTime.Now.ToString("dddd, dd MMM yyyy HH:mm:ss");
         }
 
-        private void pnlContent_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-
-        }
-
-        private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
     }
 }

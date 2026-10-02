@@ -15,6 +15,13 @@
 - Baseline `dotnet build DentalClinicSystem/DentalClinicSystem.csproj`: succeeded, 0 errors, 17 warnings (16 CS8622 event sender nullability warnings and one CS0108 on ServiceResult<T>.Fail).
 - The reported txtReason compile failure is already fixed in this checkout. Duplicate status entries, logout lifecycle, dead event handlers and automatic database setup remain.
 
+### Phase 1 - known breakages
+
+- Expanded editable reason list, removed duplicate/invalid Designer status items and incorrect treatment appointment items.
+- Dashboard reuses the original login; logout clears its password and closing the dashboard exits. Persistent header/clock and separate disposable page host; navigation stacks and logout docks at the bottom.
+- Removed empty handlers and their Designer subscriptions; corrected event sender nullability.
+- Build gate: passed, 0 errors, 1 existing warning (CS0108). GUI lifecycle/layout remain unverified.
+
 ## Unverified at runtime
 
 - [ ] Run manual database scripts against a disposable MySQL database and rerun to check idempotence.

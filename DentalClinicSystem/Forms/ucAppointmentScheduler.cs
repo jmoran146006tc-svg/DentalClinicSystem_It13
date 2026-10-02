@@ -26,8 +26,12 @@ namespace DentalClinicSystem.Forms
             _dentistService = dentistService;
         }
 
-        private async void ucAppointmentScheduler_Load(object sender, EventArgs e)
+        private async void ucAppointmentScheduler_Load(object? sender, EventArgs e)
         {
+            cmbReason.DropDownStyle = ComboBoxStyle.DropDown;
+            cmbReason.Items.Clear();
+            cmbReason.Items.AddRange(["Oral Prophylaxis Package", "Consultation & Check up", "Promo Bundles", "Tooth Extraction", "Filling / Restoration", "Root Canal", "Braces Adjustment", "Dentures", "Teeth Whitening", "Other"]);
+            cboStatus.Items.Clear();
             cboStatus.Items.AddRange(["Scheduled", "Completed", "Cancelled", "NoShow"]);
             dgvAppointments.SelectionChanged += dgvAppointments_SelectionChanged;
 
@@ -69,7 +73,7 @@ namespace DentalClinicSystem.Forms
             dgvAppointments.DataSource = new BindingList<AppointmentRow>(rows);
         }
 
-        private void dgvAppointments_SelectionChanged(object sender, EventArgs e)
+        private void dgvAppointments_SelectionChanged(object? sender, EventArgs e)
         {
             if (dgvAppointments.CurrentRow?.DataBoundItem is not AppointmentRow row)
             {
@@ -83,7 +87,7 @@ namespace DentalClinicSystem.Forms
             btnUpdateStatus.Enabled = true;
         }
 
-        private async void btnSchedule_Click(object sender, EventArgs e)
+        private async void btnSchedule_Click(object? sender, EventArgs e)
         {
             if (cboPatient.SelectedValue is not int patientId || cboDentist.SelectedValue is not int dentistId)
             {
@@ -113,7 +117,7 @@ namespace DentalClinicSystem.Forms
             cmbReason.Text = string.Empty;
         }
 
-        private async void btnUpdateStatus_Click(object sender, EventArgs e)
+        private async void btnUpdateStatus_Click(object? sender, EventArgs e)
         {
             if (_selectedAppointmentId is null || cboStatus.SelectedItem is not string status)
             {
@@ -143,16 +147,6 @@ namespace DentalClinicSystem.Forms
             public DateTime AppointmentDateTime { get; init; }
             public string Status { get; init; } = string.Empty;
             public string? Reason { get; init; }
-        }
-
-        private void txtReason_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void dgvAppointments_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
         }
 
     }

@@ -1,4 +1,4 @@
-﻿using DentalClinicSystem.Interfaces;
+using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
 
 namespace DentalClinicSystem.Forms
@@ -16,14 +16,10 @@ namespace DentalClinicSystem.Forms
             pnlHost.Controls.Add(userControl);
         }
 
-        private void btnClose_Click(object sender, EventArgs e)
+        private void btnClose_Click(object? sender, EventArgs e)
         {
             Close();
         }
 
-        private void pnlHeader_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
     }
 }

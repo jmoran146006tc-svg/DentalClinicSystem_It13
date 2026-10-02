@@ -62,13 +62,11 @@ namespace DentalClinicSystem.Forms
             // cboAppointment
             // 
             cboAppointment.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboAppointment.Items.AddRange(new object[] { "Fluoride Application", "Tooth Restoration", "Tooth Extraction", "Teeth Whitening ", "Veeners", "Braces & Retainers", "Dentures", "Crown & Fixed Bridge", "Root Canal", "Odontectomy", "Gingivectomy / Gum Contouring" });
             cboAppointment.Location = new Point(36, 180);
             cboAppointment.Margin = new Padding(2);
             cboAppointment.Name = "cboAppointment";
             cboAppointment.Size = new Size(225, 28);
             cboAppointment.TabIndex = 11;
-            cboAppointment.SelectedIndexChanged += cboAppointment_SelectedIndexChanged;
             // 
             // lblTreatmentType
             // 

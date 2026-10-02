@@ -46,7 +46,6 @@ namespace DentalClinicSystem.Forms
             dgvAppointments.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvAppointments.Size = new Size(853, 136);
             dgvAppointments.TabIndex = 0;
-            dgvAppointments.CellContentClick += dgvAppointments_CellContentClick;
             // 
             // lblPatient
             // 
@@ -149,7 +148,6 @@ namespace DentalClinicSystem.Forms
             // cboStatus
             // 
             cboStatus.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboStatus.Items.AddRange(new object[] { "Scheduled", "Cancelled", "No Show" });
             cboStatus.Location = new Point(36, 356);
             cboStatus.Margin = new Padding(2);
             cboStatus.Name = "cboStatus";

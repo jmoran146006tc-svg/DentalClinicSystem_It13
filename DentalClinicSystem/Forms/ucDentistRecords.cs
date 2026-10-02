@@ -15,7 +15,7 @@ namespace DentalClinicSystem.Forms
             _dentistService = dentistService;
         }
 
-        private async void ucDentistRecords_Load(object sender, EventArgs e)
+        private async void ucDentistRecords_Load(object? sender, EventArgs e)
         {
             dgvDentists.SelectionChanged += dgvDentists_SelectionChanged;
             btnAdd.Click += btnAdd_Click;
@@ -37,7 +37,7 @@ namespace DentalClinicSystem.Forms
             if (dgvDentists.Columns["IsActive"] is { } isActiveCol) isActiveCol.Visible = false;
         }
 
-        private void dgvDentists_SelectionChanged(object sender, EventArgs e)
+        private void dgvDentists_SelectionChanged(object? sender, EventArgs e)
         {
             if (dgvDentists.CurrentRow?.DataBoundItem is not Dentist dentist)
                 return;
@@ -53,7 +53,7 @@ namespace DentalClinicSystem.Forms
             btnDelete.Enabled = true;
         }
 
-        private async void btnAdd_Click(object sender, EventArgs e)
+        private async void btnAdd_Click(object? sender, EventArgs e)
         {
             var dentist = new Dentist
             {
@@ -76,7 +76,7 @@ namespace DentalClinicSystem.Forms
             ClearForm();
         }
 
-        private async void btnUpdate_Click(object sender, EventArgs e)
+        private async void btnUpdate_Click(object? sender, EventArgs e)
         {
             if (_selectedDentistId is null)
             {
@@ -107,7 +107,7 @@ namespace DentalClinicSystem.Forms
             ClearForm();
         }
 
-        private async void btnDelete_Click(object sender, EventArgs e)
+        private async void btnDelete_Click(object? sender, EventArgs e)
         {
             if (_selectedDentistId is null)
             {
@@ -140,14 +140,5 @@ namespace DentalClinicSystem.Forms
             btnDelete.Enabled = false;
         }
 
-        private void txtContactNumber_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
     }
 }

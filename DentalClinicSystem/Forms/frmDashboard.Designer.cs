@@ -176,7 +176,6 @@ namespace DentalClinicSystem.Forms
             btnLogout.Text = "Logout";
             btnLogout.TextAlign = ContentAlignment.MiddleLeft;
             btnLogout.UseVisualStyleBackColor = false;
-            btnLogout.Click += btnLogout_Click;
             // 
             // pnlContent
             // 
@@ -190,7 +189,6 @@ namespace DentalClinicSystem.Forms
             pnlContent.Name = "pnlContent";
             pnlContent.Size = new Size(640, 520);
             pnlContent.TabIndex = 1;
-            pnlContent.Paint += pnlContent_Paint;
             // 
             // tableLayoutPanel2
             // 
@@ -220,7 +218,6 @@ namespace DentalClinicSystem.Forms
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.Size = new Size(599, 35);
             tableLayoutPanel1.TabIndex = 3;
-            tableLayoutPanel1.Paint += tableLayoutPanel1_Paint;
             // 
             // lblWc
             // 
