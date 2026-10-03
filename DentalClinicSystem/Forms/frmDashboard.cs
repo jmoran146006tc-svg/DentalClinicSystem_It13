@@ -1,5 +1,6 @@
 using DentalClinicSystem.Service;
 using DentalClinicSystem.Models;
+using DentalClinicSystem.Helpers;
 
 namespace DentalClinicSystem.Forms
 {
@@ -8,6 +9,9 @@ namespace DentalClinicSystem.Forms
         private readonly User _currentUser;
         private readonly frmLogin _login;
         private readonly Panel _contentHost = new() { Dock = DockStyle.Fill };
+        private readonly IReadOnlyList<NavItem> _navigationItems;
+        private readonly Color _navigationColor;
+        private static readonly Color ActiveNavigationColor = Color.FromArgb(47, 169, 174);
         private bool _loggingOut;
 
         private readonly AppServices _services;
@@ -22,53 +26,93 @@ namespace DentalClinicSystem.Forms
 
             _currentUser = currentUser;
             _login = login;
+            _navigationColor = btnDashboard.BackColor;
+            _navigationItems = CreateNavigation();
+            ConfigureContent();
+            ConfigureNavigation();
+            FormClosed += (_, _) => { if (!_loggingOut) Application.Exit(); };
+            Load += (_, _) => Navigate(_navigationItems[0]);
+        }
+
+        private void ConfigureContent()
+        {
             tableLayoutPanel2.Dispose();
             lblDateTime.Visible = false;
             tableLayoutPanel1.Dock = DockStyle.Top;
             tableLayoutPanel1.Height = 60;
-            lblWc.Text = $"Welcome, {currentUser.Username} ({currentUser.Role})";
+            lblWc.Text = $"Welcome, {_currentUser.Username} ({_currentUser.Role})";
             pnlContent.Controls.Add(_contentHost);
             _contentHost.BringToFront();
             timer1_Tick(this, EventArgs.Empty);
-            btnLogout.Dock = DockStyle.Bottom;
-            var navigation = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true };
-            foreach (var button in new[] { btnDashboard, btnPatients, btnDentists, btnAppointments, btnTreatments, btnUsers })
+        }
+
+        private IReadOnlyList<NavItem> CreateNavigation()
+        {
+            var btnReports = new Button
             {
-                button.Margin = Padding.Empty;
-                navigation.Controls.Add(button);
+                Name = "btnReports",
+                FlatStyle = btnDashboard.FlatStyle,
+                Font = btnDashboard.Font,
+                ForeColor = btnDashboard.ForeColor,
+                BackColor = _navigationColor,
+                Padding = btnDashboard.Padding,
+                Size = btnDashboard.Size,
+                TextAlign = btnDashboard.TextAlign,
+                UseVisualStyleBackColor = false
+            };
+            return [
+                new("Dashboard", Permission.ViewDashboard, () => PageFactory.CreateDashboard(_currentUser), btnDashboard),
+                new("Patients", Permission.ViewPatients, () => PageFactory.CreatePatients(_services.Patients, _currentUser), btnPatients),
+                new("Dentists", Permission.ViewDentists, () => PageFactory.CreateDentists(_services.Dentists, _currentUser), btnDentists),
+                new("Appointments", Permission.ViewAppointments, () => PageFactory.CreateAppointments(_services.Appointments, _services.Patients, _services.Dentists, _currentUser), btnAppointments),
+                new("Treatments", Permission.ViewTreatments, () => PageFactory.CreateTreatments(_services.Treatments, _services.Appointments, _services.TreatmentTypes, _currentUser), btnTreatments),
+                new("Users", Permission.ViewUsers, () => PageFactory.CreateUsers(_services.Users, _services.Dentists, _currentUser), btnUsers),
+                new("Reports", Permission.ViewReports, () => PageFactory.CreateReports(_services.Reports, _currentUser), btnReports),
+                new("Logout", Permission.ViewDashboard, null, btnLogout)
+            ];
+        }
+
+        private void ConfigureNavigation()
+        {
+            var navigation = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true
+            };
+            foreach (var item in _navigationItems)
+            {
+                item.Button.Text = item.Text;
+                item.Button.Visible = RoleAccess.Can(_currentUser, item.RequiredPermission);
+                item.Button.Margin = Padding.Empty;
+                item.Button.Click += (_, _) => Navigate(item);
+                if (item.CreatePage is null) item.Button.Dock = DockStyle.Bottom;
+                else navigation.Controls.Add(item.Button);
             }
             pnlSidebar.Controls.Add(navigation);
             navigation.BringToFront();
-            FormClosed += (_, _) => { if (!_loggingOut) Application.Exit(); };
+        }
 
-            btnDashboard.Click += (_, _) => ShowDashboardHome();
-            btnPatients.Click += (_, _) => ShowPage(new ucPatientRecords(_services.Patients, _currentUser));
-            btnDentists.Click += (_, _) => ShowPage(new ucDentistRecords(_services.Dentists, _currentUser));
-            btnAppointments.Click += (_, _) => ShowPage(
-                new ucAppointmentScheduler(_services.Appointments, _services.Patients, _services.Dentists, _currentUser));
-            btnTreatments.Click += (_, _) => ShowPage(
-                new ucTreatmentRecords(_services.Treatments, _services.Appointments, _services.TreatmentTypes, _currentUser));
-            btnUsers.Click += (_, _) => ShowPage(new ucUserManagement(_services.Users, _services.Dentists, _currentUser));
-            btnLogout.Click += (_, _) => Logout();
-
-            btnPatients.Visible = RoleAccess.Can(_currentUser, Permission.ViewPatients);
-            btnTreatments.Visible = RoleAccess.Can(_currentUser, Permission.ViewTreatments);
-            btnDentists.Visible = RoleAccess.Can(_currentUser, Permission.ViewDentists);
-            btnUsers.Visible = RoleAccess.Can(_currentUser, Permission.ViewUsers);
-
-            Load += (_, _) => ShowDashboardHome();
+        private void Navigate(NavItem item)
+        {
+            if (!RoleAccess.Can(_currentUser, item.RequiredPermission)) return;
+            if (item.CreatePage is not { } createPage) { Logout(); return; }
+            ShowPage(createPage());
+            foreach (var navigationItem in _navigationItems)
+                navigationItem.Button.BackColor = navigationItem == item ? ActiveNavigationColor : _navigationColor;
         }
 
         private void ShowPage(Control page)
         {
-            foreach (Control previous in _contentHost.Controls.Cast<Control>().ToArray()) previous.Dispose();
-            page.Dock = DockStyle.Fill;
-            _contentHost.Controls.Add(page);
-        }
-
-        private void ShowDashboardHome()
-        {
-            ShowPage(new Label { Text = "Dental clinic overview", AutoSize = false });
+            _contentHost.SuspendLayout();
+            try
+            {
+                foreach (Control previous in _contentHost.Controls.Cast<Control>().ToArray()) previous.Dispose();
+                page.Dock = DockStyle.Fill;
+                _contentHost.Controls.Add(page);
+            }
+            finally { _contentHost.ResumeLayout(true); }
         }
 
         private void Logout()
@@ -80,7 +124,7 @@ namespace DentalClinicSystem.Forms
 
         private void timer1_Tick(object? sender, EventArgs e)
         {
-            _lblClock.Text = DateTime.Now.ToString("dddd, dd MMM yyyy HH:mm:ss");
+            _lblClock.Text = DateTime.Now.ToString(AppointmentLabels.ClockFormat);
         }
 
     }

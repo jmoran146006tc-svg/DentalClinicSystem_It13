@@ -20,4 +20,4 @@ The scripts are re-runnable but do not migrate existing tables. **`Database/00_R
 
 DEMO ONLY: `admin / admin123`, `reception / reception123`, `drsantos / dentist123`.
 
-This revision stops after Phase 4 at the user's request. See `docs/REVISION_NOTES.md` for completed work, verification, runtime checks and deferred phases. The themed pages, dashboards, reports UI and xUnit project from later phases are not implemented.
+The sidebar follows each account's role permissions, highlights the active page, and keeps the welcome header and clock visible during navigation. Admin accounts can open reports with date filters and read-only tables. Expanded dashboards, calendar views, charts, runtime themes and the automated test project remain future work.

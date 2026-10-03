@@ -9,10 +9,8 @@ namespace DentalClinicSystem.Forms
         {
             InitializeComponent();
 
-            var userControl = new ucUserManagement(userService, dentistService, currentUser)
-            {
-                Dock = DockStyle.Fill
-            };
+            var userControl = PageFactory.CreateUsers(userService, dentistService, currentUser);
+            userControl.Dock = DockStyle.Fill;
             pnlHost.Controls.Add(userControl);
         }
 
