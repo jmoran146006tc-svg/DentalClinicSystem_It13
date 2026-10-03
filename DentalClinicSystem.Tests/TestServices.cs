@@ -8,6 +8,7 @@ public class TestServices : DispatchProxy
 {
     public Dictionary<string, object> Results { get; } = [];
     public Dictionary<string, int> Calls { get; } = [];
+    public Dictionary<string, object?[]> Arguments { get; } = [];
     public static T Create<T>(params (string Method, object Result)[] results) where T : class
     {
         var proxy = Create<T, TestServices>();
@@ -17,6 +18,7 @@ public class TestServices : DispatchProxy
     protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
     {
         var method = targetMethod!; Calls[method.Name] = Calls.GetValueOrDefault(method.Name) + 1;
+        Arguments[method.Name] = args ?? [];
         if (Results.TryGetValue(method.Name, out var configured)) return configured;
         var resultType = method.ReturnType.GetGenericArguments()[0];
         object? value;
