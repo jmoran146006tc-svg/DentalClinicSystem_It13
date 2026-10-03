@@ -41,6 +41,7 @@ public sealed class TransitionHost : IDisposable
         }
         catch { previous?.Dispose(); throw; }
         finally { _host.ResumeLayout(true); }
+        page.SelectNextControl(null, true, true, true, false);
         if (previous is null) return;
         var next = Capture();
         if (next is null) { previous.Dispose(); return; }
