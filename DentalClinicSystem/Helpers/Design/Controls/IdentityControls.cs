@@ -46,9 +46,11 @@ public sealed class Toggle : DesignControl
     {
         Text = text; Size = new(Metrics.FormWidth / 2, Metrics.ControlHeight); TabStop = true; Cursor = Cursors.Hand;
         AccessibleRole = AccessibleRole.CheckButton;
+        Fit(); TextChanged += (_, _) => Fit(); DpiChangedAfterParent += (_, _) => Fit();
         MouseEnter += (_, _) => { _hover = true; Invalidate(); }; MouseLeave += (_, _) => { _hover = false; Invalidate(); };
         GotFocus += (_, _) => Invalidate(); LostFocus += (_, _) => Invalidate(); EnabledChanged += (_, _) => Invalidate();
     }
+    private void Fit() => MinimumSize = new(TextRenderer.MeasureText(Text, Typography.Body).Width + Metrics.Scale(this, Metrics.NavHeight + Space.Sm * 2), Metrics.Scale(this, Metrics.ControlHeight));
     protected override void OnClick(EventArgs e) { if (Enabled) { Focus(); Checked = !Checked; } base.OnClick(e); }
     protected override void OnKeyDown(KeyEventArgs e) { if (e.KeyCode is Keys.Space or Keys.Enter) { Checked = !Checked; e.SuppressKeyPress = true; } base.OnKeyDown(e); }
     protected override void OnPaint(PaintEventArgs e)

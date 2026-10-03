@@ -14,6 +14,7 @@ namespace DentalClinicSystem
             AppServices services)
         {
             InitializeComponent();
+            AcceptButton = btnLogin;
             _services = services;
             WindowChrome.Apply(this);
         }

@@ -21,6 +21,7 @@ public sealed class AppButton : Button
     }
     public AppButton(string text, ButtonVariant variant = ButtonVariant.Primary, IconKind? icon = null, ButtonSize size = ButtonSize.Regular)
     {
+        Theme.MarkPrimitive(this);
         Text = text;
         Height = size == ButtonSize.Compact ? Metrics.CompactHeight : Metrics.ControlHeight;
         Width = Metrics.FormWidth / 2;
@@ -46,16 +47,21 @@ public static class ButtonStyler
         public float Phase { get; set; }
         public Color Fill { get; set; } = Palette.Surface;
         public Color Border { get; set; } = Palette.LineStrong;
+        public int OriginalMinimum { get; } = button.MinimumSize.Width;
     }
     private static readonly ConditionalWeakTable<Button, State> States = new();
-    public static void Attach(Button button, ButtonVariant variant, IconKind? icon = null)
+    public static void Attach(Button button, ButtonVariant variant, IconKind? icon = null, bool preserveFont = false)
     {
-        if (States.TryGetValue(button, out var existing)) { existing.Variant = variant; existing.Icon = icon; Change(existing); return; }
+        if (States.TryGetValue(button, out var existing)) { existing.Variant = variant; existing.Icon = icon; Measure(existing); Change(existing); return; }
         var state = new State(button, variant, icon);
         States.Add(button, state);
         DesignPaint.Enable(button);
         button.FlatStyle = FlatStyle.Flat; button.FlatAppearance.BorderSize = 0;
-        button.UseVisualStyleBackColor = false; button.Font = Typography.Label; button.Cursor = Cursors.Hand;
+        button.UseVisualStyleBackColor = false; if (!preserveFont) button.Font = Typography.Label; button.Cursor = Cursors.Hand;
+        button.AutoEllipsis = false;
+        button.TextChanged += (_, _) => Measure(state);
+        button.FontChanged += (_, _) => Measure(state);
+        button.DpiChangedAfterParent += (_, _) => Measure(state);
         button.TabStop = true; button.AccessibleRole = AccessibleRole.PushButton;
         button.AccessibleName ??= button.Text;
         button.Paint += (_, e) => Draw(state, e.Graphics);
@@ -75,7 +81,17 @@ public static class ButtonStyler
             if (button.Visible && state.Busy) StartSpinner(state);
         };
         button.Disposed += (_, _) => MotionSystem.Animator.Cancel(button);
-        Change(state);
+        Measure(state); Change(state);
+    }
+    private static void Measure(State state)
+    {
+        var button = state.Button;
+        var iconWidth = state.Icon.HasValue || state.Busy ? Metrics.Scale(button, Metrics.IconSize + Space.Sm) : 0;
+        var text = state.Busy && button is AppButton app ? app.BusyText : button.Text;
+        var width = text.Length == 0 ? Metrics.Scale(button, Metrics.CompactHeight)
+            : TextRenderer.MeasureText(text, button.Font).Width + Metrics.Scale(button, Space.Lg * 2 + Metrics.FocusRing * 2) + iconWidth;
+        button.MinimumSize = new(Math.Max(state.OriginalMinimum, width), button.MinimumSize.Height);
+        if (button.Width < button.MinimumSize.Width) button.Width = button.MinimumSize.Width;
     }
     private static void Change(State state)
     {
@@ -97,6 +113,7 @@ public static class ButtonStyler
     {
         if (!States.TryGetValue(button, out var state)) return;
         state.Busy = busy;
+        Measure(state); button.Invalidate();
         if (busy) StartSpinner(state); else MotionSystem.Animator.Cancel(button, "button-spinner");
     }
     private static void StartSpinner(State state) => MotionSystem.Animator.Loop(state.Button, "button-spinner", MotionSystem.SpinnerPeriod, t => { state.Phase = t; state.Button.Invalidate(); });
@@ -124,7 +141,7 @@ public static class ButtonStyler
             graphics.DrawPath(pen, ring);
         }
         var textColor = !button.Enabled ? Palette.Ink400 : state.Variant is ButtonVariant.Primary or ButtonVariant.Danger ? Palette.Surface : state.Hover ? Palette.BrandSoftText : Palette.Ink700;
-        var content = Rectangle.Inflate(bounds, -Space.Md, -Space.Xs);
+        var content = Rectangle.Inflate(bounds, -Metrics.Scale(button, button.Text.Length == 0 ? Space.Xs : Space.Lg), -Space.Xs);
         content.Offset(0, (int)Math.Round(state.Offset));
         if (state.Icon.HasValue || state.Busy)
         {

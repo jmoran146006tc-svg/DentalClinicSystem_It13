@@ -7,6 +7,10 @@ namespace DentalClinicSystem.Helpers.Design;
 public static class Theme
 {
     private static readonly ConditionalWeakTable<Control, object> Applied = new();
+    private static readonly object PrimitiveTag = new();
+    public static void MarkPrimitive(Control control) => control.Tag = PrimitiveTag;
+    public static bool UsesDefaultFont(Control control) => control.Font.Equals(Control.DefaultFont)
+        || control.Font.Name.StartsWith("Bahnschrift", StringComparison.OrdinalIgnoreCase);
     public static SemanticStyle SemanticStyle(Semantic semantic) => semantic switch
     {
         Semantic.Info => Palette.Info, Semantic.Success => Palette.Success, Semantic.Danger => Palette.Danger,
@@ -27,16 +31,16 @@ public static class Theme
     }
     public static void Apply(Control root)
     {
-        if (root is DesignControl or RoundedPanel or FieldBox or FormField or AppButton or PageHeader or EmptyState or DialogShell) return;
+        if (ReferenceEquals(root.Tag, PrimitiveTag)) return;
         if (!Applied.TryGetValue(root, out _))
         {
             Applied.Add(root, new object());
             switch (root)
             {
-                case Button button: ButtonStyler.Attach(button, Variant(button.Name)); break;
+                case Button button: ButtonStyler.Attach(button, Variant(button.Name), preserveFont: !UsesDefaultFont(button)); break;
                 case DataGridView grid: GridTheme.Apply(grid); break;
-                case Label label: label.Font = Typography.Body; label.ForeColor = Palette.Ink700; break;
-                case TextBoxBase or ComboBox or DateTimePicker: root.Font = Typography.Body; root.ForeColor = Palette.Ink700; break;
+                case Label label when UsesDefaultFont(label): label.Font = Typography.Body; label.ForeColor = Palette.Ink700; break;
+                case TextBoxBase or ComboBox or DateTimePicker when UsesDefaultFont(root): root.Font = Typography.Body; root.ForeColor = Palette.Ink700; break;
                 case Form or Panel or UserControl: root.BackColor = Palette.Canvas; break;
             }
         }

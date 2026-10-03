@@ -12,7 +12,8 @@ public static class Elevation
         ElevationLevel.E3 => [new(4, 6, .08f), new(16, 18, .14f)],
         _ => []
     };
-    public static int Padding(ElevationLevel level) => level switch { ElevationLevel.E1 => Space.Md, ElevationLevel.E2 => Space.Xl, ElevationLevel.E3 => Space.Xxxl, _ => 0 };
+    // Raised cards reserve the same bounds so hover elevation cannot move their contents.
+    public static int Padding(ElevationLevel level) => level switch { ElevationLevel.E1 or ElevationLevel.E2 => Space.Xl, ElevationLevel.E3 => Space.Xxxl, _ => 0 };
 }
 
 public static class ShadowCache

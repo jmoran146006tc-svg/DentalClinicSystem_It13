@@ -13,6 +13,7 @@ public class DialogShell : Form
     public AppButton DismissButton { get; }
     public DialogShell(string title, string confirmText = "Confirm")
     {
+        Theme.MarkPrimitive(this);
         Text = title; StartPosition = FormStartPosition.CenterParent; FormBorderStyle = FormBorderStyle.FixedDialog;
         MinimizeBox = false; MaximizeBox = false; ShowInTaskbar = false; BackColor = Palette.Surface;
         Size = new(Metrics.DialogWidth, Metrics.DialogHeight); MinimumSize = Size; Font = Typography.Body;

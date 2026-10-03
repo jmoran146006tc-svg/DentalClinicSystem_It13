@@ -36,7 +36,6 @@ public static class GridTheme
         {
             foreach (DataGridViewColumn column in grid.Columns)
             {
-                column.HeaderText = column.HeaderText.ToUpperInvariant();
                 if (column.ValueType == typeof(decimal) || column.ValueType == typeof(int) || column.ValueType == typeof(double)) column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
         };
@@ -74,7 +73,7 @@ public static class GridTheme
         if (e.Value is DateTime date)
         {
             var name = grid.Columns[e.ColumnIndex].Name;
-            e.Value = name.Contains("Time", StringComparison.OrdinalIgnoreCase) ? $"{DisplayFormat.Date(date)} {DisplayFormat.Time(date)}" : DisplayFormat.Date(date); e.FormattingApplied = true;
+            e.Value = date.ToString(DisplayFormat.ColumnDatePattern(name), System.Globalization.CultureInfo.InvariantCulture); e.FormattingApplied = true;
         }
         else if (e.Value is decimal value && grid.Columns[e.ColumnIndex].Name is "Cost" or "Revenue" or "TotalRevenue") { e.Value = DisplayFormat.Currency(value); e.FormattingApplied = true; }
     }

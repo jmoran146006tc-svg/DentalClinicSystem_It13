@@ -8,7 +8,9 @@ public class Badge : DesignControl
     {
         Text = text; Style = Theme.SemanticStyle(semantic); Height = Metrics.CompactHeight; Width = Metrics.ControlHeight * 3;
         AccessibleRole = AccessibleRole.StaticText;
+        Fit(); TextChanged += (_, _) => Fit(); DpiChangedAfterParent += (_, _) => Fit();
     }
+    private void Fit() => MinimumSize = new(TextRenderer.MeasureText(Text, Typography.Label).Width + Metrics.Scale(this, Space.Md * 2 + Metrics.StatusDot + Space.Sm), Metrics.Scale(this, Metrics.CompactHeight));
     protected override void OnPaint(PaintEventArgs e)
     {
         if (Width <= 0 || Height <= 0) return;

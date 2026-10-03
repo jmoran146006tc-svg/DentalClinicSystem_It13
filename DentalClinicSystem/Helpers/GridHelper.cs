@@ -1,28 +1,70 @@
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using DentalClinicSystem.Helpers.Design;
+using DentalClinicSystem.Models;
 
-namespace DentalClinicSystem.Helpers
+namespace DentalClinicSystem.Helpers;
+
+public static class GridHelper
 {
-    public static class GridHelper
+    private sealed class Binding
     {
-        public static void Bind<T>(DataGridView grid, IEnumerable<T> rows, params string[] hiddenColumns)
-        {
-            Theme.StyleGrid(grid);
-            grid.DataSource = new BindingList<T>(rows.ToList());
-            foreach (var name in hiddenColumns)
-                if (grid.Columns[name] is { } column) column.Visible = false;
-            grid.CurrentCell = null;
-            grid.ClearSelection();
-            GridTheme.SetEmptyState(grid, grid.Rows.Count == 0, "Try changing the filters or add a record.");
-        }
-        public static void Bind<T>(DataGridView grid, IEnumerable<T> rows, Func<T, object> key, string emptyMessage, params string[] hiddenColumns)
-        {
-            Bind(grid, rows, hiddenColumns);
-            GridTheme.SetKey(grid, item => key((T)item));
-            GridTheme.SetEmptyState(grid, grid.Rows.Count == 0, emptyMessage);
-        }
-        public static void FlashRow(DataGridView grid, object key) => GridTheme.FlashRow(grid, key);
-        public static void IdentityColumn<T>(DataGridView grid, string column, Func<T, (string Name, string Detail)> identity) =>
-            GridTheme.IdentityColumn(grid, column, item => identity((T)item));
+        public Type RowType { get; set; } = typeof(object);
+        public HashSet<string> Hidden { get; set; } = [];
     }
+    private static readonly ConditionalWeakTable<DataGridView, Binding> Bindings = new();
+    private static readonly Dictionary<string, string> Headers = new()
+    {
+        ["FirstName"] = "First name", ["LastName"] = "Last name", ["FullName"] = "Full name",
+        ["DateOfBirth"] = "Date of birth", ["ContactNumber"] = "Contact", ["Email"] = "Email", ["Address"] = "Address",
+        ["AppointmentDateTime"] = "Appointment date", ["DatePerformed"] = "Date performed", ["IsActive"] = "Active",
+        ["LicenseNumber"] = "License", ["ToothNumber"] = "Tooth", ["Username"] = "Username"
+    };
+    public static void Bind<T>(DataGridView grid, IEnumerable<T> rows, params string[] hiddenColumns) =>
+        Bind(grid, rows, null, "Try changing the filters or add a record.", hiddenColumns);
+    public static void Bind<T>(DataGridView grid, IEnumerable<T> rows, Func<T, object>? key, string emptyMessage, params string[] hiddenColumns)
+    {
+        Theme.StyleGrid(grid);
+        if (!Bindings.TryGetValue(grid, out var binding))
+        {
+            binding = new Binding(); Bindings.Add(grid, binding);
+            grid.DataBindingComplete += (_, _) => ConfigureColumns(grid, binding);
+            grid.DpiChangedAfterParent += (_, _) => ConfigureColumns(grid, binding);
+        }
+        binding.RowType = typeof(T); binding.Hidden = hiddenColumns.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var items = rows.ToList();
+        grid.DataSource = new BindingList<T>(items);
+        ConfigureColumns(grid, binding);
+        grid.CurrentCell = null; grid.ClearSelection();
+        if (key is not null) GridTheme.SetKey(grid, item => key((T)item));
+        // Binding can complete after parenting. Source count is already reliable.
+        GridTheme.SetEmptyState(grid, items.Count == 0, emptyMessage);
+    }
+    private static void ConfigureColumns(DataGridView grid, Binding binding)
+    {
+        foreach (DataGridViewColumn column in grid.Columns)
+        {
+            var name = column.DataPropertyName.Length > 0 ? column.DataPropertyName : column.Name;
+            if (binding.Hidden.Contains(name) || name.Equals(binding.RowType.Name + "Id", StringComparison.OrdinalIgnoreCase)
+                || name == "FullName" && (binding.RowType == typeof(Patient) || binding.RowType == typeof(Dentist)))
+                column.Visible = false;
+            column.HeaderText = Headers.GetValueOrDefault(name, Regex.Replace(name, "(?<=[a-z])([A-Z])", " $1"));
+            if (Nullable.GetUnderlyingType(column.ValueType ?? typeof(object)) == typeof(DateTime) || column.ValueType == typeof(DateTime))
+            {
+                column.DefaultCellStyle.Format = DisplayFormat.ColumnDatePattern(name);
+                column.DefaultCellStyle.FormatProvider = System.Globalization.CultureInfo.InvariantCulture;
+            }
+            var shortWidth = Metrics.Scale(grid, Metrics.ControlHeight * 2);
+            var width = name is "Email" or "Address" or "Notes" or "Reason" ? Metrics.FormWidth / 2
+                : name.Contains("Date", StringComparison.Ordinal) ? Metrics.FormWidth / 2
+                : name.Contains("Name", StringComparison.Ordinal) || name is "Patient" or "Dentist" or "ContactNumber" or "Status" ? Metrics.FormWidth / 3 : shortWidth;
+            var header = TextRenderer.MeasureText(column.HeaderText, grid.ColumnHeadersDefaultCellStyle.Font ?? Typography.Label).Width;
+            column.MinimumWidth = Math.Max(shortWidth, header + Metrics.Scale(grid, Space.Lg * 2 + Metrics.IconSize));
+            column.FillWeight = width;
+        }
+    }
+    public static void FlashRow(DataGridView grid, object key) => GridTheme.FlashRow(grid, key);
+    public static void IdentityColumn<T>(DataGridView grid, string column, Func<T, (string Name, string Detail)> identity) =>
+        GridTheme.IdentityColumn(grid, column, item => identity((T)item));
 }

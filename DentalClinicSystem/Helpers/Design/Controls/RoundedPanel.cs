@@ -15,6 +15,7 @@ public class RoundedPanel : Panel
     }
     public RoundedPanel(string? title = null, ElevationLevel elevation = ElevationLevel.E0)
     {
+        Theme.MarkPrimitive(this);
         DesignPaint.Enable(this);
         BackColor = Palette.Surface; Font = Typography.Body; Margin = new Padding(Space.Sm);
         Controls.Add(Content);

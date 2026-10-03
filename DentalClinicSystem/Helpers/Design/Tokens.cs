@@ -44,7 +44,7 @@ public static class Metrics
     public const int FormWidth = 380, ControlRadius = 8, CardRadius = 12, IconSize = 20;
     public const int Border = 1, FocusRing = 2, StatusDot = 6, PressOffset = 1;
     public const int MinimumWidth = 1100, MinimumHeight = 700, DialogWidth = 480, DialogHeight = 320;
-    public const int ToastWidth = 380, ToastHeight = 112, TooltipWidth = 320, KpiHeight = 144;
+    public const int ToastWidth = 380, ToastHeight = 112, TooltipWidth = 320, KpiHeight = 208;
     public const int FieldHeight = 92, AlertHeight = 64, EmptyHeight = 176, SkeletonRowHeight = 36;
     public const int Slide = 24, ExitSlide = 12, Settle = 8, Shake = 6;
     public const int CacheLimit = 128, IdentityHeight = 56, GridHeaderHeight = 40;

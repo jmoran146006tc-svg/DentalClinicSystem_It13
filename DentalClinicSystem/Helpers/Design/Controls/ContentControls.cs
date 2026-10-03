@@ -7,6 +7,7 @@ public sealed class PageHeader : TableLayoutPanel
 {
     public PageHeader(string title, string? subtitle = null, params Control[] actions)
     {
+        Theme.MarkPrimitive(this);
         ColumnCount = 2; RowCount = 1; Dock = DockStyle.Top; Height = Metrics.FieldHeight; BackColor = Palette.Canvas; Margin = new Padding(0, 0, 0, Space.Xl);
         ColumnStyles.Add(new(SizeType.Percent, 100)); ColumnStyles.Add(new(SizeType.AutoSize));
         var copy = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, BackColor = Palette.Canvas };
@@ -21,11 +22,15 @@ public sealed class EmptyState : TableLayoutPanel
 {
     public EmptyState(string title = "No records yet", string message = "Records will appear here when they are added.", IconKind icon = IconKind.Info, Control? action = null)
     {
+        Theme.MarkPrimitive(this);
         ColumnCount = 1; RowCount = 4; Height = Metrics.EmptyHeight; Dock = DockStyle.Fill; BackColor = Palette.Surface; Padding = new Padding(Space.Xl);
+        ColumnStyles.Add(new(SizeType.Percent, 100));
         var illustration = new IconTile(icon) { Anchor = AnchorStyles.None, Size = new(Metrics.NavHeight, Metrics.NavHeight) };
         Controls.Add(illustration, 0, 0);
         Controls.Add(new Label { Text = title, AutoSize = true, Anchor = AnchorStyles.None, Font = Typography.Heading, ForeColor = Palette.Ink900 }, 0, 1);
-        Controls.Add(new Label { Text = message, AutoSize = true, Anchor = AnchorStyles.None, Font = Typography.Caption, ForeColor = Palette.Ink500 }, 0, 2);
+        var caption = new Label { Text = message, AutoSize = true, Anchor = AnchorStyles.None, Font = Typography.Caption, ForeColor = Palette.Ink500, TextAlign = ContentAlignment.MiddleCenter };
+        SizeChanged += (_, _) => caption.MaximumSize = new(Math.Max(1, ClientSize.Width - Padding.Horizontal - Space.Sm), 0);
+        Controls.Add(caption, 0, 2);
         if (action is not null) { action.Anchor = AnchorStyles.None; Controls.Add(action, 0, 3); }
     }
 }
@@ -51,6 +56,8 @@ public sealed class KpiCard : RoundedPanel
     {
         Height = Metrics.KpiHeight; Width = Metrics.FormWidth;
         var copy = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, BackColor = Palette.Surface };
+        copy.RowStyles.Add(new(SizeType.AutoSize)); copy.RowStyles.Add(new(SizeType.Percent, 100)); copy.RowStyles.Add(new(SizeType.AutoSize));
+        _value.MinimumSize = new(0, Typography.KpiNumber.Height + Space.Sm);
         copy.Controls.Add(new Label { Text = title, AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500 }, 0, 0);
         copy.Controls.Add(_value, 0, 1); copy.Controls.Add(new Label { Text = subtitle, AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500 }, 0, 2);
         var tile = new IconTile(icon) { Dock = DockStyle.Right, Width = Metrics.NavHeight };

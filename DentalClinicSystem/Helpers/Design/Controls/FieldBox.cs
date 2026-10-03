@@ -13,14 +13,16 @@ public sealed class FieldBox : Panel
     private Color _border = Palette.LineStrong;
     private float _focus;
     private bool _error;
+    private bool _layingOut;
     public Control Input { get; }
     public FieldBox(Control input, FieldKind kind = FieldKind.Text)
     {
+        Theme.MarkPrimitive(this);
         DesignPaint.Enable(this);
         Input = input; _kind = kind;
         Height = Metrics.ControlHeight; Width = Metrics.FormWidth; TabStop = false; BackColor = Palette.Surface;
         input.Font = Typography.Body; input.ForeColor = Palette.Ink700; input.BackColor = Palette.Surface;
-        input.Dock = DockStyle.None; input.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
+        input.Dock = DockStyle.None; input.Anchor = AnchorStyles.Left | AnchorStyles.Top;
         input.Margin = Padding.Empty;
         _action = new AppButton(string.Empty, ButtonVariant.Ghost, kind == FieldKind.Password ? IconKind.Eye : kind == FieldKind.Choice ? IconKind.ChevronDown : IconKind.Close, ButtonSize.Compact)
         { Width = Metrics.CompactHeight, AccessibleName = kind == FieldKind.Password ? "Show password" : kind == FieldKind.Choice ? "Open choices" : "Clear text", TabStop = kind != FieldKind.Choice };
@@ -38,21 +40,32 @@ public sealed class FieldBox : Panel
         input.LostFocus += (_, _) => AnimateFocus(false);
         _action.Click += (_, _) => ActivateAction();
         SizeChanged += (_, _) => LayoutInput();
+        input.FontChanged += (_, _) => LayoutInput();
+        DpiChangedAfterParent += (_, _) => LayoutInput();
         EnabledChanged += (_, _) => { input.Enabled = Enabled; _action.Enabled = Enabled; AnimateFocus(input.Focused); };
         LayoutInput();
     }
     public static FormField Wrap(Control input, string caption, FieldKind kind = FieldKind.Text) => new(caption, new FieldBox(input, kind));
     private void LayoutInput()
     {
-        if (Input.IsDisposed) return;
+        if (Input.IsDisposed || _layingOut) return;
+        _layingOut = true;
+        try
+        {
+        var inset = Metrics.Scale(this, Space.Sm);
+        var nativeHeight = Input.PreferredSize.Height;
+        MinimumSize = new(0, Math.Max(Metrics.Scale(this, Metrics.ControlHeight), nativeHeight + inset * 2));
+        if (Input is TextBox { Multiline: true }) MinimumSize = new(0, Metrics.Scale(this, Metrics.FieldHeight));
         var leading = _kind == FieldKind.Search ? Metrics.IconSize + Space.Sm : 0;
         var action = _kind is FieldKind.Password or FieldKind.Choice || (_kind == FieldKind.Search && Input.Text.Length > 0);
         _action.Visible = action;
         _action.SetBounds(Math.Max(0, Width - Metrics.CompactHeight - Space.Xs), (Height - Metrics.CompactHeight) / 2, Metrics.CompactHeight, Metrics.CompactHeight);
-        _viewport.SetBounds(Space.Md + leading, Space.Sm, Math.Max(0, Width - Space.Xl - leading - (action ? Metrics.CompactHeight : 0)), Math.Max(0, Height - Space.Lg));
+        _viewport.SetBounds(Metrics.Scale(this, Space.Md) + leading, inset, Math.Max(0, Width - Metrics.Scale(this, Space.Xl) - leading - (action ? Metrics.CompactHeight : 0)), Math.Max(0, Height - inset * 2));
         var nativeExtra = Input is ComboBox ? SystemInformation.VerticalScrollBarWidth + Space.Sm : 0;
         Input.SetBounds(0, Math.Max(0, (_viewport.Height - Input.PreferredSize.Height) / 2), _viewport.Width + nativeExtra, Input is TextBox { Multiline: true } ? _viewport.Height : Input.PreferredSize.Height);
         Invalidate();
+        }
+        finally { _layingOut = false; }
     }
     private void ActivateAction()
     {
@@ -114,9 +127,12 @@ public sealed class FormField : TableLayoutPanel
     public FieldBox Box { get; }
     public FormField(string caption, FieldBox box)
     {
+        Theme.MarkPrimitive(this);
         Box = box; ColumnCount = 1; RowCount = 3; Height = Metrics.FieldHeight; Width = Metrics.FormWidth; BackColor = Palette.Surface;
         Margin = new Padding(0, Space.Sm, 0, Space.Sm);
-        RowStyles.Add(new(SizeType.AutoSize)); RowStyles.Add(new(SizeType.Absolute, Metrics.ControlHeight)); RowStyles.Add(new(SizeType.AutoSize));
+        AutoSize = true; AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        ColumnStyles.Add(new(SizeType.Percent, 100));
+        RowStyles.Add(new(SizeType.AutoSize)); RowStyles.Add(new(SizeType.AutoSize)); RowStyles.Add(new(SizeType.AutoSize));
         var label = new Label { Text = caption, Font = Typography.Label, ForeColor = Palette.Ink500, AutoSize = true, Margin = new Padding(Space.Xs, 0, 0, Space.Xs) };
         box.Input.AccessibleName = caption; box.Dock = DockStyle.Fill;
         Controls.Add(label, 0, 0); Controls.Add(box, 0, 1); Controls.Add(_message, 0, 2);

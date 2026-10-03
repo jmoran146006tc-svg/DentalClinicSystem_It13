@@ -12,7 +12,7 @@ namespace DentalClinicSystem.Forms;
 public sealed class frmStyleGuide : Form
 {
     private readonly FlowLayoutPanel _sections = new() { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Padding = Space.Page, BackColor = Palette.Canvas };
-    private readonly Label _activity = new() { AutoSize = true, ForeColor = Palette.Ink500, Font = Typography.Caption };
+    private readonly Label _activity = new() { Width = Metrics.FormWidth / 2, Height = Metrics.ControlHeight, ForeColor = Palette.Ink500, Font = Typography.Caption };
     public frmStyleGuide()
     {
         Text = "Dental Care — Phase 6 style guide"; Size = Metrics.MinimumWindow; MinimumSize = Metrics.MinimumWindow; BackColor = Palette.Canvas;
@@ -34,7 +34,7 @@ public sealed class frmStyleGuide : Form
     {
         var width = Math.Max(Metrics.FormWidth, _sections.ClientSize.Width - Space.Xxl * 2 - SystemInformation.VerticalScrollBarWidth);
         _sections.SuspendLayout();
-        try { foreach (Control control in _sections.Controls) control.Width = width; }
+        try { foreach (Control control in _sections.Controls) { control.MaximumSize = new(width, 0); control.Width = width; } }
         finally { _sections.ResumeLayout(true); }
     }
     private void Colors()
@@ -94,7 +94,7 @@ public sealed class frmStyleGuide : Form
         components.Controls.Add(UiFactory.Toggle());
         foreach (var level in Enum.GetValues<ElevationLevel>())
         {
-            var card = UiFactory.Card(level.ToString(), level); card.Size = new(Metrics.FormWidth / 2, Metrics.EmptyHeight); components.Controls.Add(card);
+            var card = UiFactory.Card(level.ToString(), level); card.Size = new(Metrics.FormWidth, Metrics.EmptyHeight + Space.Xxxl); components.Controls.Add(card);
         }
         var empty = UiFactory.Card(); empty.Size = new(Metrics.FormWidth, Metrics.EmptyHeight + Space.Xxl); empty.Content.Controls.Add(new EmptyState()); components.Controls.Add(empty);
         var header = new PageHeader("Patients", "Page header", UiFactory.Button("New patient", icon: IconKind.Plus)) { Dock = DockStyle.None, Width = Metrics.FormWidth * 2 }; components.Controls.Add(header);

@@ -5,9 +5,13 @@ namespace DentalClinicSystem.Helpers;
 
 public static class DisplayFormat
 {
+    public const string DatePattern = "MMM d, yyyy";
+    public const string DateTimePattern = "MMM d, yyyy h:mm tt";
     public static string Currency(decimal amount) => $"₱{amount.ToString("N2", CultureInfo.InvariantCulture)}";
     public static string Time(DateTime date) => date.ToString("h:mm tt", CultureInfo.InvariantCulture);
-    public static string Date(DateTime date) => date.ToString("ddd, MMM d, yyyy", CultureInfo.InvariantCulture);
+    public static string Date(DateTime date) => date.ToString(DatePattern, CultureInfo.InvariantCulture);
+    public static string DateTime(DateTime date) => date.ToString(DateTimePattern, CultureInfo.InvariantCulture);
+    public static string ColumnDatePattern(string name) => name.Contains("Time", StringComparison.OrdinalIgnoreCase) ? DateTimePattern : DatePattern;
     public static string RelativeDate(DateTime date, DateTime today) => (date.Date - today.Date).Days switch
     {
         0 => "Today", 1 => "Tomorrow", -1 => "Yesterday", _ => date.ToString("ddd, MMM d", CultureInfo.InvariantCulture)

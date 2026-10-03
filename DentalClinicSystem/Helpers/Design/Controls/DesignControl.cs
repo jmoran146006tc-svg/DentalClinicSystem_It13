@@ -6,6 +6,7 @@ public abstract class DesignControl : Control
 {
     protected DesignControl()
     {
+        Theme.MarkPrimitive(this);
         DesignPaint.Enable(this);
         BackColor = Palette.Surface;
         ForeColor = Palette.Ink700;
