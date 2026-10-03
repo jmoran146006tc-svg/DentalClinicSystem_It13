@@ -1,6 +1,8 @@
 using DentalClinicSystem.Service;
 using DentalClinicSystem.Models;
 using DentalClinicSystem.Helpers;
+using DentalClinicSystem.Helpers.Design.Motion;
+using DentalClinicSystem.Helpers.Native;
 
 namespace DentalClinicSystem.Forms
 {
@@ -15,6 +17,10 @@ namespace DentalClinicSystem.Forms
         private bool _loggingOut;
 
         private readonly AppServices _services;
+        private readonly TransitionHost _transitions;
+#if DEBUG
+        private frmStyleGuide? _styleGuide;
+#endif
 
         public frmDashboard(
             User currentUser,
@@ -30,6 +36,12 @@ namespace DentalClinicSystem.Forms
             _navigationItems = CreateNavigation();
             ConfigureContent();
             ConfigureNavigation();
+            _transitions = new TransitionHost(_contentHost);
+            WindowChrome.Apply(this);
+#if DEBUG
+            KeyPreview = true;
+            KeyDown += OpenStyleGuide;
+#endif
             FormClosed += (_, _) => { if (!_loggingOut) Application.Exit(); };
             Load += (_, _) => Navigate(_navigationItems[0]);
         }
@@ -105,15 +117,17 @@ namespace DentalClinicSystem.Forms
 
         private void ShowPage(Control page)
         {
-            _contentHost.SuspendLayout();
-            try
-            {
-                foreach (Control previous in _contentHost.Controls.Cast<Control>().ToArray()) previous.Dispose();
-                page.Dock = DockStyle.Fill;
-                _contentHost.Controls.Add(page);
-            }
-            finally { _contentHost.ResumeLayout(true); }
+            _transitions.Show(page);
         }
+#if DEBUG
+        private void OpenStyleGuide(object? sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.F12 || !e.Control || !e.Shift) return;
+            e.SuppressKeyPress = true;
+            if (_styleGuide is null || _styleGuide.IsDisposed) _styleGuide = new frmStyleGuide();
+            _styleGuide.Show(this); _styleGuide.Activate();
+        }
+#endif
 
         private void Logout()
         {

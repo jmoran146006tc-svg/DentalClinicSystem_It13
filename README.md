@@ -20,4 +20,8 @@ The scripts are re-runnable but do not migrate existing tables. **`Database/00_R
 
 DEMO ONLY: `admin / admin123`, `reception / reception123`, `drsantos / dentist123`.
 
-The sidebar follows each account's role permissions, highlights the active page, and keeps the welcome header and clock visible during navigation. Admin accounts can open reports with date filters and read-only tables. Expanded dashboards, calendar views, charts, runtime themes and the automated test project remain future work.
+The sidebar follows each account's role permissions, highlights the active page, and keeps the welcome header and clock visible during navigation. Admin accounts can open reports with date filters and read-only tables. Phase 6 adds a shared design system, runtime legacy styling and a DEBUG review window. The new page layouts, expanded dashboards, calendar, charts and automated test project remain future work.
+
+In Debug, press **Ctrl+Shift+F12** on the dashboard to open the style guide. To review it without a database, run `dotnet run --project DentalClinicSystem/DentalClinicSystem.csproj -- --style-guide`. The guide is not included in Release.
+
+Existing Designer layouts are retained; runtime styling (and later runtime reparenting) may differ from the Designer view. Build checks do not verify interactive GUI behavior.

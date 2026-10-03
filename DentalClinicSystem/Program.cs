@@ -2,15 +2,25 @@ using DentalClinicSystem.DBContent;
 using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Service;
+using DentalClinicSystem.Helpers.Design;
+using MotionSystem = DentalClinicSystem.Helpers.Design.Motion.Motion;
 
 namespace DentalClinicSystem
 {
     internal static class Program
     {
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             ApplicationConfiguration.Initialize();
+            Application.ApplicationExit += (_, _) => { MotionSystem.Animator.Dispose(); ShadowCache.Clear(); DesignPaint.ClearPaths(); };
+#if DEBUG
+            if (args.Contains("--style-guide", StringComparer.Ordinal))
+            {
+                Application.Run(new Forms.frmStyleGuide());
+                return;
+            }
+#endif
             using var context = new ApplicationContext();
             using var startupOwner = new Control();
             Application.Idle += Start;
@@ -25,7 +35,7 @@ namespace DentalClinicSystem
                 {
                     if (!await DbConnectionHelper.CanConnectAsync())
                     {
-                        UiMessages.ShowInfo("Could not connect to the database. Make sure MySQL is running and that you have run the scripts in the Database folder (see README), then check the connection settings in DBContent/DbConnectionHelper.cs.");
+                        UiMessages.ShowFatal("Could not connect to the database. Make sure MySQL is running and that you have run the scripts in the Database folder (see README), then check the connection settings in DBContent/DbConnectionHelper.cs.");
                         return;
                     }
                     var login = new frmLogin(BuildServices());

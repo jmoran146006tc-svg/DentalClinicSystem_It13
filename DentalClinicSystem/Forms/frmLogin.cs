@@ -1,6 +1,7 @@
 using DentalClinicSystem.Service;
 using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Forms;
+using DentalClinicSystem.Helpers.Native;
 
 namespace DentalClinicSystem
 {
@@ -14,6 +15,7 @@ namespace DentalClinicSystem
         {
             InitializeComponent();
             _services = services;
+            WindowChrome.Apply(this);
         }
 
         private async Task OnLoginAttempt(string username, string password)
