@@ -64,7 +64,7 @@ public sealed class ReasonDialog : DialogShell
     public ReasonDialog() : base("Cancel appointment", "Confirm cancellation")
     {
         Height = Metrics.DialogHeight + Metrics.FieldHeight;
-        _reasons.Items.AddRange(["Patient request", "Dentist unavailable", "No Show", "Other"]); _reasons.SelectedIndex = 0;
+        _reasons.Items.AddRange(["No Show", "Patient Rescheduled", "Clinic Rescheduled", "Other"]); _reasons.SelectedIndex = 0;
         var fields = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2 };
         var choices = FieldBox.Wrap(_reasons, "Reason", FieldKind.Choice); choices.Dock = DockStyle.Top;
         _other = FieldBox.Wrap(_details, "Details for Other"); _other.Dock = DockStyle.Top; _other.Visible = false;
