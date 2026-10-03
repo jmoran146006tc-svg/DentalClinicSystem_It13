@@ -1,137 +1,86 @@
 using DentalClinicSystem.Service;
 using DentalClinicSystem.Helpers;
+using DentalClinicSystem.Helpers.Design;
+using DentalClinicSystem.Helpers.Design.Controls;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
 
-namespace DentalClinicSystem.Forms
+namespace DentalClinicSystem.Forms;
+
+public partial class ucPatientRecords : UserControl
 {
-    public partial class ucPatientRecords : UserControl
+    private readonly IPatientService _patientService;
+    private readonly User _currentUser;
+    private readonly CrudPageLayout _layout;
+    private readonly AppButton _reactivate = UiFactory.Button("Reactivate", ButtonVariant.Secondary);
+    private IReadOnlyList<Patient> _patients = [];
+    private Patient? _selected;
+    private sealed record PatientRow(int PatientId, string FullName, string ContactNumber, string? Email, DateTime DateOfBirth, string? Address, Patient Record);
+    public ucPatientRecords(IPatientService patientService, User currentUser)
     {
-        private readonly IPatientService _patientService;
-        private readonly User _currentUser;
-        private int? _selectedPatientId;
-
-        public ucPatientRecords(IPatientService patientService, User currentUser)
-        {
-            InitializeComponent();
-            _patientService = patientService;
-            _currentUser = currentUser;
-            btnDelete.Dispose();
-        }
-
-        private async void ucPatientRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, ucPatientRecords_LoadAsync);
-
-        private async Task ucPatientRecords_LoadAsync()
-        {
-            dtpDateOfBirth.MaxDate = DateTime.Today;
-
-            dgvPatients.SelectionChanged += dgvPatients_SelectionChanged;
-            btnAdd.Click += btnAdd_Click;
-            btnUpdate.Click += btnUpdate_Click;
-            btnClear.Click += (_, _) => ClearForm();
-
-            btnAdd.Visible = RoleAccess.Can(_currentUser, Permission.ManagePatients);
-            btnUpdate.Visible = RoleAccess.Can(_currentUser, Permission.ManagePatients);
-
-            btnUpdate.Enabled = false;
-
-            await RefreshGridAsync();
-        }
-
-        private async Task RefreshGridAsync()
-        {
-            var patients = UiMessages.Items(await _patientService.GetAllPatientsAsync(_currentUser));
-            GridHelper.Bind(dgvPatients, patients.ToList());
-
-            if (dgvPatients.Columns["IsActive"] is { } isActiveCol) isActiveCol.Visible = false;
-            if (dgvPatients.Columns["CreatedAt"] is { } createdAtCol) createdAtCol.Visible = false;
-        }
-
-        private void dgvPatients_SelectionChanged(object? sender, EventArgs e)
-        {
-            if (dgvPatients.CurrentRow?.DataBoundItem is not Patient patient)
-                return;
-
-            _selectedPatientId = patient.PatientId;
-            txtFirstName.Text = patient.FirstName;
-            txtLastName.Text = patient.LastName;
-            txtEmail.Text = patient.Email;
-            txtContactNumber.Text = patient.ContactNumber;
-            txtAddress.Text = patient.Address;
-            dtpDateOfBirth.Value = patient.DateOfBirth;
-
-            btnUpdate.Enabled = RoleAccess.Can(_currentUser, Permission.ManagePatients);
-        }
-
-        private async void btnAdd_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnAdd_ClickAsync);
-
-        private async Task btnAdd_ClickAsync()
-        {
-            var patient = new Patient
-            {
-                FirstName = txtFirstName.Text.Trim(),
-                LastName = txtLastName.Text.Trim(),
-                DateOfBirth = dtpDateOfBirth.Value.Date,
-                ContactNumber = txtContactNumber.Text.Trim(),
-                Email = string.IsNullOrWhiteSpace(txtEmail.Text) ? null : txtEmail.Text.Trim(),
-                Address = string.IsNullOrWhiteSpace(txtAddress.Text) ? null : txtAddress.Text.Trim()
-            };
-
-            var result = await _patientService.AddPatientAsync(_currentUser, patient);
-            if (!result.Success)
-            {
-                UiMessages.ShowError(result);
-                return;
-            }
-
-            await RefreshGridAsync();
-            ClearForm();
-        }
-
-        private async void btnUpdate_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, btnUpdate_ClickAsync);
-
-        private async Task btnUpdate_ClickAsync()
-        {
-            if (_selectedPatientId is null)
-            {
-                MessageBox.Show("Select a patient from the grid first.", "No Patient Selected",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            var patient = new Patient
-            {
-                PatientId = _selectedPatientId.Value,
-                FirstName = txtFirstName.Text.Trim(),
-                LastName = txtLastName.Text.Trim(),
-                DateOfBirth = dtpDateOfBirth.Value.Date,
-                ContactNumber = txtContactNumber.Text.Trim(),
-                Email = string.IsNullOrWhiteSpace(txtEmail.Text) ? null : txtEmail.Text.Trim(),
-                Address = string.IsNullOrWhiteSpace(txtAddress.Text) ? null : txtAddress.Text.Trim()
-            };
-
-            var result = await _patientService.UpdatePatientAsync(_currentUser, patient);
-            if (!result.Success)
-            {
-                UiMessages.ShowError(result);
-                return;
-            }
-
-            await RefreshGridAsync();
-            ClearForm();
-        }
-
-        private void ClearForm()
-        {
-            _selectedPatientId = null;
-            txtFirstName.Clear();
-            txtLastName.Clear();
-            txtEmail.Clear();
-            txtContactNumber.Clear();
-            txtAddress.Clear();
-            dtpDateOfBirth.Value = DateTime.Today;
-            dgvPatients.ClearSelection();
-            btnUpdate.Enabled = false;
-        }
+        InitializeComponent(); _patientService = patientService; _currentUser = currentUser; btnDelete.Dispose();
+        _layout = new(this, "Patients", "patient", "Contact details and patient records", dgvPatients, btnAdd, btnClear, ClearForm);
+        txtAddress.Multiline = true;
+        _layout.AddRow(UiFactory.Field(txtFirstName, "First name"), UiFactory.Field(txtLastName, "Last name"));
+        _layout.AddRow(UiFactory.Field(txtContactNumber, "Contact"), UiFactory.Field(txtEmail, "Email"));
+        _layout.AddRow(UiFactory.Field(dtpDateOfBirth, "Date of birth", FieldKind.Date));
+        _layout.AddRow(UiFactory.Field(txtAddress, "Address"));
+        dtpDateOfBirth.MaxDate = DateTime.Today; dtpDateOfBirth.Format = DateTimePickerFormat.Custom; dtpDateOfBirth.CustomFormat = DisplayFormat.DatePattern;
+        InputRules.ApplyMaxLengths((txtFirstName, FieldLimits.Name), (txtLastName, FieldLimits.Name), (txtContactNumber, FieldLimits.ContactNumber), (txtEmail, FieldLimits.Email), (txtAddress, FieldLimits.Address));
+        txtContactNumber.KeyPress += InputRules.PhoneKeyPress;
+        _layout.Toolbar.Controls.Add(_layout.ShowInactive);
+        _layout.ShowInactive.Visible = RoleAccess.Can(currentUser, Permission.ManagePatients);
+        _layout.ShowInactive.CheckedChanged += async (_, _) => await UiAction.RunAsync(this, RefreshGridAsync);
+        _layout.Search.TextChanged += (_, _) => BindRows();
+        _reactivate.Visible = false; _layout.Actions.Controls.Add(_reactivate);
+        _reactivate.Click += async (_, _) => await UiAction.RunAsync(this, ReactivateAsync);
+        dgvPatients.SelectionChanged += SelectionChanged;
+        GridTheme.MuteInactive<PatientRow>(dgvPatients, row => !row.Record.IsActive);
+        btnAdd.Click += async (_, _) => await UiAction.RunAsync(this, SaveAsync);
+        btnClear.Click += (_, _) => ClearForm();
+        _layout.FormCard.Visible = _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManagePatients);
+        if (!RoleAccess.Can(currentUser, Permission.ViewPatients)) Enabled = false;
+    }
+    private async void ucPatientRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, RefreshGridAsync);
+    private async Task RefreshGridAsync()
+    {
+        var result = _layout.ShowInactive.Checked ? await _patientService.GetAllIncludingInactiveAsync(_currentUser) : await _patientService.GetAllPatientsAsync(_currentUser);
+        _patients = UiMessages.Items(result); if (!IsDisposed) BindRows();
+    }
+    private void BindRows()
+    {
+        var rows = PatientFilter.Apply(_patients, _layout.Search.Text, _layout.ShowInactive.Checked)
+            .Select(p => new PatientRow(p.PatientId, p.FullName, p.ContactNumber, p.Email, p.DateOfBirth, p.Address, p));
+        GridHelper.Bind(dgvPatients, rows, row => row.PatientId, "No patients match your search.", "PatientId", "Record");
+        ClearForm();
+    }
+    private void SelectionChanged(object? sender, EventArgs e)
+    {
+        if (dgvPatients.SelectedRows.Count == 0 || dgvPatients.CurrentRow?.DataBoundItem is not PatientRow row) return;
+        _selected = row.Record; txtFirstName.Text = _selected.FirstName; txtLastName.Text = _selected.LastName;
+        txtContactNumber.Text = _selected.ContactNumber; txtEmail.Text = _selected.Email; txtAddress.Text = _selected.Address;
+        InputRules.SetDate(dtpDateOfBirth, _selected.DateOfBirth); _layout.SetEditing(true); _reactivate.Visible = !_selected.IsActive;
+    }
+    private async Task SaveAsync()
+    {
+        var patient = new Patient { PatientId = _selected?.PatientId ?? 0, FirstName = txtFirstName.Text.Trim(), LastName = txtLastName.Text.Trim(), ContactNumber = txtContactNumber.Text.Trim(),
+            Email = InputRules.NullIfBlank(txtEmail.Text), Address = InputRules.NullIfBlank(txtAddress.Text), DateOfBirth = dtpDateOfBirth.Value.Date };
+        var result = _selected is null ? await _patientService.AddPatientAsync(_currentUser, patient) : await _patientService.UpdatePatientAsync(_currentUser, patient);
+        if (!result.Success) { UiMessages.ShowError(result); return; }
+        await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("Patient saved.");
+        var saved = _patients.Where(p => p.FullName == patient.FullName && p.ContactNumber == patient.ContactNumber).MaxBy(p => p.PatientId);
+        if (saved is not null) GridHelper.FlashRow(dgvPatients, patient.PatientId > 0 ? patient.PatientId : saved.PatientId);
+    }
+    private async Task ReactivateAsync()
+    {
+        if (_selected is not { IsActive: false } patient) return;
+        var result = await _patientService.ReactivatePatientAsync(_currentUser, patient.PatientId);
+        if (!result.Success) { UiMessages.ShowError(result); return; }
+        await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("Patient reactivated."); GridHelper.FlashRow(dgvPatients, patient.PatientId);
+    }
+    private void ClearForm()
+    {
+        _selected = null; txtFirstName.Clear(); txtLastName.Clear(); txtContactNumber.Clear(); txtEmail.Clear(); txtAddress.Clear();
+        dtpDateOfBirth.Value = DateTime.Today; dgvPatients.ClearSelection(); _reactivate.Visible = false; _layout?.SetEditing(false); _layout?.Alert.Dismiss();
     }
 }

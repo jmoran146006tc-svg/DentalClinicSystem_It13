@@ -20,6 +20,7 @@ public sealed class FieldBox : Panel
         Theme.MarkPrimitive(this);
         DesignPaint.Enable(this);
         Input = input; _kind = kind;
+        input.Visible = true;
         Height = Metrics.ControlHeight; Width = Metrics.FormWidth; TabStop = false; BackColor = Palette.Surface;
         input.Font = Typography.Body; input.ForeColor = Palette.Ink700; input.BackColor = Palette.Surface;
         input.Dock = DockStyle.None; input.Anchor = AnchorStyles.Left | AnchorStyles.Top;

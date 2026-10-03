@@ -15,6 +15,7 @@ public static class GridTheme
         public Func<object, object>? Key { get; set; }
         public Dictionary<object, float> Flashes { get; } = [];
         public Dictionary<string, Func<object, (string Name, string Detail)>> Identities { get; } = [];
+        public Func<object, bool>? Inactive { get; set; }
     }
     private static readonly ConditionalWeakTable<DataGridView, State> States = new();
     public static void Apply(DataGridView grid)
@@ -52,6 +53,7 @@ public static class GridTheme
         state.Empty.BringToFront();
     }
     public static void SetKey(DataGridView grid, Func<object, object> selector) { Apply(grid); States.GetValue(grid, _ => new State()).Key = selector; }
+    public static void MuteInactive<T>(DataGridView grid, Func<T, bool> inactive) { Apply(grid); States.GetValue(grid, _ => new State()).Inactive = item => inactive((T)item); }
     public static void IdentityColumn(DataGridView grid, string column, Func<object, (string Name, string Detail)> identity)
     {
         Apply(grid); States.GetValue(grid, _ => new State()).Identities[column] = identity;
@@ -84,9 +86,10 @@ public static class GridTheme
         var fill = row.Selected ? Palette.BrandSoft : state.Hover == e.RowIndex ? Palette.SurfaceAlt : Palette.Surface;
         if (!row.Selected && data is not null && state.Key is not null && state.Flashes.TryGetValue(state.Key(data), out var flash)) fill = Theme.Lerp(fill, Palette.BrandSoft, flash);
         using var brush = new SolidBrush(fill); graphics.FillRectangle(brush, e.CellBounds);
-        if (name == "Status")
+        if (data is not null && state.Inactive?.Invoke(data) == true) e.CellStyle!.ForeColor = Palette.Ink400;
+        if (name is "Status" or "Role")
         {
-            var status = e.FormattedValue?.ToString() ?? string.Empty; var style = Theme.StatusStyle(status);
+            var status = e.FormattedValue?.ToString() ?? string.Empty; var style = name == "Role" ? Palette.Neutral : Theme.StatusStyle(status);
             var width = Math.Min(e.CellBounds.Width - Space.Xl, TextRenderer.MeasureText(status, Typography.Label).Width + Space.Xxl);
             var pill = new Rectangle(e.CellBounds.Left + Space.Md, e.CellBounds.Top + Space.Sm, Math.Max(0, width), Math.Max(0, e.CellBounds.Height - Space.Lg));
             DesignPaint.Surface(graphics, pill, pill.Height / 2f, style.Background);
