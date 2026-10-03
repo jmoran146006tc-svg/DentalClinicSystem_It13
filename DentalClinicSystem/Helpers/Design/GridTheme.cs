@@ -72,6 +72,9 @@ public static class GridTheme
     private static void FormatCell(DataGridView grid, DataGridViewCellFormattingEventArgs e)
     {
         if (e.ColumnIndex < 0) return;
+        var columnName = grid.Columns[e.ColumnIndex].Name;
+        if (columnName == "ContactNumber") { e.Value = DisplayFormat.Phone(e.Value?.ToString()); e.FormattingApplied = true; }
+        else if (e.Value is null || e.Value is string text && string.IsNullOrWhiteSpace(text)) { e.Value = "n/a"; e.CellStyle.ForeColor = Palette.Ink500; e.FormattingApplied = true; }
         if (e.Value is DateTime date)
         {
             var name = grid.Columns[e.ColumnIndex].Name;
@@ -101,8 +104,9 @@ public static class GridTheme
             var (person, detail) = identity(data);
             Avatar.Draw(graphics, new(e.CellBounds.Left + Space.Sm, e.CellBounds.Top + Space.Xs, Metrics.NavHeight, Metrics.NavHeight), person);
             var left = e.CellBounds.Left + Metrics.NavHeight + Space.Lg;
-            TextRenderer.DrawText(graphics, person, Typography.Label, new Rectangle(left, e.CellBounds.Top + Space.Xs, Math.Max(0, e.CellBounds.Right - left - Space.Sm), Metrics.CompactHeight - Space.Sm), Palette.Ink900, DesignPaint.TextFlags);
-            TextRenderer.DrawText(graphics, detail, Typography.Caption, new Rectangle(left, e.CellBounds.Top + Metrics.CompactHeight - Space.Xs, Math.Max(0, e.CellBounds.Right - left - Space.Sm), Space.Xl), Palette.Ink500, DesignPaint.TextFlags);
+            var inactive = state.Inactive?.Invoke(data) == true;
+            TextRenderer.DrawText(graphics, person, Typography.Label, new Rectangle(left, e.CellBounds.Top + Space.Xs, Math.Max(0, e.CellBounds.Right - left - Space.Sm), Metrics.CompactHeight - Space.Sm), inactive ? Palette.Ink400 : Palette.Ink900, DesignPaint.TextFlags);
+            TextRenderer.DrawText(graphics, detail, Typography.Caption, new Rectangle(left, e.CellBounds.Top + Metrics.CompactHeight - Space.Xs, Math.Max(0, e.CellBounds.Right - left - Space.Sm), Space.Xl), inactive ? Palette.Ink400 : Palette.Ink500, DesignPaint.TextFlags);
         }
         else e.Paint(e.CellBounds, DataGridViewPaintParts.ContentForeground | DataGridViewPaintParts.Border | DataGridViewPaintParts.ErrorIcon);
         e.Handled = true;

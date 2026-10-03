@@ -60,8 +60,11 @@ public sealed class KpiCard : RoundedPanel
         _value.MinimumSize = new(0, Typography.KpiNumber.Height + Space.Sm);
         copy.Controls.Add(new Label { Text = title, AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500 }, 0, 0);
         copy.Controls.Add(_value, 0, 1); copy.Controls.Add(new Label { Text = subtitle, AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500 }, 0, 2);
-        var tile = new IconTile(icon) { Dock = DockStyle.Right, Width = Metrics.NavHeight };
+        var tile = new IconTile(icon) { Anchor = AnchorStyles.Top | AnchorStyles.Left };
+        copy.Padding = new Padding(0, 0, Metrics.NavHeight + Space.Sm, 0);
+        Content.SizeChanged += (_, _) => tile.Location = new(Math.Max(0, Content.ClientSize.Width - tile.Width), 0);
         Content.Controls.Add(copy); Content.Controls.Add(tile);
+        tile.Location = new(Math.Max(0, Content.ClientSize.Width - tile.Width), 0); tile.BringToFront();
         MouseEnter += (_, _) => Elevation = ElevationLevel.E2;
         MouseLeave += (_, _) => Elevation = ElevationLevel.E1;
     }

@@ -27,17 +27,18 @@ public partial class ucDentistRecords : UserControl
         btnDelete.Text = "Deactivate"; btnDelete.Visible = true; btnDelete.Height = Metrics.ControlHeight; ButtonStyler.Attach(btnDelete, ButtonVariant.Danger);
         _layout.Actions.Controls.Add(btnDelete);
         dgvDentists.SelectionChanged += SelectionChanged; _layout.Search.TextChanged += (_, _) => BindRows();
-        btnAdd.Click += async (_, _) => await UiAction.RunAsync(this, SaveAsync); btnClear.Click += (_, _) => ClearForm();
-        btnDelete.Click += async (_, _) => await UiAction.RunAsync(this, DeactivateAsync);
+        btnAdd.Click += async (_, _) => await UiAction.RunAsync(this, SaveAsync, btnAdd); btnClear.Click += (_, _) => ClearForm();
+        btnDelete.Click += async (_, _) => await UiAction.RunAsync(this, DeactivateAsync, btnDelete);
         Enabled = RoleAccess.Can(currentUser, Permission.ManageDentists); ClearForm();
     }
-    private async void ucDentistRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, RefreshGridAsync);
+    private async void ucDentistRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await RefreshGridAsync(); });
     private async Task RefreshGridAsync() { _dentists = UiMessages.Items(await _dentistService.GetAllDentistsAsync(_currentUser)); if (!IsDisposed) BindRows(); }
     private void BindRows()
     {
         var rows = _dentists.Where(d => new[] { d.FullName, d.Specialization ?? "", d.ContactNumber ?? "", d.LicenseNumber ?? "" }.Any(v => v.Contains(_layout.Search.Text.Trim(), StringComparison.OrdinalIgnoreCase)))
             .Select(d => new DentistRow(d.DentistId, d.FullName, d.Specialization, d.ContactNumber, d.LicenseNumber, d));
-        GridHelper.Bind(dgvDentists, rows, row => row.DentistId, "No dentists match your search.", "DentistId", "Record"); ClearForm();
+        GridHelper.Bind(dgvDentists, rows, row => row.DentistId, "No dentists match your search.", "DentistId", "Record");
+        GridHelper.IdentityColumn<DentistRow>(dgvDentists, "Name", row => (row.Name, row.Specialization ?? "Dentist")); ClearForm();
     }
     private void SelectionChanged(object? sender, EventArgs e)
     {

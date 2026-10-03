@@ -90,12 +90,14 @@ public static class ButtonStyler
         var text = state.Busy && button is AppButton app ? app.BusyText : button.Text;
         var width = text.Length == 0 ? Metrics.Scale(button, Metrics.CompactHeight)
             : TextRenderer.MeasureText(text, button.Font).Width + Metrics.Scale(button, Space.Lg * 2 + Metrics.FocusRing * 2) + iconWidth;
+        if (button.Text.Length > 0)
+            width = Math.Max(width, TextRenderer.MeasureText(BusyLabel(state), button.Font).Width + Metrics.Scale(button, Space.Lg * 2 + Metrics.FocusRing * 2 + Metrics.IconSize + Space.Sm));
         button.MinimumSize = new(Math.Max(state.OriginalMinimum, width), button.MinimumSize.Height);
         if (button.Width < button.MinimumSize.Width) button.Width = button.MinimumSize.Width;
     }
     private static void Change(State state)
     {
-        var fill = !state.Button.Enabled ? Palette.SurfaceAlt : state.Variant switch
+        var fill = !state.Button.Enabled && !state.Busy ? Palette.SurfaceAlt : state.Variant switch
         {
             ButtonVariant.Primary => state.Pressed ? Palette.BrandPressed : state.Hover ? Palette.BrandHover : Palette.Brand,
             ButtonVariant.Danger => state.Pressed ? Theme.Lerp(Palette.Danger.Text, Palette.Ink900, .2f) : state.Hover ? Theme.Lerp(Palette.Danger.Text, Palette.Ink900, .1f) : Palette.Danger.Text,
@@ -113,9 +115,12 @@ public static class ButtonStyler
     {
         if (!States.TryGetValue(button, out var state)) return;
         state.Busy = busy;
-        Measure(state); button.Invalidate();
+        Measure(state); Change(state); button.Invalidate();
         if (busy) StartSpinner(state); else MotionSystem.Animator.Cancel(button, "button-spinner");
     }
+    public static bool IsBusy(Button button) => States.TryGetValue(button, out var state) && state.Busy;
+    private static string BusyLabel(State state) => state.Button is AppButton app ? app.BusyText
+        : state.Button.Name == "btnLogin" ? "Signing in…" : state.Button.Name == "btnSchedule" ? "Scheduling…" : "Saving…";
     private static void StartSpinner(State state) => MotionSystem.Animator.Loop(state.Button, "button-spinner", MotionSystem.SpinnerPeriod, t => { state.Phase = t; state.Button.Invalidate(); });
     private static void Draw(State state, Graphics graphics)
     {
@@ -126,7 +131,7 @@ public static class ButtonStyler
         bounds.Inflate(-Metrics.FocusRing, -Metrics.FocusRing);
         var radius = Metrics.Scale(button, Metrics.ControlRadius);
         DesignPaint.Surface(graphics, bounds, radius, state.Fill, state.Variant == ButtonVariant.Secondary ? state.Border : null);
-        if (button.Enabled && state.Variant is ButtonVariant.Primary or ButtonVariant.Danger && bounds.Height > 0)
+        if ((button.Enabled || state.Busy) && state.Variant is ButtonVariant.Primary or ButtonVariant.Danger && bounds.Height > 0)
         {
             using var path = DesignPaint.RoundedRect(bounds, radius);
             using var gradient = new LinearGradientBrush(bounds, Theme.Lerp(state.Fill, Palette.Surface, .03f), state.Fill, LinearGradientMode.Vertical);
@@ -140,7 +145,7 @@ public static class ButtonStyler
             using var pen = new Pen(Palette.WithAlpha(Palette.BrandAccent, .4f * state.Focus), Metrics.FocusRing);
             graphics.DrawPath(pen, ring);
         }
-        var textColor = !button.Enabled ? Palette.Ink400 : state.Variant is ButtonVariant.Primary or ButtonVariant.Danger ? Palette.Surface : state.Hover ? Palette.BrandSoftText : Palette.Ink700;
+        var textColor = !button.Enabled && !state.Busy ? Palette.Ink400 : state.Variant is ButtonVariant.Primary or ButtonVariant.Danger ? Palette.Surface : state.Hover ? Palette.BrandSoftText : Palette.Ink700;
         var content = Rectangle.Inflate(bounds, -Metrics.Scale(button, button.Text.Length == 0 ? Space.Xs : Space.Lg), -Space.Xs);
         content.Offset(0, (int)Math.Round(state.Offset));
         if (state.Icon.HasValue || state.Busy)
@@ -150,7 +155,7 @@ public static class ButtonStyler
             else if (state.Icon is IconKind kind) Icons.Draw(graphics, kind, iconBounds, textColor);
             content.X += Metrics.IconSize + Space.Sm; content.Width -= Metrics.IconSize + Space.Sm;
         }
-        var text = state.Busy && button is AppButton app ? app.BusyText : button.Text;
+        var text = state.Busy ? BusyLabel(state) : button.Text;
         TextRenderer.DrawText(graphics, text, button.Font, content, textColor, DesignPaint.TextFlags | TextFormatFlags.HorizontalCenter);
     }
 }

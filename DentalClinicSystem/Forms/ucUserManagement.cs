@@ -27,13 +27,13 @@ public partial class ucUserManagement : UserControl
         cboRole.Items.Clear(); cboRole.Items.AddRange([Roles.Admin, Roles.Receptionist, Roles.Dentist]);
         cboRole.SelectedIndexChanged += (_, _) => cboDentist.Enabled = RoleAccess.RequiresDentist(cboRole.SelectedItem as string ?? "");
         btnDeactivate.Text = "Deactivate"; btnDeactivate.Visible = true; btnDeactivate.Height = Metrics.ControlHeight; ButtonStyler.Attach(btnDeactivate, ButtonVariant.Danger); _layout.Actions.Controls.Add(btnDeactivate);
-        btnAdd.Click += async (_, _) => await UiAction.RunAsync(this, SaveAsync); btnClear.Click += (_, _) => ClearForm();
-        btnDeactivate.Click += async (_, _) => await UiAction.RunAsync(this, DeactivateAsync);
+        btnAdd.Click += async (_, _) => await UiAction.RunAsync(this, SaveAsync, btnAdd); btnClear.Click += (_, _) => ClearForm();
+        btnDeactivate.Click += async (_, _) => await UiAction.RunAsync(this, DeactivateAsync, btnDeactivate);
         dgvUsers.SelectionChanged += SelectionChanged; _layout.Search.TextChanged += (_, _) => BindRows();
         GridTheme.MuteInactive<UserRow>(dgvUsers, row => !row.IsActive);
         Enabled = RoleAccess.Can(currentUser, Permission.ManageUsers); ClearForm();
     }
-    private async void ucUserManagement_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, LoadAsync);
+    private async void ucUserManagement_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await LoadAsync(); });
     private async Task LoadAsync()
     {
         var dentists = UiMessages.Items(await _dentistService.GetAllDentistsAsync(_currentUser));
@@ -47,7 +47,8 @@ public partial class ucUserManagement : UserControl
     {
         var rows = _users.Where(u => new[] { u.Username, u.Role }.Any(v => v.Contains(_layout.Search.Text.Trim(), StringComparison.OrdinalIgnoreCase)))
             .Select(u => new UserRow(u.UserId, u.Username, u.Role, u.DentistId is int id ? _dentistNames.GetValueOrDefault(id, "Unlinked") : "n/a", u.IsActive, u));
-        GridHelper.Bind(dgvUsers, rows, row => row.UserId, "No users match your search.", "UserId", "Record"); ClearForm();
+        GridHelper.Bind(dgvUsers, rows, row => row.UserId, "No users match your search.", "UserId", "Record");
+        GridHelper.IdentityColumn<UserRow>(dgvUsers, "Username", row => (row.Username, row.IsActive ? "Active account" : "Inactive account")); ClearForm();
     }
     private void SelectionChanged(object? sender, EventArgs e)
     {

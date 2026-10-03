@@ -21,12 +21,16 @@ namespace DentalClinicSystem.Helpers
         public static void ShowError(ServiceResult result)
         {
             var page = Current.Value;
-            if (page is { IsDisposed: false } && Alerts.TryGetValue(page, out var alert) && !alert.IsDisposed) alert.ShowMessage(result.ErrorMessage);
+            if (page is { IsDisposed: false } && Alerts.TryGetValue(page, out var alert) && !alert.IsDisposed)
+            {
+                alert.ShowMessage(result.ErrorMessage);
+                if (alert.Parent is { } formBody) Design.Motion.Motion.Shake(formBody);
+            }
             else Feedback(result.ErrorMessage, Semantic.Danger);
         }
         public static void ShowSuccess(string text) => Feedback(text, Semantic.Success);
         public static void ShowInfo(string text) => Feedback(text, Semantic.Info);
-        public static void ShowUnexpectedError() => Feedback("The action could not be completed. Check the database connection and try again.", Semantic.Danger);
+        public static void ShowUnexpectedError() => ShowError(ServiceResult.Fail("The action could not be completed. Check the database connection and try again."));
         public static void ShowFatal(string text) => MessageBox.Show(text, "Dental clinic", MessageBoxButtons.OK, MessageBoxIcon.Error);
         private static Form? Owner() => Current.Value?.FindForm() ?? Form.ActiveForm ?? Application.OpenForms.Cast<Form>().FirstOrDefault(form => form.Visible);
         private static void Feedback(string text, Semantic semantic)

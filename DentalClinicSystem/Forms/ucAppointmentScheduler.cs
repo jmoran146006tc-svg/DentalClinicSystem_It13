@@ -53,7 +53,7 @@ public partial class ucAppointmentScheduler : UserControl
         Enabled = RoleAccess.Can(currentUser, Permission.ViewAppointments);
         ClearForm();
     }
-    private async void ucAppointmentScheduler_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, LoadAsync);
+    private async void ucAppointmentScheduler_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await LoadAsync(); });
     private async Task LoadAsync()
     {
         if (RoleAccess.Can(_currentUser, Permission.ManageAppointments))
@@ -91,6 +91,7 @@ public partial class ucAppointmentScheduler : UserControl
         var rows = filtered.Select(a => new AppointmentRow(a.AppointmentId, _patientNamesById.GetValueOrDefault(a.PatientId, $"Patient #{a.PatientId}"),
             _dentistNamesById.GetValueOrDefault(a.DentistId, $"Dentist #{a.DentistId}"), a.AppointmentDateTime, a.Reason, a.Status, a));
         GridHelper.Bind(dgvAppointments, rows, row => row.AppointmentId, RoleAccess.IsDentist(_currentUser) && _currentUser.DentistId is null ? "Your account has no linked dentist. Ask an Admin to link it." : "No appointments match these filters.", "AppointmentId", "Record");
+        GridHelper.IdentityColumn<AppointmentRow>(dgvAppointments, "Patient", row => (row.Patient, row.Reason ?? "Appointment"));
         _details.Enabled = false;
     }
     private async void AvailabilityChanged(object? sender, EventArgs e)
@@ -112,7 +113,7 @@ public partial class ucAppointmentScheduler : UserControl
         if (cboDentist.SelectedItem is DisplayOption { Busy: true }) _layout.Alert.ShowMessage("This dentist already has an appointment at that time. Choose another time or dentist.", Semantic.Warning);
         else _layout.Alert.Dismiss();
     }
-    private async void btnSchedule_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, ScheduleAsync);
+    private async void btnSchedule_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, ScheduleAsync, btnSchedule);
     private async Task ScheduleAsync()
     {
         if (cboPatient.SelectedValue is not int patientId || cboDentist.SelectedValue is not int dentistId) { UiMessages.ShowError(ServiceResult.Fail("Pick a patient and a dentist first.")); return; }

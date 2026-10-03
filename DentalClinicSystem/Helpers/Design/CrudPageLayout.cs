@@ -10,6 +10,9 @@ public sealed class CrudPageLayout
     private readonly Label _title;
     private readonly TableLayoutPanel _fields = new() { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2, BackColor = Palette.Surface };
     private int _row;
+    private readonly List<Control> _inputs = [];
+    private readonly Panel _gridContent;
+    private bool _loaded;
     public FlowLayoutPanel Toolbar { get; }
     public InlineAlert Alert { get; } = new() { Visible = false, Dock = DockStyle.Fill };
     public RoundedPanel FormCard { get; }
@@ -33,7 +36,7 @@ public sealed class CrudPageLayout
         root.Controls.Add(Toolbar, 0, 1);
         var gridCard = UiFactory.Card(); grid.Visible = true; grid.Dock = DockStyle.Fill;
         grid.ReadOnly = true; grid.AllowUserToAddRows = false; grid.AllowUserToDeleteRows = false; grid.MultiSelect = false;
-        GridTheme.Apply(grid); gridCard.Content.Controls.Add(grid);
+        GridTheme.Apply(grid); gridCard.Content.Controls.Add(grid); _gridContent = gridCard.Content;
         FormCard = UiFactory.Card(); FormCard.Content.AutoScroll = true;
         _title = new Label { Text = $"New {singular}", Font = Typography.Heading, ForeColor = Palette.Ink900, AutoSize = true, Margin = new Padding(0, 0, 0, Space.Lg) };
         _fields.ColumnStyles.Add(new(SizeType.Percent, 50)); _fields.ColumnStyles.Add(new(SizeType.Percent, 50));
@@ -48,15 +51,60 @@ public sealed class CrudPageLayout
         root.Controls.Add(new ResponsiveSplit(gridCard, FormCard, () => formBody.PreferredSize.Height + FormCard.Padding.Vertical + Space.Xl), 0, 2);
         page.Controls.Add(root); root.BringToFront(); UiMessages.RegisterAlertHost(page, Alert);
         var keys = new KeyboardShortcuts(page); keys.Register(Keys.Control | Keys.F, () => Search.Focus());
-        keys.Register(Keys.Control | Keys.N, () => NewButton.PerformClick()); keys.Register(Keys.Control | Keys.S, save.PerformClick); keys.Register(Keys.Escape, clearForm);
+        keys.Register(Keys.Control | Keys.N, () => NewButton.PerformClick()); keys.Register(Keys.Control | Keys.S, save.PerformClick);
+        keys.Register(Keys.Escape, () => { if (Search.ContainsFocus) Search.Clear(); else clearForm(); });
+        keys.RegisterEnterNavigation(_inputs, save.PerformClick);
+        Tooltips.Attach(NewButton, "New record · Ctrl+N"); Tooltips.Attach(save, "Save · Ctrl+S"); Tooltips.Attach(Search, "Search · Ctrl+F; Esc to clear");
         page.ResumeLayout(true);
     }
     public void AddRow(params FormField[] fields)
     {
+        _inputs.AddRange(fields.Select(field => field.Box.Input));
         foreach (var field in fields) { field.Dock = DockStyle.Fill; field.Margin = new Padding(0, Space.Xs, fields.Length > 1 ? Space.Sm : 0, Space.Sm); }
         for (var col = 0; col < fields.Length; col++) _fields.Controls.Add(fields[col], col, _row);
         if (fields.Length == 1) _fields.SetColumnSpan(fields[0], 2);
         _fields.RowStyles.Add(new(SizeType.AutoSize)); _row++;
+    }
+    public IDisposable Loading()
+    {
+        if (_loaded) return new LoadScope(() => { });
+        _loaded = true; var skeleton = new Skeleton { Dock = DockStyle.Fill };
+        _gridContent.Controls.Add(skeleton); skeleton.BringToFront();
+        return new LoadScope(() => Reveal(skeleton));
+    }
+    private sealed class LoadScope(Action finish) : IDisposable { public void Dispose() => finish(); }
+    private void Reveal(Skeleton skeleton)
+    {
+        Bitmap? previous = null; Bitmap? next = null;
+        try
+        {
+            if (_gridContent.IsDisposed || !_gridContent.Visible || _gridContent.FindForm()?.WindowState == FormWindowState.Minimized || !Motion.Motion.Enabled || _gridContent.Width <= 0 || _gridContent.Height <= 0) return;
+            previous = new(_gridContent.Width, _gridContent.Height); _gridContent.DrawToBitmap(previous, _gridContent.ClientRectangle);
+            skeleton.Dispose(); next = new(_gridContent.Width, _gridContent.Height); _gridContent.DrawToBitmap(next, _gridContent.ClientRectangle);
+            var reveal = new RecordReveal(previous, next) { Dock = DockStyle.Fill }; previous = next = null;
+            _gridContent.Controls.Add(reveal); reveal.BringToFront();
+            if (reveal.FindForm() is { } form)
+            {
+                EventHandler minimized = (_, _) => { if (form.WindowState == FormWindowState.Minimized) reveal.Dispose(); };
+                form.Resize += minimized; reveal.Disposed += (_, _) => form.Resize -= minimized;
+            }
+            Motion.Motion.Animator.Run(reveal, "records-reveal", 0, 1, Motion.Motion.Fast, Motion.Easing.EaseOutCubic, value => { reveal.Progress = value; reveal.Invalidate(); }, reveal.Dispose);
+        }
+        catch (Exception error) { AppLog.Write(error); }
+        finally { skeleton.Dispose(); previous?.Dispose(); next?.Dispose(); }
+    }
+    private sealed class RecordReveal(Bitmap previous, Bitmap next) : DesignControl
+    {
+        [System.ComponentModel.DefaultValue(0f)] public float Progress { get; set; }
+        protected override void OnVisibleChanged(EventArgs e) { base.OnVisibleChanged(e); if (!Visible && !Disposing && !IsDisposed) Dispose(); }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            e.Graphics.DrawImage(next, ClientRectangle);
+            using var attributes = new System.Drawing.Imaging.ImageAttributes();
+            attributes.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix { Matrix33 = Math.Clamp(1 - Progress, 0, 1) });
+            e.Graphics.DrawImage(previous, ClientRectangle, 0, 0, previous.Width, previous.Height, GraphicsUnit.Pixel, attributes);
+        }
+        protected override void Dispose(bool disposing) { if (disposing) { previous.Dispose(); next.Dispose(); } base.Dispose(disposing); }
     }
     public void SetEditing(bool editing)
     {

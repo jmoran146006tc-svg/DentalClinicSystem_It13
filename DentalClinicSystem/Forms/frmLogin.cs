@@ -4,6 +4,8 @@ using DentalClinicSystem.Forms;
 using DentalClinicSystem.Helpers.Native;
 using DentalClinicSystem.Helpers.Design;
 using DentalClinicSystem.Helpers.Design.Controls;
+using DentalClinicSystem.Helpers.Design.Motion;
+using MotionSystem = DentalClinicSystem.Helpers.Design.Motion.Motion;
 
 namespace DentalClinicSystem
 {
@@ -45,7 +47,7 @@ namespace DentalClinicSystem
             txtPassword.KeyUp += (_, _) => caps.Visible = Control.IsKeyLocked(Keys.CapsLock);
             txtPassword.GotFocus += (_, _) => caps.Visible = Control.IsKeyLocked(Keys.CapsLock);
             _formColumn.Controls.Add(caps); _formColumn.Controls.Add(_alert);
-            btnLogin.Text = "Sign in"; btnLogin.Dock = DockStyle.None; btnLogin.Size = new(Metrics.LoginFormWidth, Metrics.ControlHeight); btnLogin.TabIndex = 2;
+            btnLogin.Text = "Sign in"; btnLogin.Dock = DockStyle.None; btnLogin.Margin = Padding.Empty; _alert.Margin = Padding.Empty; btnLogin.Size = new(Metrics.LoginFormWidth, Metrics.ControlHeight); btnLogin.TabIndex = 2;
             ButtonStyler.Attach(btnLogin, ButtonVariant.Primary); _formColumn.Controls.Add(btnLogin);
             right.Controls.Add(_formColumn);
             void Center() { _formColumn.Location = new(Math.Max(Space.Xl, (right.ClientSize.Width - _formColumn.Width) / 2), Math.Max(Space.Xl, (right.ClientSize.Height - _formColumn.Height) / 2)); }
@@ -64,6 +66,7 @@ namespace DentalClinicSystem
                 return;
             }
 
+            if (IsDisposed || !Visible || !await FadeOutAsync()) return;
             var dashboard = new frmDashboard(
                 result.Data, this, _services);
             dashboard.Show();
@@ -71,13 +74,31 @@ namespace DentalClinicSystem
         }
 
         private async void btnLogin_Click(object? sender, EventArgs e) =>
-            await UiAction.RunAsync(this, () => OnLoginAttempt(txtUsername.Text, txtPassword.Text));
+            await UiAction.RunAsync(this, () => OnLoginAttempt(txtUsername.Text, txtPassword.Text), btnLogin);
+
+        private async Task<bool> FadeOutAsync()
+        {
+            if (!MotionSystem.Enabled || WindowState == FormWindowState.Minimized) return true;
+            var complete = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            void Cancel(object? sender, EventArgs e) { if (IsDisposed || !Visible) complete.TrySetResult(false); }
+            void Minimized(object? sender, EventArgs e) { if (WindowState == FormWindowState.Minimized) complete.TrySetResult(true); }
+            Disposed += Cancel; VisibleChanged += Cancel; SizeChanged += Minimized;
+            try
+            {
+                MotionSystem.Animator.Run(this, "login-exit", (float)Opacity, 0, MotionSystem.Fast, Easing.EaseOutCubic,
+                    value => Opacity = Math.Clamp(value, 0, 1), () => complete.TrySetResult(true));
+                return await complete.Task;
+            }
+            finally { Disposed -= Cancel; VisibleChanged -= Cancel; SizeChanged -= Minimized; MotionSystem.Animator.Cancel(this, "login-exit"); }
+        }
 
         public void ShowAfterLogout()
         {
             txtPassword.Clear();
+            Opacity = 1; _alert.Dismiss();
             Show();
             Activate();
+            txtUsername.Focus();
         }
 
     }

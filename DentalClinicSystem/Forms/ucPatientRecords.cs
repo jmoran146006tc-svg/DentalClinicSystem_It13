@@ -33,15 +33,15 @@ public partial class ucPatientRecords : UserControl
         _layout.ShowInactive.CheckedChanged += async (_, _) => await UiAction.RunAsync(this, RefreshGridAsync);
         _layout.Search.TextChanged += (_, _) => BindRows();
         _reactivate.Visible = false; _layout.Actions.Controls.Add(_reactivate);
-        _reactivate.Click += async (_, _) => await UiAction.RunAsync(this, ReactivateAsync);
+        _reactivate.Click += async (_, _) => await UiAction.RunAsync(this, ReactivateAsync, _reactivate);
         dgvPatients.SelectionChanged += SelectionChanged;
         GridTheme.MuteInactive<PatientRow>(dgvPatients, row => !row.Record.IsActive);
-        btnAdd.Click += async (_, _) => await UiAction.RunAsync(this, SaveAsync);
+        btnAdd.Click += async (_, _) => await UiAction.RunAsync(this, SaveAsync, btnAdd);
         btnClear.Click += (_, _) => ClearForm();
         _layout.FormCard.Visible = _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManagePatients);
         if (!RoleAccess.Can(currentUser, Permission.ViewPatients)) Enabled = false;
     }
-    private async void ucPatientRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, RefreshGridAsync);
+    private async void ucPatientRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await RefreshGridAsync(); });
     private async Task RefreshGridAsync()
     {
         var result = _layout.ShowInactive.Checked ? await _patientService.GetAllIncludingInactiveAsync(_currentUser) : await _patientService.GetAllPatientsAsync(_currentUser);
@@ -52,6 +52,7 @@ public partial class ucPatientRecords : UserControl
         var rows = PatientFilter.Apply(_patients, _layout.Search.Text, _layout.ShowInactive.Checked)
             .Select(p => new PatientRow(p.PatientId, p.FullName, p.ContactNumber, p.Email, p.DateOfBirth, p.Address, p));
         GridHelper.Bind(dgvPatients, rows, row => row.PatientId, "No patients match your search.", "PatientId", "Record");
+        GridHelper.IdentityColumn<PatientRow>(dgvPatients, "FullName", row => (row.FullName, row.Record.IsActive ? "Active patient" : "Inactive patient"));
         ClearForm();
     }
     private void SelectionChanged(object? sender, EventArgs e)

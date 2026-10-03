@@ -16,6 +16,8 @@ namespace DentalClinicSystem.Forms
         private readonly IReadOnlyList<NavItem> _navigationItems;
         private readonly FlowLayoutPanel _navigation = new() { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Padding = new Padding(Space.Xl, 0, Space.Xl, 0), BackColor = Palette.Surface };
         private bool _loggingOut;
+        private readonly NavIndicator _indicator = new() { Name = "navIndicator", Visible = false };
+        private Button? _activeNavigation;
 
         private readonly AppServices _services;
         private readonly TransitionHost _transitions;
@@ -45,6 +47,7 @@ namespace DentalClinicSystem.Forms
 #endif
             FormClosed += (_, _) => { if (!_loggingOut) Application.Exit(); };
             Load += (_, _) => Navigate(_navigationItems[0]);
+            Shown += (_, _) => MoveIndicator();
         }
 
         private void ConfigureContent()
@@ -60,7 +63,7 @@ namespace DentalClinicSystem.Forms
             header.Paint += (_, e) => { using var pen = new Pen(Palette.Line); e.Graphics.DrawLine(pen, 0, header.Height - Metrics.Border, header.Width, header.Height - Metrics.Border); };
             tableLayoutPanel1.Dispose();
             pnlContent.Controls.Add(_contentHost);
-            pnlContent.Controls.Add(header); header.BringToFront();
+            pnlContent.Controls.Add(header); _contentHost.BringToFront();
             pnlContent.BackColor = Palette.Canvas;
             timer1_Tick(this, EventArgs.Empty);
         }
@@ -116,7 +119,9 @@ namespace DentalClinicSystem.Forms
                 if (item.CreatePage is not null) { NavButtonStyler.Attach(item.Button, icons[index++]); _navigation.Controls.Add(item.Button); }
             }
             pnlSidebar.Controls.Add(_navigation); pnlSidebar.Controls.Add(account); pnlSidebar.Controls.Add(brand);
-            brand.BringToFront(); account.BringToFront();
+            _navigation.BringToFront();
+            pnlSidebar.Controls.Add(_indicator); _indicator.BringToFront();
+            _navigation.Scroll += (_, _) => MoveIndicator(); _navigation.Layout += (_, _) => MoveIndicator();
             pnlSidebar.Paint += (_, e) => { using var pen = new Pen(Palette.Line); e.Graphics.DrawLine(pen, pnlSidebar.Width - Metrics.Border, 0, pnlSidebar.Width - Metrics.Border, pnlSidebar.Height); };
         }
 
@@ -126,8 +131,19 @@ namespace DentalClinicSystem.Forms
             if (item.CreatePage is not { } createPage) { Logout(); return; }
             ShowPage(createPage());
             lblWc.Text = item.Text;
+            Text = $"{item.Text} - Dental Care";
+            _activeNavigation = item.Button; MoveIndicator();
             foreach (var navigationItem in _navigationItems)
                 NavButtonStyler.Select(navigationItem.Button, navigationItem == item);
+        }
+        private void MoveIndicator()
+        {
+            if (_activeNavigation is not { Visible: true } button || !_navigation.Visible) return;
+            // The indicator is a sidebar sibling so the FlowLayoutPanel never reflows for its animation.
+            var point = pnlSidebar.PointToClient(button.Parent!.PointToScreen(button.Location));
+            _indicator.Visible = point.Y >= _navigation.Top && point.Y + button.Height <= _navigation.Bottom;
+            _indicator.Left = Space.Sm;
+            if (_indicator.Visible) _indicator.MoveTo(point.Y, button.Height);
         }
 
         private void ShowPage(Control page)

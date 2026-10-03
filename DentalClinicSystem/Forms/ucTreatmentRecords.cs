@@ -38,7 +38,7 @@ public partial class ucTreatmentRecords : UserControl
         Enabled = RoleAccess.Can(currentUser, Permission.ViewTreatments);
         _layout.FormCard.Visible = _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManageTreatments);
     }
-    private async void ucTreatmentRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, LoadAsync);
+    private async void ucTreatmentRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await LoadAsync(); });
     private async Task LoadAsync()
     {
         var appointments = UiMessages.Items(await _appointmentService.GetAllAppointmentsAsync(_currentUser)).Where(a => RoleAccess.CanAccessAppointment(_currentUser, a)).ToList();
@@ -69,6 +69,7 @@ public partial class ucTreatmentRecords : UserControl
                 _appointmentsById.GetValueOrDefault(t.AppointmentId)?.AppointmentDateTime, _treatmentTypesById.GetValueOrDefault(t.TreatmentTypeId)?.Name ?? "n/a", t.ToothNumber, t.Cost, t.DatePerformed, t.Notes, t))
             .Where(t => new[] { t.Patient, t.TreatmentType, t.Notes ?? "" }.Any(v => v.Contains(_layout.Search.Text.Trim(), StringComparison.OrdinalIgnoreCase)));
         GridHelper.Bind(dgvTreatments, rows, row => row.TreatmentId, "No treatments match your search.", "TreatmentId", "Record");
+        GridHelper.IdentityColumn<TreatmentRow>(dgvTreatments, "Patient", row => (row.Patient, "Treatment record"));
         ClearForm();
     }
     private void SelectionChanged(object? sender, EventArgs e)
@@ -83,7 +84,7 @@ public partial class ucTreatmentRecords : UserControl
         if (cboTreatmentType.SelectedValue is int id && _treatmentTypesById.TryGetValue(id, out var type))
             txtCost.Text = type.DefaultCost.ToString("0.00", CultureInfo.InvariantCulture);
     }
-    private async void btnAddTreatment_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, SaveAsync);
+    private async void btnAddTreatment_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, SaveAsync, btnAddTreatment);
     private async Task SaveAsync()
     {
         if (cboAppointment.SelectedValue is not int appointmentId || cboTreatmentType.SelectedValue is not int typeId) { UiMessages.ShowError(ServiceResult.Fail("Pick an appointment and a treatment type first.")); return; }

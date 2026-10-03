@@ -34,6 +34,7 @@ public static class GridHelper
         }
         binding.RowType = typeof(T); binding.Hidden = hiddenColumns.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var items = rows.ToList();
+        grid.ScrollBars = items.Count == 0 ? ScrollBars.None : ScrollBars.Both;
         grid.DataSource = new BindingList<T>(items);
         ConfigureColumns(grid, binding);
         grid.CurrentCell = null; grid.ClearSelection();
@@ -60,7 +61,11 @@ public static class GridHelper
                 : name.Contains("Date", StringComparison.Ordinal) ? Metrics.FormWidth / 2
                 : name.Contains("Name", StringComparison.Ordinal) || name is "Patient" or "Dentist" or "ContactNumber" or "Status" ? Metrics.FormWidth / 3 : shortWidth;
             var header = TextRenderer.MeasureText(column.HeaderText, grid.ColumnHeadersDefaultCellStyle.Font ?? Typography.Label).Width;
-            column.MinimumWidth = Math.Max(shortWidth, header + Metrics.Scale(grid, Space.Lg * 2 + Metrics.IconSize));
+            var contentWidth = name is "ContactNumber" ? Metrics.FormWidth / 3 + Space.Xl
+                : name is "FullName" or "Name" or "Username" or "Patient" or "Dentist" or "Email" or "Address" ? Metrics.FormWidth / 2
+                : column.ValueType == typeof(DateTime) || Nullable.GetUnderlyingType(column.ValueType ?? typeof(object)) == typeof(DateTime) ? name.Contains("Time", StringComparison.OrdinalIgnoreCase) ? Metrics.FormWidth / 2 + Space.Xl : Metrics.FormWidth / 3 + Space.Lg
+                : name is "Status" or "Role" ? TextRenderer.MeasureText(AppointmentStatus.Completed, Typography.Label).Width + Space.Xxl + Space.Md : 0;
+            column.MinimumWidth = Math.Max(Metrics.Scale(grid, contentWidth), Math.Max(shortWidth, header + Metrics.Scale(grid, Space.Lg * 2 + Metrics.IconSize)));
             column.FillWeight = width;
         }
     }

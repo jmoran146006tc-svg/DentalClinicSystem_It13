@@ -27,8 +27,9 @@ public sealed class TransitionHost : IDisposable
         }
     }
     private readonly Panel _host;
+    private readonly Form? _form;
     private Overlay? _overlay;
-    public TransitionHost(Panel host) { _host = host; host.Disposed += HostDisposed; host.VisibleChanged += HostVisibilityChanged; }
+    public TransitionHost(Panel host) { _host = host; _form = host.FindForm(); host.Disposed += HostDisposed; host.VisibleChanged += HostVisibilityChanged; if (_form is not null) _form.Resize += FormResized; }
     public void Show(Control page)
     {
         Clear();
@@ -52,7 +53,7 @@ public sealed class TransitionHost : IDisposable
     }
     private Bitmap? Capture()
     {
-        if (!Motion.Enabled || !_host.Visible || _host.Width <= 0 || _host.Height <= 0 || _host.Controls.Count == 0) return null;
+        if (!Motion.Enabled || !_host.Visible || _form?.WindowState == FormWindowState.Minimized || _host.Width <= 0 || _host.Height <= 0 || _host.Controls.Count == 0) return null;
         Bitmap? snapshot = null;
         try { snapshot = new Bitmap(_host.Width, _host.Height); _host.DrawToBitmap(snapshot, _host.ClientRectangle); return snapshot; }
         catch (Exception) { snapshot?.Dispose(); return null; }
@@ -60,5 +61,6 @@ public sealed class TransitionHost : IDisposable
     private void Clear() { _overlay?.Dispose(); _overlay = null; }
     private void HostDisposed(object? sender, EventArgs e) => Dispose();
     private void HostVisibilityChanged(object? sender, EventArgs e) { if (!_host.Visible) Clear(); }
-    public void Dispose() { Clear(); _host.Disposed -= HostDisposed; _host.VisibleChanged -= HostVisibilityChanged; }
+    private void FormResized(object? sender, EventArgs e) { if (_form?.WindowState == FormWindowState.Minimized) Clear(); }
+    public void Dispose() { Clear(); _host.Disposed -= HostDisposed; _host.VisibleChanged -= HostVisibilityChanged; if (_form is not null) _form.Resize -= FormResized; }
 }
