@@ -53,7 +53,11 @@ public sealed class FieldBox : Panel
         input.FontChanged += (_, _) => LayoutInput();
         input.SizeChanged += (_, _) => LayoutInput();
         DpiChangedAfterParent += (_, _) => LayoutInput();
-        EnabledChanged += (_, _) => { input.Enabled = Enabled; _action.Enabled = Enabled; AnimateFocus(input.Focused); };
+        // Children already inherit the parent's enabled state. Assigning it back
+        // to Input overwrites locks when a busy dialog is enabled again.
+        EnabledChanged += (_, _) => AnimateFocus(input.Focused);
+        input.EnabledChanged += (_, _) => { _action.Enabled = input.Enabled; AnimateFocus(input.Focused); Invalidate(); };
+        _action.Enabled = input.Enabled;
         LayoutInput();
     }
     public static FormField Wrap(Control input, string caption, FieldKind kind = FieldKind.Text) => new(caption, new FieldBox(input, kind));

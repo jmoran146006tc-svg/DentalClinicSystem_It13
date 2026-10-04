@@ -50,6 +50,7 @@ public class DiscountTests
             {
                 type.SelectedIndex = Array.IndexOf(DiscountTypes.All, standard);
                 Assert.Equal(ClinicRules.StandardDiscountPercent, percent.Value); Assert.False(percent.Enabled);
+                dialog.Enabled = false; dialog.Enabled = true; Assert.False(percent.Enabled);
                 Assert.Equal(DisplayFormat.Currency(800), net.Text);
             }
             type.SelectedIndex = Array.IndexOf(DiscountTypes.All, DiscountTypes.Other); Assert.True(percent.Enabled);

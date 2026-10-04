@@ -42,7 +42,7 @@ public partial class ucTreatmentRecords : UserControl
         txtNotes.Multiline = true; _layout.AddRow(UiFactory.Field(txtNotes, "Notes"));
         InputRules.ApplyMaxLengths((txtToothNumber, FieldLimits.ToothNumber), (txtNotes, FieldLimits.Notes), (txtCost, FieldLimits.ContactNumber));
         dtpDatePerformed.Enabled = false; dtpDatePerformed.Format = DateTimePickerFormat.Custom; dtpDatePerformed.CustomFormat = DisplayFormat.DatePattern;
-        cboAppointment.SelectedIndexChanged += (_, _) => SetAppointmentDate();
+        cboAppointment.SelectedValueChanged += (_, _) => SetAppointmentDate();
         cboTreatmentType.SelectedIndexChanged += cboTreatmentType_SelectedIndexChanged; dgvTreatments.SelectionChanged += SelectionChanged;
         _layout.Search.TextChanged += (_, _) => BindRows(); _clear.Click += (_, _) => ClearForm();
         Enabled = RoleAccess.Can(currentUser, Permission.ViewTreatments);

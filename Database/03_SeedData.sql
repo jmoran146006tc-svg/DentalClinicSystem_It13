@@ -62,6 +62,8 @@ SELECT 'drsantos', '$2a$11$CqzW7tBTUEIjEWgJ0.tXp.W76Gx0xwofe.dQsFtl12Hgd2MYk7n3S
 
 SET @seed_appointments = (SELECT COUNT(*) = 0 FROM Appointments);
 SET @week_start = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY);
+-- Keep the demo no-show on a past open day, even when seeded early in the week.
+SET @previous_open_day = IF(DAYOFWEEK(CURDATE()) = 2, DATE_SUB(CURDATE(), INTERVAL 2 DAY), DATE_SUB(CURDATE(), INTERVAL 1 DAY));
 SET @demo_day = IF(DAYOFWEEK(CURDATE()) = 1, DATE_ADD(CURDATE(), INTERVAL 1 DAY), CURDATE());
 SET @juan = (SELECT MIN(PatientId) FROM Patients WHERE FirstName = 'Juan' AND LastName = 'Dela Cruz');
 SET @ana = (SELECT MIN(PatientId) FROM Patients WHERE FirstName = 'Ana' AND LastName = 'Lopez');
@@ -75,7 +77,7 @@ SELECT @ana, @carlos, DATE_ADD(LEAST(DATE_ADD(@week_start, INTERVAL 0 DAY), CURD
 INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
 SELECT @juan, @maria, DATE_ADD(DATE_ADD(@week_start, INTERVAL 1 DAY), INTERVAL 10 HOUR), 30, 'Cancelled', 'Demo consultation', 'Patient Rescheduled' FROM DUAL WHERE @seed_appointments;
 INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
-SELECT @ana, @carlos, DATE_ADD(DATE_ADD(@week_start, INTERVAL 2 DAY), INTERVAL 14 HOUR), 30, 'NoShow', 'Demo consultation', 'No Show' FROM DUAL WHERE @seed_appointments;
+SELECT @ana, @carlos, DATE_ADD(LEAST(DATE_ADD(@week_start, INTERVAL 2 DAY), @previous_open_day), INTERVAL 14 HOUR), 30, 'NoShow', 'Demo consultation', 'No Show' FROM DUAL WHERE @seed_appointments;
 INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
 SELECT @juan, @maria, DATE_ADD(DATE_ADD(@week_start, INTERVAL 3 DAY), INTERVAL 9 HOUR), 30, 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
 INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)

@@ -8,7 +8,8 @@ public sealed class CrudPageLayout
     private readonly string _singular;
     private readonly Button _save;
     private readonly Label _title;
-    private readonly TableLayoutPanel _fields = new() { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2, BackColor = Palette.Surface };
+    // Keep bound selections while the same fields move between page and dialog.
+    private readonly TableLayoutPanel _fields = new() { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2, BackColor = Palette.Surface, BindingContext = new BindingContext() };
     private int _row;
     private readonly List<Control> _inputs = [];
     private readonly Panel _gridContent;

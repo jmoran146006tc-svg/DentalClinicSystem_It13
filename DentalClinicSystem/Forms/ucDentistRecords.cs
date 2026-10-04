@@ -49,6 +49,7 @@ public partial class ucDentistRecords : UserControl
     }
     private void SelectionChanged(object? sender, EventArgs e)
     {
+        _timeOff.Enabled = dgvDentists.SelectedRows.Count > 0;
         if (dgvDentists.SelectedRows.Count == 0 || dgvDentists.CurrentRow?.DataBoundItem is not DentistRow row) return;
         _selected = row.Record; txtFirstName.Text = _selected.FirstName; txtLastName.Text = _selected.LastName; cboSpecialization.Text = _selected.Specialization;
         txtContactNumber.Text = _selected.ContactNumber; txtLicenseNumber.Text = _selected.LicenseNumber; _layout.SetEditing(true); btnDelete.Enabled = true; _timeOff.Enabled = true;

@@ -33,8 +33,6 @@ namespace DentalClinicSystem.Service
             var patient = await patients.GetByIdAsync(appointment.PatientId);
             if (patient is null)
                 return ServiceResult.Fail("Select an active patient.");
-            if (await dentists.GetByIdAsync(appointment.DentistId) is not { IsActive: true })
-                return ServiceResult.Fail("Select an active dentist.");
             var slot = await ValidateSlotAsync(appointment.DentistId, appointment.AppointmentDateTime, appointment.DurationMinutes);
             if (!slot.Success) return slot;
             appointment.Status = AppointmentStatus.Scheduled;
@@ -59,7 +57,6 @@ namespace DentalClinicSystem.Service
             };
             var validation = Validator.Appointment(changed, time.GetLocalNow().DateTime);
             if (!validation.Success) return validation;
-            if (await dentists.GetByIdAsync(newDentistId) is not { IsActive: true }) return ServiceResult.Fail("Select an active dentist.");
             var slot = await ValidateSlotAsync(newDentistId, newDateTime, changed.DurationMinutes, appointmentId);
             if (!slot.Success) return slot;
             return await ServiceOperation.SaveAsync(() => appointments.UpdateAsync(changed));
