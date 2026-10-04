@@ -31,6 +31,7 @@ public static class GridHelper
             binding = new Binding(); Bindings.Add(grid, binding);
             grid.DataBindingComplete += (_, _) => ConfigureColumns(grid, binding);
             grid.DpiChangedAfterParent += (_, _) => ConfigureColumns(grid, binding);
+            grid.HandleCreated += (_, _) => ConfigureColumns(grid, binding);
         }
         binding.RowType = typeof(T); binding.Hidden = hiddenColumns.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var items = rows.ToList();
@@ -44,9 +45,11 @@ public static class GridHelper
     }
     private static void ConfigureColumns(DataGridView grid, Binding binding)
     {
+        if (grid.IsDisposed) return;
+        GridTheme.Apply(grid);
         foreach (DataGridViewColumn column in grid.Columns)
         {
-            var name = column.DataPropertyName.Length > 0 ? column.DataPropertyName : column.Name;
+            var name = !string.IsNullOrEmpty(column.DataPropertyName) ? column.DataPropertyName : column.Name ?? string.Empty;
             if (binding.Hidden.Contains(name) || name.Equals(binding.RowType.Name + "Id", StringComparison.OrdinalIgnoreCase)
                 || name == "FullName" && (binding.RowType == typeof(Patient) || binding.RowType == typeof(Dentist)))
                 column.Visible = false;
@@ -56,11 +59,17 @@ public static class GridHelper
                 column.DefaultCellStyle.Format = DisplayFormat.ColumnDatePattern(name);
                 column.DefaultCellStyle.FormatProvider = System.Globalization.CultureInfo.InvariantCulture;
             }
+            // A Fill column's MinimumWidth setter creates the handle. That can run
+            // page Load handlers and rebind/detach this column inside the setter.
+            // Metadata is safe before the handle; sizing waits for HandleCreated.
+            if (!grid.IsHandleCreated) continue;
             var shortWidth = Metrics.Scale(grid, Metrics.ControlHeight * 2);
             var width = name is "Email" or "Address" or "Notes" or "Reason" ? Metrics.FormWidth / 2
                 : name.Contains("Date", StringComparison.Ordinal) ? Metrics.FormWidth / 2
                 : name.Contains("Name", StringComparison.Ordinal) || name is "Patient" or "Dentist" or "ContactNumber" or "Status" ? Metrics.FormWidth / 3 : shortWidth;
-            var header = TextRenderer.MeasureText(column.HeaderText, grid.ColumnHeadersDefaultCellStyle.Font ?? Typography.Label).Width;
+            var font = column.DefaultCellStyle.Font ?? grid.DefaultCellStyle.Font ?? grid.Font ?? Typography.Body;
+            var headerFont = column.HeaderCell.Style.Font ?? grid.ColumnHeadersDefaultCellStyle.Font ?? font;
+            var header = TextRenderer.MeasureText(column.HeaderText ?? string.Empty, headerFont).Width;
             var contentWidth = name is "ContactNumber" ? Metrics.FormWidth / 3 + Space.Xl
                 : name is "FullName" or "Name" or "Username" or "Patient" or "Dentist" or "Email" or "Address" ? Metrics.FormWidth / 2
                 : column.ValueType == typeof(DateTime) || Nullable.GetUnderlyingType(column.ValueType ?? typeof(object)) == typeof(DateTime) ? name.Contains("Time", StringComparison.OrdinalIgnoreCase) ? Metrics.FormWidth / 2 + Space.Xl : Metrics.FormWidth / 3 + Space.Lg

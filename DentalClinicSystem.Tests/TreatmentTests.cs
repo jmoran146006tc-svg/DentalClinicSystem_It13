@@ -35,9 +35,12 @@ public class TreatmentTests
             using var host = new Form { ClientSize = new(1440, 1000) }; page.Dock = DockStyle.Fill; host.Controls.Add(page); PageLayoutTests.ShowOffscreen(host);
             var grid = PageLayoutTests.Named<DataGridView>(page, "dgvTreatments"); Assert.Single(grid.Rows.Cast<DataGridViewRow>());
             grid.CurrentCell = grid.Rows[0].Cells["Patient"]; grid.Rows[0].Selected = true;
-            Assert.Equal("300.00", PageLayoutTests.Named<TextBox>(page, "txtCost").Text);
-            var save = PageLayoutTests.Named<Button>(page, "btnAddTreatment"); Assert.Equal("Update treatment", save.Text);
-            PageLayoutTests.Named<TextBox>(page, "txtCost").Text = "325.50"; save.PerformClick();
+            var edit = PageLayoutTests.Descendants(page).OfType<AppButton>().Single(button => button.Text == "Edit treatment");
+            PageLayoutTests.InspectNextDialog(host, dialog =>
+            {
+                Assert.Equal("300.00", PageLayoutTests.Named<TextBox>(dialog, "txtCost").Text);
+                PageLayoutTests.Named<TextBox>(dialog, "txtCost").Text = "325.50"; dialog.ConfirmButton.PerformClick();
+            }, edit.PerformClick, save: true);
             var proxy = (TestServices)(object)treatments; Assert.Equal(1, proxy.Calls.GetValueOrDefault(nameof(ITreatmentService.UpdateTreatmentAsync)));
             Assert.Equal(0, proxy.Calls.GetValueOrDefault(nameof(ITreatmentService.AddTreatmentAsync)));
             var saved = Assert.IsType<Treatment>(proxy.Arguments[nameof(ITreatmentService.UpdateTreatmentAsync)][1]); Assert.Equal(7, saved.TreatmentId); Assert.Equal(325.50m, saved.Cost);

@@ -28,13 +28,21 @@ namespace DentalClinicSystem
         }
         private void BuildLoginLayout()
         {
-            SuspendLayout(); AutoSize = false; AutoScaleMode = AutoScaleMode.Dpi; BackgroundImage = null;
+            SuspendLayout(); AutoSize = false; AutoScaleMode = AutoScaleMode.Dpi; AutoScaleDimensions = new SizeF(96, 96); BackgroundImageLayout = ImageLayout.Zoom;
             pictureBox1.Visible = false; panel1.Visible = false;
             FormBorderStyle = FormBorderStyle.FixedSingle; MaximizeBox = false; StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new(Metrics.LoginWidth, Metrics.LoginHeight); BackColor = Palette.Surface;
-            var split = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty };
-            split.ColumnStyles.Add(new(SizeType.Percent, 50)); split.ColumnStyles.Add(new(SizeType.Percent, 50));
-            var right = new Panel { Dock = DockStyle.Fill, BackColor = Palette.Surface };
+            var aspect = (double)BackgroundImage!.Width / BackgroundImage.Height;
+            var rightWidth = Metrics.LoginFormWidth + Space.Xl * 2;
+            var available = Screen.FromControl(this).WorkingArea;
+            var dpiScale = DeviceDpi / 96d;
+            var photoHeight = Math.Min(Metrics.LoginHeight, Math.Min((int)(available.Height / dpiScale) - Space.Xxxl * 2,
+                (int)((available.Width / dpiScale - rightWidth - Space.Xl * 2 - Space.Lg * 2) / aspect)));
+            var photoWidth = (int)Math.Round(photoHeight * aspect);
+            ClientSize = new(photoWidth + rightWidth + Space.Lg * 2, photoHeight + Space.Lg * 2); BackColor = Palette.Surface;
+            var split = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, BackColor = Palette.Surface, Padding = new Padding(Space.Lg) };
+            split.ColumnStyles.Add(new(SizeType.Absolute, photoWidth)); split.ColumnStyles.Add(new(SizeType.Percent, 100));
+            split.RowStyles.Add(new(SizeType.Percent, 100));
+            var right = new Panel { Dock = DockStyle.Fill, BackColor = Palette.Surface, Margin = Padding.Empty };
             _formColumn.MaximumSize = new(Metrics.LoginFormWidth, 0);
             _formColumn.Controls.Add(new Label { Text = "Welcome back", Font = Typography.Title, ForeColor = Palette.Ink900, AutoSize = true });
             _formColumn.Controls.Add(new Label { Text = "Sign in to continue", Font = Typography.Caption, ForeColor = Palette.Ink500, AutoSize = true, Margin = new Padding(0, 0, 0, Space.Xl) });
@@ -52,7 +60,7 @@ namespace DentalClinicSystem
             right.Controls.Add(_formColumn);
             void Center() { _formColumn.Location = new(Math.Max(Space.Xl, (right.ClientSize.Width - _formColumn.Width) / 2), Math.Max(Space.Xl, (right.ClientSize.Height - _formColumn.Height) / 2)); }
             right.SizeChanged += (_, _) => Center(); _formColumn.SizeChanged += (_, _) => Center();
-            split.Controls.Add(new LoginBrand(), 0, 0); split.Controls.Add(right, 1, 0); Controls.Add(split); split.BringToFront();
+            split.Controls.Add(new LoginBrand { BackgroundImage = BackgroundImage, Margin = Padding.Empty }, 0, 0); split.Controls.Add(right, 1, 0); Controls.Add(split); split.BringToFront();
             UiMessages.RegisterAlertHost(this, _alert); ResumeLayout(true); Center();
             Shown += (_, _) => txtUsername.Focus();
         }

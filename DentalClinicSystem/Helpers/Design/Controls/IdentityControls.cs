@@ -58,7 +58,7 @@ public sealed class Toggle : DesignControl
         if (Width <= 0 || Height <= 0) return;
         DesignPaint.Begin(e.Graphics, this);
         var track = new Rectangle(Space.Xs, Space.Sm, Metrics.NavHeight, Height - Space.Lg);
-        DesignPaint.Surface(e.Graphics, track, track.Height / 2f, Enabled ? Theme.Lerp(Palette.Neutral.Background, Palette.Brand, _position) : Palette.SurfaceAlt, Focused || _hover ? Palette.BrandAccent : null);
+        DesignPaint.Surface(e.Graphics, track, track.Height / 2f, Enabled ? Theme.Lerp(Palette.LineStrong, Palette.Brand, _position) : Palette.SurfaceAlt, Focused || _hover ? Palette.BrandAccent : null);
         var diameter = Math.Max(0, track.Height - Space.Xs);
         var left = track.Left + Metrics.FocusRing + (track.Width - diameter - Space.Xs) * Math.Clamp(_position, -.1f, 1.1f);
         using var brush = new SolidBrush(Palette.Surface);

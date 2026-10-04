@@ -102,13 +102,22 @@ namespace DentalClinicSystem.Forms
             brand.Controls.Add(new Label { Text = "Dental Care", Font = Typography.Title, ForeColor = Palette.Ink900, AutoSize = true });
             brand.Controls.Add(new Label { Text = "Clinic Management", Font = Typography.Caption, ForeColor = Palette.Ink500, AutoSize = true });
             brand.Controls.Add(new Label { Text = "MENU", Font = Typography.Label, ForeColor = Palette.Ink500, AutoSize = true, Margin = new Padding(0, Space.Lg, 0, 0) });
-            var account = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = Metrics.EmptyHeight + Space.Xxxl + Space.Lg, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(Space.Xl), BackColor = Palette.Surface };
-            account.Controls.Add(new Avatar(_currentUser.Username));
-            account.Controls.Add(new Label { Text = _currentUser.Username, Font = Typography.Label, ForeColor = Palette.Ink700, AutoSize = true });
-            account.Controls.Add(new Badge(_currentUser.Role));
+            var account = new TableLayoutPanel { Dock = DockStyle.Bottom, Height = Metrics.NavHeight * 2 + Space.Sm + Space.Md * 3, ColumnCount = 1, RowCount = 3, Padding = new Padding(Space.Xl, Space.Md, Space.Xl, Space.Md), BackColor = Palette.Surface };
+            account.ColumnStyles.Add(new(SizeType.Percent, 100));
+            account.RowStyles.Add(new(SizeType.Absolute, Metrics.NavHeight + Space.Sm)); account.RowStyles.Add(new(SizeType.Absolute, Space.Md)); account.RowStyles.Add(new(SizeType.Percent, 100));
+            var profile = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 2, Margin = Padding.Empty, BackColor = Palette.Surface };
+            profile.ColumnStyles.Add(new(SizeType.Absolute, Metrics.NavHeight + Space.Sm)); profile.ColumnStyles.Add(new(SizeType.Percent, 100));
+            profile.RowStyles.Add(new(SizeType.Percent, 50)); profile.RowStyles.Add(new(SizeType.Percent, 50));
+            var avatar = new Avatar(_currentUser.Username) { Margin = Padding.Empty }; profile.Controls.Add(avatar, 0, 0); profile.SetRowSpan(avatar, 2);
+            var username = new Label { Text = _currentUser.Username, Font = Typography.Label, ForeColor = Palette.Ink900, Dock = DockStyle.Fill, AutoEllipsis = true, TextAlign = ContentAlignment.BottomLeft, Margin = Padding.Empty, AccessibleName = _currentUser.Username };
+            Tooltips.Attach(username, _currentUser.Username); profile.Controls.Add(username, 1, 0);
+            profile.Controls.Add(new Label { Text = _currentUser.Role, Font = Typography.Caption, ForeColor = Palette.Ink500, Dock = DockStyle.Fill, Margin = Padding.Empty }, 1, 1);
+            account.Controls.Add(profile, 0, 0);
+            var divider = new Panel { Dock = DockStyle.Fill, Margin = new Padding(0, (Space.Md - Metrics.Border) / 2, 0, Space.Md / 2), BackColor = Palette.Line }; account.Controls.Add(divider, 0, 1);
             btnLogout.Dock = DockStyle.None; btnLogout.Text = "Logout";
-            ButtonStyler.Attach(btnLogout, ButtonVariant.Ghost, IconKind.Logout); btnLogout.Size = new(Metrics.SidebarWidth - Space.Xl * 2, Metrics.ControlHeight);
-            account.Controls.Add(btnLogout);
+            ButtonStyler.NavigationGhost(btnLogout); btnLogout.Size = new(Metrics.SidebarWidth - Space.Xl * 2, Metrics.NavHeight);
+            btnLogout.Dock = DockStyle.Fill; btnLogout.Margin = Padding.Empty; btnLogout.AccessibleName = "Logout";
+            account.Controls.Add(btnLogout, 0, 2);
             IconKind[] icons = [IconKind.Dashboard, IconKind.Patients, IconKind.Dentist, IconKind.Appointments, IconKind.Treatments, IconKind.Users, IconKind.Reports];
             var index = 0;
             foreach (var item in _navigationItems)

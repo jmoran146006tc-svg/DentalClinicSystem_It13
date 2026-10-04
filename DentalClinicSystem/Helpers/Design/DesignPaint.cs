@@ -10,6 +10,12 @@ public static class DesignPaint
     public const TextFormatFlags TextFlags = TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
 
     public static void Enable(Control control) => SetStyle?.Invoke(control, [ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.Opaque, true]);
+    public static Color ParentBackground(Control control)
+    {
+        for (var parent = control.Parent; parent is not null; parent = parent.Parent)
+            if (parent.BackColor.A == 255) return parent.BackColor;
+        return Palette.Canvas;
+    }
     public static void Prepare(Graphics graphics)
     {
         graphics.SmoothingMode = SmoothingMode.AntiAlias;
@@ -17,7 +23,7 @@ public static class DesignPaint
     }
     public static void Begin(Graphics graphics, Control control)
     {
-        graphics.Clear(control.Parent?.BackColor ?? Palette.Canvas);
+        graphics.Clear(ParentBackground(control));
         Prepare(graphics);
     }
     public static GraphicsPath RoundedRect(RectangleF rect, float radius)

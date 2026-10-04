@@ -24,6 +24,7 @@ public partial class ucAppointmentScheduler : UserControl
     private Dictionary<int, string> _patientNamesById = [];
     private Dictionary<int, string> _dentistNamesById = [];
     private bool _lookupsLoaded;
+    private Appointment? _savedAppointment;
     private bool _updatingAvailability;
     private int _availabilityVersion;
     private sealed record AppointmentRow(int AppointmentId, string Patient, string Dentist, DateTime AppointmentDateTime, string? Reason, string Status, Appointment Record);
@@ -45,11 +46,12 @@ public partial class ucAppointmentScheduler : UserControl
         _layout.Toolbar.Controls.Add(status); _layout.Toolbar.Controls.Add(dates); _layout.Toolbar.Controls.Add(_details);
         _layout.Search.TextChanged += (_, _) => BindRows(); _statusFilter.SelectedIndexChanged += (_, _) => BindRows(); _dateFilter.SelectedIndexChanged += (_, _) => BindRows();
         _clear.Click += (_, _) => ClearForm();
-        dgvAppointments.CellDoubleClick += async (_, e) => { if (e.RowIndex >= 0) await UiAction.RunAsync(this, ShowDetailsAsync); };
-        _details.Click += async (_, _) => await UiAction.RunAsync(this, ShowDetailsAsync);
+        dgvAppointments.CellDoubleClick += async (_, e) => { if (e.RowIndex >= 0) await ShowDetailsAsync(); };
+        _details.Click += async (_, _) => await ShowDetailsAsync();
         dgvAppointments.SelectionChanged += (_, _) => _details.Enabled = dgvAppointments.SelectedRows.Count > 0;
         dtpAppointmentDateTime.ValueChanged += AvailabilityChanged; cboDentist.SelectedIndexChanged += AvailabilityChanged;
-        _layout.FormCard.Visible = _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManageAppointments);
+        _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManageAppointments);
+        _layout.UseModal(ScheduleAsync, AfterScheduleAsync, allowEdit: false);
         Enabled = RoleAccess.Can(currentUser, Permission.ViewAppointments);
         ClearForm();
     }
@@ -96,7 +98,8 @@ public partial class ucAppointmentScheduler : UserControl
     }
     private async void AvailabilityChanged(object? sender, EventArgs e)
     {
-        if (_lookupsLoaded && !_updatingAvailability) await UiAction.RunAsync(this, RefreshAvailabilityAsync);
+        if (_lookupsLoaded && !_updatingAvailability)
+            await UiAction.RunAsync((sender as Control)?.FindForm() is RecordDialog dialog ? dialog : this, RefreshAvailabilityAsync);
     }
     private async Task RefreshAvailabilityAsync()
     {
@@ -110,19 +113,24 @@ public partial class ucAppointmentScheduler : UserControl
         _updatingAvailability = true;
         try { cboDentist.DataSource = options; if (selected is int id) cboDentist.SelectedValue = id; }
         finally { _updatingAvailability = false; }
-        if (cboDentist.SelectedItem is DisplayOption { Busy: true }) _layout.Alert.ShowMessage("This dentist already has an appointment at that time. Choose another time or dentist.", Semantic.Warning);
-        else _layout.Alert.Dismiss();
+        if (cboDentist.SelectedItem is DisplayOption { Busy: true }) _layout.ActiveAlert.ShowMessage("This dentist already has an appointment at that time. Choose another time or dentist.", Semantic.Warning);
+        else _layout.ActiveAlert.Dismiss();
     }
-    private async void btnSchedule_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, ScheduleAsync, btnSchedule);
-    private async Task ScheduleAsync()
+    private async void btnSchedule_Click(object? sender, EventArgs e) => await _layout.OpenEditorAsync();
+    private async Task<bool> ScheduleAsync()
     {
-        if (cboPatient.SelectedValue is not int patientId || cboDentist.SelectedValue is not int dentistId) { UiMessages.ShowError(ServiceResult.Fail("Pick a patient and a dentist first.")); return; }
+        if (cboPatient.SelectedValue is not int patientId || cboDentist.SelectedValue is not int dentistId) { UiMessages.ShowError(ServiceResult.Fail("Pick a patient and a dentist first.")); return false; }
         var appointment = new Appointment { PatientId = patientId, DentistId = dentistId, AppointmentDateTime = dtpAppointmentDateTime.Value, Reason = InputRules.NullIfBlank(cmbReason.Text), Notes = InputRules.NullIfBlank(_notes.Text) };
         var result = await _appointmentService.ScheduleAppointmentAsync(_currentUser, appointment);
-        if (!result.Success) { UiMessages.ShowError(result); return; }
+        if (!result.Success) { UiMessages.ShowError(result); return false; }
+        _savedAppointment = appointment; return true;
+    }
+    private async Task AfterScheduleAsync()
+    {
+        var appointment = _savedAppointment!;
         await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("Appointment scheduled.");
-        var saved = _appointments.Where(a => a.PatientId == patientId && a.DentistId == dentistId && a.AppointmentDateTime == appointment.AppointmentDateTime).MaxBy(a => a.AppointmentId);
-        if (saved is not null) GridHelper.FlashRow(dgvAppointments, saved.AppointmentId);
+        var saved = _appointments.Where(a => a.PatientId == appointment.PatientId && a.DentistId == appointment.DentistId && a.AppointmentDateTime == appointment.AppointmentDateTime).MaxBy(a => a.AppointmentId);
+        if (saved is not null) GridTheme.SelectAndFlash(dgvAppointments, saved.AppointmentId);
         await RefreshAvailabilityAsync();
     }
     private async Task ShowDetailsAsync()

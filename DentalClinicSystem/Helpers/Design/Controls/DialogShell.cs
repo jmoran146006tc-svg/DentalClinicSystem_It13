@@ -7,24 +7,33 @@ namespace DentalClinicSystem.Helpers.Design.Controls;
 public class DialogShell : Form
 {
     private bool _closing;
+    private bool _accepted;
     public Panel Body { get; } = new() { Dock = DockStyle.Fill, BackColor = Palette.Surface, Padding = new Padding(Space.Xl) };
     public FlowLayoutPanel Footer { get; } = new() { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = Metrics.ControlHeight + Space.Xl, Padding = new Padding(Space.Sm), BackColor = Palette.Surface };
     public AppButton ConfirmButton { get; }
     public AppButton DismissButton { get; }
-    public DialogShell(string title, string confirmText = "Confirm")
+    public DialogShell(string title, string confirmText = "Confirm", Size? size = null)
     {
         Theme.MarkPrimitive(this);
         Text = title; StartPosition = FormStartPosition.CenterParent; FormBorderStyle = FormBorderStyle.FixedDialog;
         MinimizeBox = false; MaximizeBox = false; ShowInTaskbar = false; BackColor = Palette.Surface;
-        Size = new(Metrics.DialogWidth, Metrics.DialogHeight); MinimumSize = Size; Font = Typography.Body;
+        Size = size ?? new(Metrics.DialogWidth, Metrics.DialogHeight); MinimumSize = Size; Font = Typography.Body;
         ConfirmButton = new AppButton(confirmText); DismissButton = new AppButton("Cancel", ButtonVariant.Secondary) { DialogResult = DialogResult.Cancel };
-        ConfirmButton.Click += (_, _) => { if (CanConfirm()) DialogResult = DialogResult.OK; };
+        ConfirmButton.Click += async (_, _) =>
+        {
+            if (ConfirmButton.IsBusy || _accepted) return;
+            ConfirmButton.IsBusy = true; DismissButton.Enabled = false;
+            try { if (await ConfirmAsync()) { _accepted = true; CloseAnimated(DialogResult.OK); } }
+            catch (Exception error) { AppLog.Write(error); using var owner = UiMessages.UseOwner(this); UiMessages.ShowUnexpectedError(); }
+            finally { if (!IsDisposed) { ConfirmButton.IsBusy = false; ConfirmButton.Enabled = !_accepted; DismissButton.Enabled = !_accepted; } }
+        };
         Footer.Controls.Add(ConfirmButton); Footer.Controls.Add(DismissButton);
         Controls.Add(Body); Controls.Add(Footer);
         Controls.Add(new Label { Text = title, Dock = DockStyle.Top, Height = Metrics.ControlHeight + Space.Xl, Padding = new Padding(Space.Xl, Space.Md, 0, 0), Font = Typography.Heading, ForeColor = Palette.Ink900 });
         AcceptButton = ConfirmButton; CancelButton = DismissButton; WindowChrome.Apply(this);
     }
     protected virtual bool CanConfirm() => true;
+    protected virtual Task<bool> ConfirmAsync() => Task.FromResult(CanConfirm());
     protected override void OnShown(EventArgs e)
     {
         base.OnShown(e); var destination = Top;
@@ -34,6 +43,7 @@ public class DialogShell : Form
     public void CloseAnimated(DialogResult result = DialogResult.Cancel) { DialogResult = result; Close(); }
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
+        if (ConfirmButton.IsBusy && DialogResult != DialogResult.OK && e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; return; }
         if (!_closing && MotionSystem.Enabled && e.CloseReason == CloseReason.UserClosing)
         {
             var result = DialogResult == DialogResult.None ? DialogResult.Cancel : DialogResult;

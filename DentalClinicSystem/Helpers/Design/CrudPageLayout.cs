@@ -12,9 +12,18 @@ public sealed class CrudPageLayout
     private int _row;
     private readonly List<Control> _inputs = [];
     private readonly Panel _gridContent;
+    private readonly UserControl _page;
+    private readonly DataGridView _grid;
+    private Func<Task<bool>>? _saveModal;
+    private Func<Task>? _afterSave;
+    private bool _editing;
+    private bool _dialogOpen;
+    private RecordDialog? _dialog;
+    public InlineAlert ActiveAlert => _dialog?.Alert ?? Alert;
+    private readonly AppButton _edit = UiFactory.Button("Edit", ButtonVariant.Ghost, IconKind.Edit);
     private bool _loaded;
     public FlowLayoutPanel Toolbar { get; }
-    public InlineAlert Alert { get; } = new() { Visible = false, Dock = DockStyle.Fill };
+    public InlineAlert Alert { get; } = new() { Visible = false, Dock = DockStyle.Top };
     public RoundedPanel FormCard { get; }
     public TextBox Search { get; } = new();
     public Toggle ShowInactive { get; } = new();
@@ -22,40 +31,82 @@ public sealed class CrudPageLayout
     public FlowLayoutPanel Actions { get; }
     public CrudPageLayout(UserControl page, string title, string singular, string subtitle, DataGridView grid, Button save, Button clear, Action clearForm)
     {
-        _singular = singular; _save = save;
+        _singular = singular; _save = save; _page = page; _grid = grid;
         page.SuspendLayout(); foreach (Control old in page.Controls) old.Visible = false;
-        page.BackColor = Palette.Canvas;
+        page.BackColor = Palette.Canvas; page.AutoScroll = false;
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = Space.Page, BackColor = Palette.Canvas };
         Theme.MarkPrimitive(root); root.ColumnStyles.Add(new(SizeType.Percent, 100));
-        root.RowStyles.Add(new(SizeType.Absolute, Metrics.FieldHeight)); root.RowStyles.Add(new(SizeType.AutoSize)); root.RowStyles.Add(new(SizeType.Percent, 100));
+        root.RowStyles.Add(new(SizeType.AutoSize)); root.RowStyles.Add(new(SizeType.AutoSize)); root.RowStyles.Add(new(SizeType.Percent, 100));
         NewButton = UiFactory.Button($"New {singular}", icon: IconKind.Plus);
-        NewButton.Click += (_, _) => { clearForm(); FormCard?.SelectNextControl(null, true, true, true, false); };
+        NewButton.Click += async (_, _) => { clearForm(); await OpenEditorAsync(); };
         root.Controls.Add(new PageHeader(title, subtitle, NewButton), 0, 0);
         Toolbar = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, BackColor = Palette.Canvas, Margin = new Padding(0, 0, 0, Space.Lg) };
-        Search.PlaceholderText = $"Search {title.ToLowerInvariant()}"; Toolbar.Controls.Add(UiFactory.Search(Search));
+        Search.PlaceholderText = $"Search {title.ToLowerInvariant()}"; var search = UiFactory.Search(Search); search.Width = Metrics.FormWidth - Space.Xxxl; Toolbar.Controls.Add(search);
         root.Controls.Add(Toolbar, 0, 1);
-        var gridCard = UiFactory.Card(); grid.Visible = true; grid.Dock = DockStyle.Fill;
+        var gridCard = UiFactory.Card(); gridCard.Dock = DockStyle.Fill; gridCard.Margin = Padding.Empty; grid.Visible = true; grid.Dock = DockStyle.Fill;
         grid.ReadOnly = true; grid.AllowUserToAddRows = false; grid.AllowUserToDeleteRows = false; grid.MultiSelect = false;
         GridTheme.Apply(grid); gridCard.Content.Controls.Add(grid); _gridContent = gridCard.Content;
-        FormCard = UiFactory.Card(); FormCard.Content.AutoScroll = true;
+        FormCard = UiFactory.Card(); FormCard.Content.AutoScroll = true; FormCard.Visible = false;
         _title = new Label { Text = $"New {singular}", Font = Typography.Heading, ForeColor = Palette.Ink900, AutoSize = true, Margin = new Padding(0, 0, 0, Space.Lg) };
         _fields.ColumnStyles.Add(new(SizeType.Percent, 50)); _fields.ColumnStyles.Add(new(SizeType.Percent, 50));
-        _fields.Controls.Add(_title, 0, 0); _fields.SetColumnSpan(_title, 2); _fields.Controls.Add(Alert, 0, 1); _fields.SetColumnSpan(Alert, 2); _row = 2;
-        Actions = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, BackColor = Palette.Surface };
+        _row = 0; _title.Visible = false;
+        Actions = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = false, BackColor = Palette.Surface };
         save.Visible = clear.Visible = true; save.Dock = clear.Dock = DockStyle.None; save.Height = clear.Height = Metrics.ControlHeight;
         ButtonStyler.Attach(save, ButtonVariant.Primary); ButtonStyler.Attach(clear, ButtonVariant.Ghost);
-        clear.Text = "Clear"; Actions.Controls.AddRange([save, clear]); SetEditing(false);
+        clear.Text = "Clear"; save.Visible = clear.Visible = false; SetEditing(false);
         var formBody = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, RowCount = 2, BackColor = Palette.Surface };
         formBody.ColumnStyles.Add(new(SizeType.Percent, 100)); formBody.RowStyles.Add(new(SizeType.AutoSize)); formBody.RowStyles.Add(new(SizeType.AutoSize));
-        Actions.Dock = DockStyle.Fill; formBody.Controls.Add(_fields, 0, 0); formBody.Controls.Add(Actions, 0, 1); FormCard.Content.Controls.Add(formBody);
-        root.Controls.Add(new ResponsiveSplit(gridCard, FormCard, () => formBody.PreferredSize.Height + FormCard.Padding.Vertical + Space.Xl), 0, 2);
+        formBody.Controls.Add(_fields, 0, 0); FormCard.Content.Controls.Add(formBody);
+        gridCard.Content.Controls.Add(Alert); grid.BringToFront();
+        root.Controls.Add(gridCard, 0, 2);
         page.Controls.Add(root); root.BringToFront(); UiMessages.RegisterAlertHost(page, Alert);
         var keys = new KeyboardShortcuts(page); keys.Register(Keys.Control | Keys.F, () => Search.Focus());
-        keys.Register(Keys.Control | Keys.N, () => NewButton.PerformClick()); keys.Register(Keys.Control | Keys.S, save.PerformClick);
+        keys.Register(Keys.Control | Keys.N, () => NewButton.PerformClick()); keys.Register(Keys.Control | Keys.S, _edit.PerformClick);
         keys.Register(Keys.Escape, () => { if (Search.ContainsFocus) Search.Clear(); else clearForm(); });
-        keys.RegisterEnterNavigation(_inputs, save.PerformClick);
         Tooltips.Attach(NewButton, "New record · Ctrl+N"); Tooltips.Attach(save, "Save · Ctrl+S"); Tooltips.Attach(Search, "Search · Ctrl+F; Esc to clear");
         page.ResumeLayout(true);
+        page.Disposed += (_, _) => { FormCard.Dispose(); _title.Dispose(); };
+        Toolbar.ControlAdded += (_, _) => AlignToolbar();
+        Toolbar.Layout += (_, _) => AlignToolbar();
+    }
+    private bool _aligning;
+    private void AlignToolbar()
+    {
+        if (_aligning) return; _aligning = true;
+        try
+        {
+            var top = Typography.Label.Height + Space.Xs + Space.Sm;
+            foreach (Control control in Toolbar.Controls)
+                if (control is not FormField) control.Margin = new Padding(Space.Xs, top, Space.Xs, Space.Sm);
+        }
+        finally { _aligning = false; }
+    }
+    public void UseModal(Func<Task<bool>> save, Func<Task> afterSave, bool allowEdit = true)
+    {
+        _saveModal = save; _afterSave = afterSave; FormCard.Visible = false;
+        _edit.Text = $"Edit {_singular}"; _edit.Visible = allowEdit && NewButton.Visible; _edit.Enabled = false;
+        Toolbar.Controls.Add(_edit); Actions.BackColor = Palette.Canvas; Actions.Dock = DockStyle.None; Toolbar.Controls.Add(Actions);
+        _edit.Click += async (_, _) => { if (_editing) await OpenEditorAsync(); };
+        _grid.SelectionChanged += (_, _) => _edit.Enabled = _grid.SelectedRows.Count > 0;
+        if (allowEdit) _grid.CellDoubleClick += async (_, e) => { if (e.RowIndex >= 0 && _editing && NewButton.Visible) await OpenEditorAsync(); };
+    }
+    public async Task OpenEditorAsync()
+    {
+        if (_dialogOpen || _saveModal is null || !_page.Enabled || !NewButton.Visible) return;
+        _dialogOpen = true;
+        try
+        {
+            using RecordDialog dialog = _singular == "patient" ? new PatientDialog(_fields, _saveModal, _editing)
+                : new RecordDialog($"{(_editing ? "Edit" : "New")} {_singular}", _fields, _saveModal);
+            _dialog = dialog;
+            var result = dialog.ShowDialog(_page.FindForm());
+            // The reusable fields belong to the page, not to the temporary dialog.
+            _fields.Parent?.Controls.Remove(_fields); FormCard.Content.Controls.Add(_fields);
+            _dialog = null;
+            if (result == DialogResult.OK && _afterSave is not null)
+                await UiAction.RunAsync(_page, _afterSave);
+        }
+        finally { _dialogOpen = false; _dialog = null; }
     }
     public void AddRow(params FormField[] fields)
     {
@@ -108,6 +159,7 @@ public sealed class CrudPageLayout
     }
     public void SetEditing(bool editing)
     {
+        _editing = editing;
         _title.Text = $"{(editing ? "Edit" : "New")} {_singular}";
         _save.Text = editing ? $"Update {_singular}" : $"Add {_singular}";
     }

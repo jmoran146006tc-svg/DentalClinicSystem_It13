@@ -21,6 +21,7 @@ public partial class ucTreatmentRecords : UserControl
     private Dictionary<int, string> _patientNamesByAppointmentId = [];
     private IReadOnlyList<Treatment> _treatments = [];
     private Treatment? _selected;
+    private Treatment? _savedTreatment;
     private sealed record TreatmentRow(int TreatmentId, string Patient, DateTime? AppointmentDateTime, string TreatmentType, string? ToothNumber, decimal Cost, DateTime DatePerformed, string? Notes, Treatment Record);
 
     public ucTreatmentRecords(ITreatmentService treatmentService, IAppointmentService appointmentService, ITreatmentTypeService treatmentTypeService, User currentUser)
@@ -36,7 +37,8 @@ public partial class ucTreatmentRecords : UserControl
         cboTreatmentType.SelectedIndexChanged += cboTreatmentType_SelectedIndexChanged; dgvTreatments.SelectionChanged += SelectionChanged;
         _layout.Search.TextChanged += (_, _) => BindRows(); _clear.Click += (_, _) => ClearForm();
         Enabled = RoleAccess.Can(currentUser, Permission.ViewTreatments);
-        _layout.FormCard.Visible = _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManageTreatments);
+        _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManageTreatments);
+        _layout.UseModal(SaveAsync, AfterSaveAsync);
     }
     private async void ucTreatmentRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await LoadAsync(); });
     private async Task LoadAsync()
@@ -84,18 +86,23 @@ public partial class ucTreatmentRecords : UserControl
         if (cboTreatmentType.SelectedValue is int id && _treatmentTypesById.TryGetValue(id, out var type))
             txtCost.Text = type.DefaultCost.ToString("0.00", CultureInfo.InvariantCulture);
     }
-    private async void btnAddTreatment_Click(object? sender, EventArgs e) => await UiAction.RunAsync(this, SaveAsync, btnAddTreatment);
-    private async Task SaveAsync()
+    private async void btnAddTreatment_Click(object? sender, EventArgs e) => await _layout.OpenEditorAsync();
+    private async Task<bool> SaveAsync()
     {
-        if (cboAppointment.SelectedValue is not int appointmentId || cboTreatmentType.SelectedValue is not int typeId) { UiMessages.ShowError(ServiceResult.Fail("Pick an appointment and a treatment type first.")); return; }
-        if (!InputRules.TryCost(txtCost.Text, out var cost)) { UiMessages.ShowError(ServiceResult.Fail("Enter a cost between 0 and 99,999,999.99 using a decimal point, for example 1250.50.")); txtCost.Focus(); return; }
+        if (cboAppointment.SelectedValue is not int appointmentId || cboTreatmentType.SelectedValue is not int typeId) { UiMessages.ShowError(ServiceResult.Fail("Pick an appointment and a treatment type first.")); return false; }
+        if (!InputRules.TryCost(txtCost.Text, out var cost)) { UiMessages.ShowError(ServiceResult.Fail("Enter a cost between 0 and 99,999,999.99 using a decimal point, for example 1250.50.")); txtCost.Focus(); return false; }
         var treatment = new Treatment { TreatmentId = _selected?.TreatmentId ?? 0, AppointmentId = appointmentId, TreatmentTypeId = typeId,
             Cost = cost, ToothNumber = InputRules.NullIfBlank(txtToothNumber.Text), DatePerformed = dtpDatePerformed.Value.Date, Notes = InputRules.NullIfBlank(txtNotes.Text) };
         var result = _selected is null ? await _treatmentService.AddTreatmentAsync(_currentUser, treatment) : await _treatmentService.UpdateTreatmentAsync(_currentUser, treatment);
-        if (!result.Success) { UiMessages.ShowError(result); return; }
-        await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("Treatment saved.");
-        var saved = _treatments.Where(t => t.AppointmentId == treatment.AppointmentId && t.TreatmentTypeId == treatment.TreatmentTypeId && t.Cost == cost).MaxBy(t => t.TreatmentId);
-        if (saved is not null) GridHelper.FlashRow(dgvTreatments, treatment.TreatmentId > 0 ? treatment.TreatmentId : saved.TreatmentId);
+        if (!result.Success) { UiMessages.ShowError(result); return false; }
+        _savedTreatment = treatment; return true;
+    }
+    private async Task AfterSaveAsync()
+    {
+        var treatment = _savedTreatment!;
+        await RefreshGridAsync(); UiMessages.ShowSuccess("Treatment saved.");
+        var saved = _treatments.Where(t => t.AppointmentId == treatment.AppointmentId && t.TreatmentTypeId == treatment.TreatmentTypeId && t.Cost == treatment.Cost).MaxBy(t => t.TreatmentId);
+        if (saved is not null) GridTheme.SelectAndFlash(dgvTreatments, treatment.TreatmentId > 0 ? treatment.TreatmentId : saved.TreatmentId);
     }
     private void ClearForm()
     {

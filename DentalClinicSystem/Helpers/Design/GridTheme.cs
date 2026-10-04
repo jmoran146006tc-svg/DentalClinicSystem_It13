@@ -10,6 +10,7 @@ public static class GridTheme
     private sealed class State
     {
         public int Hover { get; set; } = -1;
+        public bool Scrolling { get; set; }
         public EmptyState? Empty { get; set; }
         public string EmptyMessage { get; set; } = string.Empty;
         public Func<object, object>? Key { get; set; }
@@ -22,19 +23,28 @@ public static class GridTheme
     {
         if (States.TryGetValue(grid, out _)) return;
         var state = new State(); States.Add(grid, state);
-        DesignPaint.Enable(grid); grid.BackgroundColor = Palette.Surface; grid.BorderStyle = BorderStyle.None;
+        typeof(Control).GetProperty("DoubleBuffered", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.SetValue(grid, true);
+        grid.BackgroundColor = Palette.Surface; grid.BorderStyle = BorderStyle.None;
         grid.EnableHeadersVisualStyles = false; grid.RowHeadersVisible = false; grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill; grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
         grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None; grid.GridColor = Palette.Line;
         grid.DefaultCellStyle = new() { Font = Typography.Body, ForeColor = Palette.Ink700, BackColor = Palette.Surface, SelectionBackColor = Palette.BrandSoft, SelectionForeColor = Palette.Ink900, Padding = new Padding(Space.Md, 0, Space.Md, 0) };
         grid.ColumnHeadersDefaultCellStyle = new() { Font = Typography.Label, ForeColor = Palette.Ink500, BackColor = Palette.SurfaceAlt, Padding = new Padding(Space.Md, 0, Space.Md, 0) };
         grid.RowTemplate.Height = Metrics.NavHeight; grid.ColumnHeadersHeight = Metrics.GridHeaderHeight;
-        grid.CellMouseEnter += (_, e) => { var old = state.Hover; state.Hover = e.RowIndex; InvalidateRow(grid, old); InvalidateRow(grid, state.Hover); };
+        grid.CellMouseEnter += (_, e) => { if (state.Scrolling || state.Hover == e.RowIndex) return; var old = state.Hover; state.Hover = e.RowIndex; InvalidateRow(grid, old); InvalidateRow(grid, state.Hover); };
+        grid.Scroll += (_, _) =>
+        {
+            state.Hover = -1;
+            if (state.Scrolling || !grid.IsHandleCreated || grid.IsDisposed) return;
+            state.Scrolling = true;
+            grid.BeginInvoke(() => { state.Scrolling = false; if (!grid.IsDisposed) grid.Invalidate(); });
+        };
         grid.MouseLeave += (_, _) => { var old = state.Hover; state.Hover = -1; InvalidateRow(grid, old); };
         grid.CellPainting += (_, e) => PaintCell(grid, state, e);
         grid.CellFormatting += (_, e) => FormatCell(grid, e);
         grid.DataBindingComplete += (_, _) =>
         {
+            if (state.Identities.Count > 0) foreach (DataGridViewRow row in grid.Rows) row.Height = Metrics.Scale(grid, Metrics.IdentityHeight);
             foreach (DataGridViewColumn column in grid.Columns)
             {
                 if (column.ValueType == typeof(decimal) || column.ValueType == typeof(int) || column.ValueType == typeof(double)) column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
@@ -57,8 +67,8 @@ public static class GridTheme
     public static void IdentityColumn(DataGridView grid, string column, Func<object, (string Name, string Detail)> identity)
     {
         Apply(grid); States.GetValue(grid, _ => new State()).Identities[column] = identity;
-        grid.RowTemplate.Height = Metrics.IdentityHeight;
-        foreach (DataGridViewRow row in grid.Rows) row.Height = Metrics.IdentityHeight;
+        grid.RowTemplate.Height = Metrics.Scale(grid, Metrics.IdentityHeight);
+        foreach (DataGridViewRow row in grid.Rows) row.Height = grid.RowTemplate.Height;
         grid.Invalidate();
     }
     public static void FlashRow(DataGridView grid, object key)
@@ -85,6 +95,12 @@ public static class GridTheme
     private static void PaintCell(DataGridView grid, State state, DataGridViewCellPaintingEventArgs e)
     {
         if (e.RowIndex < 0 || e.ColumnIndex < 0 || e.Graphics is not { } graphics) return;
+        var clip = Rectangle.Intersect(e.CellBounds, e.ClipBounds);
+        if (clip.IsEmpty) return;
+        var drawing = graphics.Save();
+        try
+        {
+        graphics.SetClip(clip, System.Drawing.Drawing2D.CombineMode.Intersect);
         var row = grid.Rows[e.RowIndex]; var data = row.DataBoundItem; var name = grid.Columns[e.ColumnIndex].Name;
         var fill = row.Selected ? Palette.BrandSoft : state.Hover == e.RowIndex ? Palette.SurfaceAlt : Palette.Surface;
         if (!row.Selected && data is not null && state.Key is not null && state.Flashes.TryGetValue(state.Key(data), out var flash)) fill = Theme.Lerp(fill, Palette.BrandSoft, flash);
@@ -110,5 +126,17 @@ public static class GridTheme
         }
         else e.Paint(e.CellBounds, DataGridViewPaintParts.ContentForeground | DataGridViewPaintParts.Border | DataGridViewPaintParts.ErrorIcon);
         e.Handled = true;
+        }
+        finally { graphics.Restore(drawing); }
+    }
+    public static void SelectAndFlash(DataGridView grid, object key)
+    {
+        if (!States.TryGetValue(grid, out var state) || state.Key is null) return;
+        foreach (DataGridViewRow row in grid.Rows)
+            if (row.DataBoundItem is { } item && Equals(state.Key(item), key))
+            {
+                grid.CurrentCell = row.Cells.Cast<DataGridViewCell>().FirstOrDefault(cell => cell.Visible);
+                row.Selected = true; FlashRow(grid, key); break;
+            }
     }
 }

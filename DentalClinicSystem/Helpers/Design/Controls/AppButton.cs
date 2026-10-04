@@ -42,6 +42,7 @@ public static class ButtonStyler
         public bool Hover { get; set; }
         public bool Pressed { get; set; }
         public bool Busy { get; set; }
+        public bool NavigationGhost { get; set; }
         public float Focus { get; set; }
         public float Offset { get; set; }
         public float Phase { get; set; }
@@ -74,6 +75,7 @@ public static class ButtonStyler
         button.GotFocus += (_, _) => Focus(state, 1);
         button.LostFocus += (_, _) => { state.Pressed = false; Focus(state, 0); Change(state); };
         button.EnabledChanged += (_, _) => Change(state);
+        button.ParentChanged += (_, _) => Change(state);
         button.VisibleChanged += (_, _) =>
         {
             if (!button.Visible) { state.Hover = false; state.Pressed = false; Focus(state, 0); }
@@ -97,11 +99,12 @@ public static class ButtonStyler
     }
     private static void Change(State state)
     {
-        var fill = !state.Button.Enabled && !state.Busy ? Palette.SurfaceAlt : state.Variant switch
+        var background = DesignPaint.ParentBackground(state.Button);
+        var fill = !state.Button.Enabled && !state.Busy ? state.Variant == ButtonVariant.Ghost ? background : Palette.SurfaceAlt : state.Variant switch
         {
             ButtonVariant.Primary => state.Pressed ? Palette.BrandPressed : state.Hover ? Palette.BrandHover : Palette.Brand,
             ButtonVariant.Danger => state.Pressed ? Theme.Lerp(Palette.Danger.Text, Palette.Ink900, .2f) : state.Hover ? Theme.Lerp(Palette.Danger.Text, Palette.Ink900, .1f) : Palette.Danger.Text,
-            ButtonVariant.Ghost => state.Hover ? Palette.BrandSoft : state.Button.Parent?.BackColor ?? Palette.Surface,
+            ButtonVariant.Ghost => state.Hover ? state.NavigationGhost ? Palette.Danger.Background : Palette.BrandSoft : background,
             _ => Palette.Surface
         };
         var border = state.Hover && state.Button.Enabled ? Palette.Brand : Palette.LineStrong;
@@ -119,6 +122,12 @@ public static class ButtonStyler
         if (busy) StartSpinner(state); else MotionSystem.Animator.Cancel(button, "button-spinner");
     }
     public static bool IsBusy(Button button) => States.TryGetValue(button, out var state) && state.Busy;
+    public static void NavigationGhost(Button button)
+    {
+        Attach(button, ButtonVariant.Ghost, IconKind.Logout);
+        States.GetValue(button, _ => throw new InvalidOperationException()).NavigationGhost = true;
+        button.Font = Typography.Body; button.TextAlign = ContentAlignment.MiddleLeft;
+    }
     private static string BusyLabel(State state) => state.Button is AppButton app ? app.BusyText
         : state.Button.Name == "btnLogin" ? "Signing in…" : state.Button.Name == "btnSchedule" ? "Scheduling…" : "Saving…";
     private static void StartSpinner(State state) => MotionSystem.Animator.Loop(state.Button, "button-spinner", MotionSystem.SpinnerPeriod, t => { state.Phase = t; state.Button.Invalidate(); });
@@ -126,11 +135,12 @@ public static class ButtonStyler
     {
         var button = state.Button;
         if (button.Width <= 0 || button.Height <= 0) return;
-        graphics.Clear(button.Parent?.BackColor ?? Palette.Canvas);
+        graphics.Clear(DesignPaint.ParentBackground(button));
         var bounds = button.ClientRectangle;
         bounds.Inflate(-Metrics.FocusRing, -Metrics.FocusRing);
         var radius = Metrics.Scale(button, Metrics.ControlRadius);
-        DesignPaint.Surface(graphics, bounds, radius, state.Fill, state.Variant == ButtonVariant.Secondary ? state.Border : null);
+        if (state.Variant != ButtonVariant.Ghost || state.Hover && button.Enabled)
+            DesignPaint.Surface(graphics, bounds, radius, state.Fill, state.Variant == ButtonVariant.Secondary ? state.Border : null);
         if ((button.Enabled || state.Busy) && state.Variant is ButtonVariant.Primary or ButtonVariant.Danger && bounds.Height > 0)
         {
             using var path = DesignPaint.RoundedRect(bounds, radius);
@@ -145,17 +155,19 @@ public static class ButtonStyler
             using var pen = new Pen(Palette.WithAlpha(Palette.BrandAccent, .4f * state.Focus), Metrics.FocusRing);
             graphics.DrawPath(pen, ring);
         }
-        var textColor = !button.Enabled && !state.Busy ? Palette.Ink400 : state.Variant is ButtonVariant.Primary or ButtonVariant.Danger ? Palette.Surface : state.Hover ? Palette.BrandSoftText : Palette.Ink700;
+        var textColor = !button.Enabled && !state.Busy ? Palette.Ink400 : state.NavigationGhost && state.Hover ? Palette.Danger.Text : state.Variant is ButtonVariant.Primary or ButtonVariant.Danger ? Palette.Surface : state.Hover ? Palette.BrandSoftText : Palette.Ink700;
         var content = Rectangle.Inflate(bounds, -Metrics.Scale(button, button.Text.Length == 0 ? Space.Xs : Space.Lg), -Space.Xs);
         content.Offset(0, (int)Math.Round(state.Offset));
+        if (state.NavigationGhost) content = new(Metrics.Scale(button, Space.Md), 0, button.Width - Metrics.Scale(button, Space.Xl), button.Height);
         if (state.Icon.HasValue || state.Busy)
         {
             var iconBounds = new Rectangle(content.Left, content.Top + (content.Height - Metrics.IconSize) / 2, Metrics.IconSize, Metrics.IconSize);
             if (state.Busy) { using var pen = new Pen(textColor, Metrics.FocusRing); graphics.DrawArc(pen, iconBounds, state.Phase * 360, 250); }
             else if (state.Icon is IconKind kind) Icons.Draw(graphics, kind, iconBounds, textColor);
-            content.X += Metrics.IconSize + Space.Sm; content.Width -= Metrics.IconSize + Space.Sm;
+            var textLeft = state.NavigationGhost ? Metrics.Scale(button, Space.Xxxl) : content.X + Metrics.IconSize + Space.Sm;
+            content.Width -= textLeft - content.X; content.X = textLeft;
         }
         var text = state.Busy ? BusyLabel(state) : button.Text;
-        TextRenderer.DrawText(graphics, text, button.Font, content, textColor, DesignPaint.TextFlags | TextFormatFlags.HorizontalCenter);
+        TextRenderer.DrawText(graphics, text, button.Font, content, textColor, DesignPaint.TextFlags | (state.NavigationGhost ? TextFormatFlags.Left : TextFormatFlags.HorizontalCenter));
     }
 }

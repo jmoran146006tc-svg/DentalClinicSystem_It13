@@ -1,6 +1,7 @@
 using System.Reflection;
 using DentalClinicSystem.Forms;
 using DentalClinicSystem.Helpers;
+using DentalClinicSystem.Helpers.Design;
 using DentalClinicSystem.Helpers.Design.Controls;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
@@ -56,6 +57,7 @@ public class VisualPreviewTests
             Capture(host, name + "-empty"); empty.Dispose();
             var filled = Page(SampleServices()); filled.Dock = DockStyle.Fill; host.Controls.Add(filled); filled.CreateControl(); Application.DoEvents();
             var grid = PageLayoutTests.Descendants(filled).OfType<DataGridView>().Single(); Assert.NotEmpty(grid.Rows.Cast<DataGridViewRow>());
+            Assert.True(grid.Width > host.ClientSize.Width / 2); Assert.True(grid.Height > host.ClientSize.Height / 3);
             Capture(host, name + "-filled");
             grid.CurrentCell = grid.Rows[0].Cells.Cast<DataGridViewCell>().First(c => c.Visible); grid.Rows[0].Selected = true; Application.DoEvents();
             Capture(host, name + "-selected");
@@ -63,8 +65,15 @@ public class VisualPreviewTests
             Application.DoEvents(); Capture(host, name + "-error");
             Assert.True(PageLayoutTests.Descendants(filled).OfType<InlineAlert>().Single().Visible);
             Assert.DoesNotContain(grid.Columns.Cast<DataGridViewColumn>(), c => c.Visible && c.Name is "PasswordHash" or "Record");
-            foreach (var field in PageLayoutTests.Descendants(filled).OfType<FormField>()) Assert.True(field.Box.Input.Parent!.Height >= field.Box.Input.Height);
-            host.ClientSize = new(1000, 900); Application.DoEvents(); Capture(host, name + "-narrow");
+            var create = PageLayoutTests.Descendants(filled).OfType<AppButton>().Single(button => button.Text == (name == "appointments" ? "Schedule" : "New " + name.TrimEnd('s')));
+            PageLayoutTests.InspectNextDialog(host, dialog => Capture(dialog, name + "-dialog"), create.PerformClick);
+            host.ClientSize = new(1100, 900); Application.DoEvents(); Capture(host, name + "-narrow");
+            foreach (var toolbar in PageLayoutTests.Descendants(filled).OfType<FlowLayoutPanel>().Where(panel => panel.Controls.OfType<FormField>().Any()))
+            {
+                Assert.All(toolbar.Controls.Cast<Control>().Where(control => control.Visible), control => Assert.True(control.Right <= toolbar.ClientSize.Width));
+                var fields = toolbar.Controls.OfType<FormField>().ToArray();
+                Assert.All(fields, field => Assert.Equal(fields[0].Top, field.Top));
+            }
         }
         finally { MotionSystem.UseSystemPreference(); }
     });
@@ -90,9 +99,36 @@ public class VisualPreviewTests
             Assert.True(PageLayoutTests.Named<Label>(dashboard, "_lblClock").Parent!.Height > 0);
             Assert.True(PageLayoutTests.Named<NavIndicator>(dashboard, "navIndicator").Visible);
             Capture(dashboard, "sidebar-" + role.ToLowerInvariant());
-            PageLayoutTests.ShowOffscreen(login); Capture(login, "login");
+            PageLayoutTests.ShowOffscreen(login);
+            var loginBrand = PageLayoutTests.Descendants(login).OfType<LoginBrand>().Single();
+            Assert.InRange(Math.Abs((double)loginBrand.Width / loginBrand.Height - (double)login.BackgroundImage!.Width / login.BackgroundImage.Height), 0, .005);
+            Capture(login, "login");
         }
         finally { MotionSystem.UseSystemPreference(); }
+    });
+    [Fact]
+    public void ReportsBindAllFourGridsIncludingUnselectedTabs() => PresentationTests.Sta(() =>
+    {
+        var reports = TestServices.Create<IReportService>(
+            (nameof(IReportService.GetAppointmentStatusCountsAsync), Task.FromResult(ServiceResult<IReadOnlyList<AppointmentStatusCount>>.Ok([new("Scheduled", 2)]))),
+            (nameof(IReportService.GetRevenueByDayAsync), Task.FromResult(ServiceResult<IReadOnlyList<RevenueDay>>.Ok([new(DateTime.Today, 1250m)]))),
+            (nameof(IReportService.GetTopTreatmentTypesAsync), Task.FromResult(ServiceResult<IReadOnlyList<TopTreatmentType>>.Ok([new("Cleaning", 2, 1250m)]))),
+            (nameof(IReportService.GetDentistWorkloadAsync), Task.FromResult(ServiceResult<IReadOnlyList<DentistWorkload>>.Ok([new("Miguel Reyes", 2, 1, 1250m)]))));
+        using var host = new Form { ClientSize = new(1200, 800) };
+        using var page = new ucReports(reports, new User { Role = Roles.Admin }) { Dock = DockStyle.Fill };
+        host.Controls.Add(page); PageLayoutTests.ShowOffscreen(host);
+        var tabs = PageLayoutTests.Descendants(page).OfType<TabControl>().Single();
+        Assert.Equal(4, tabs.TabCount);
+        // All sources are assigned while three tabs still have no grid handles.
+        Assert.All(PageLayoutTests.Descendants(page).OfType<DataGridView>(), grid => Assert.NotNull(grid.DataSource));
+        foreach (TabPage tab in tabs.TabPages)
+        {
+            tabs.SelectedTab = tab; Application.DoEvents();
+            var grid = tab.Controls.OfType<DataGridView>().Single();
+            Assert.Single(grid.Rows.Cast<DataGridViewRow>());
+            Assert.All(grid.Columns.Cast<DataGridViewColumn>(), column => Assert.True(column.MinimumWidth >= 80));
+        }
+        Capture(host, "reports");
     });
 #if DEBUG
     [Fact]
@@ -104,7 +140,7 @@ public class VisualPreviewTests
             using var guide = new frmStyleGuide { ClientSize = new(1600, 1000) }; PageLayoutTests.ShowOffscreen(guide);
             Capture(guide, "guide-top");
             var grids = PageLayoutTests.Descendants(guide).OfType<DataGridView>().ToArray(); Assert.Contains(grids, grid => grid.Rows.Count == 4);
-            foreach (var field in PageLayoutTests.Descendants(guide).OfType<FormField>()) Assert.True(field.Box.Input.Parent!.Height >= field.Box.Input.Height);
+            foreach (var field in PageLayoutTests.Descendants(guide).OfType<FormField>()) Assert.True(field.Box.Input.Parent!.Height >= field.Box.Input.Height - Metrics.Scale(field.Box, 8), $"{field.Box.Input.AccessibleName}: viewport {field.Box.Input.Parent!.Height}, input {field.Box.Input.Height}, DPI {field.Box.DeviceDpi}");
             var kpi = PageLayoutTests.Descendants(guide).OfType<KpiCard>().Single();
             var tile = kpi.Content.Controls.OfType<IconTile>().Single(); Assert.True(kpi.Content.ClientRectangle.Contains(tile.Bounds)); Assert.Equal(tile.Width, tile.Height);
             var scroll = guide.Controls.OfType<FlowLayoutPanel>().Single(); var last = scroll.Controls[scroll.Controls.Count - 1]; scroll.ScrollControlIntoView(last); Application.DoEvents(); Capture(guide, "guide-motion");

@@ -15,6 +15,7 @@ public partial class ucUserManagement : UserControl
     private readonly CrudPageLayout _layout;
     private IReadOnlyList<User> _users = [];
     private User? _selected;
+    private User? _savedUser;
     private sealed record UserRow(int UserId, string Username, string Role, string Dentist, bool IsActive, User Record);
     private Dictionary<int, string> _dentistNames = [];
     public ucUserManagement(IUserService userService, IDentistService dentistService, User currentUser)
@@ -27,11 +28,12 @@ public partial class ucUserManagement : UserControl
         cboRole.Items.Clear(); cboRole.Items.AddRange([Roles.Admin, Roles.Receptionist, Roles.Dentist]);
         cboRole.SelectedIndexChanged += (_, _) => cboDentist.Enabled = RoleAccess.RequiresDentist(cboRole.SelectedItem as string ?? "");
         btnDeactivate.Text = "Deactivate"; btnDeactivate.Visible = true; btnDeactivate.Height = Metrics.ControlHeight; ButtonStyler.Attach(btnDeactivate, ButtonVariant.Danger); _layout.Actions.Controls.Add(btnDeactivate);
-        btnAdd.Click += async (_, _) => await UiAction.RunAsync(this, SaveAsync, btnAdd); btnClear.Click += (_, _) => ClearForm();
+        btnClear.Click += (_, _) => ClearForm();
         btnDeactivate.Click += async (_, _) => await UiAction.RunAsync(this, DeactivateAsync, btnDeactivate);
         dgvUsers.SelectionChanged += SelectionChanged; _layout.Search.TextChanged += (_, _) => BindRows();
         GridTheme.MuteInactive<UserRow>(dgvUsers, row => !row.IsActive);
         Enabled = RoleAccess.Can(currentUser, Permission.ManageUsers); ClearForm();
+        _layout.UseModal(SaveAsync, AfterSaveAsync);
     }
     private async void ucUserManagement_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await LoadAsync(); });
     private async Task LoadAsync()
@@ -57,15 +59,20 @@ public partial class ucUserManagement : UserControl
         if (_selected.DentistId is int id) cboDentist.SelectedValue = id; else cboDentist.SelectedIndex = -1;
         btnDeactivate.Enabled = _selected.IsActive && _selected.UserId != _currentUser.UserId; _layout.SetEditing(true);
     }
-    private async Task SaveAsync()
+    private async Task<bool> SaveAsync()
     {
         var user = new User { UserId = _selected?.UserId ?? 0, Username = txtUsername.Text.Trim(), Role = cboRole.SelectedItem as string ?? "",
             DentistId = RoleAccess.RequiresDentist(cboRole.SelectedItem as string ?? "") && cboDentist.SelectedValue is int id ? id : null, IsActive = _selected?.IsActive ?? true };
         var result = _selected is null ? await _userService.AddUserAsync(_currentUser, user, txtPassword.Text)
             : await _userService.UpdateUserAsync(_currentUser, user, string.IsNullOrEmpty(txtPassword.Text) ? null : txtPassword.Text);
-        if (!result.Success) { UiMessages.ShowError(result); return; }
-        await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("User saved.");
-        var saved = _users.FirstOrDefault(u => u.Username == user.Username); if (saved is not null) GridHelper.FlashRow(dgvUsers, saved.UserId);
+        if (!result.Success) { UiMessages.ShowError(result); return false; }
+        _savedUser = user; return true;
+    }
+    private async Task AfterSaveAsync()
+    {
+        var user = _savedUser!;
+        await RefreshGridAsync(); UiMessages.ShowSuccess("User saved.");
+        var saved = _users.FirstOrDefault(u => u.Username == user.Username); if (saved is not null) GridTheme.SelectAndFlash(dgvUsers, saved.UserId);
     }
     private async Task DeactivateAsync()
     {

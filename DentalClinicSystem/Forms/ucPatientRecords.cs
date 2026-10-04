@@ -15,6 +15,7 @@ public partial class ucPatientRecords : UserControl
     private readonly AppButton _reactivate = UiFactory.Button("Reactivate", ButtonVariant.Secondary);
     private IReadOnlyList<Patient> _patients = [];
     private Patient? _selected;
+    private Patient? _savedPatient;
     private sealed record PatientRow(int PatientId, string FullName, string ContactNumber, string? Email, DateTime DateOfBirth, string? Address, Patient Record);
     public ucPatientRecords(IPatientService patientService, User currentUser)
     {
@@ -36,9 +37,9 @@ public partial class ucPatientRecords : UserControl
         _reactivate.Click += async (_, _) => await UiAction.RunAsync(this, ReactivateAsync, _reactivate);
         dgvPatients.SelectionChanged += SelectionChanged;
         GridTheme.MuteInactive<PatientRow>(dgvPatients, row => !row.Record.IsActive);
-        btnAdd.Click += async (_, _) => await UiAction.RunAsync(this, SaveAsync, btnAdd);
         btnClear.Click += (_, _) => ClearForm();
-        _layout.FormCard.Visible = _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManagePatients);
+        _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManagePatients);
+        _layout.UseModal(SaveAsync, AfterSaveAsync);
         if (!RoleAccess.Can(currentUser, Permission.ViewPatients)) Enabled = false;
     }
     private async void ucPatientRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await RefreshGridAsync(); });
@@ -62,15 +63,20 @@ public partial class ucPatientRecords : UserControl
         txtContactNumber.Text = _selected.ContactNumber; txtEmail.Text = _selected.Email; txtAddress.Text = _selected.Address;
         InputRules.SetDate(dtpDateOfBirth, _selected.DateOfBirth); _layout.SetEditing(true); _reactivate.Visible = !_selected.IsActive;
     }
-    private async Task SaveAsync()
+    private async Task<bool> SaveAsync()
     {
         var patient = new Patient { PatientId = _selected?.PatientId ?? 0, FirstName = txtFirstName.Text.Trim(), LastName = txtLastName.Text.Trim(), ContactNumber = txtContactNumber.Text.Trim(),
             Email = InputRules.NullIfBlank(txtEmail.Text), Address = InputRules.NullIfBlank(txtAddress.Text), DateOfBirth = dtpDateOfBirth.Value.Date };
         var result = _selected is null ? await _patientService.AddPatientAsync(_currentUser, patient) : await _patientService.UpdatePatientAsync(_currentUser, patient);
-        if (!result.Success) { UiMessages.ShowError(result); return; }
-        await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("Patient saved.");
+        if (!result.Success) { UiMessages.ShowError(result); return false; }
+        _savedPatient = patient; return true;
+    }
+    private async Task AfterSaveAsync()
+    {
+        var patient = _savedPatient!;
+        await RefreshGridAsync(); UiMessages.ShowSuccess("Patient saved.");
         var saved = _patients.Where(p => p.FullName == patient.FullName && p.ContactNumber == patient.ContactNumber).MaxBy(p => p.PatientId);
-        if (saved is not null) GridHelper.FlashRow(dgvPatients, patient.PatientId > 0 ? patient.PatientId : saved.PatientId);
+        if (saved is not null) GridTheme.SelectAndFlash(dgvPatients, patient.PatientId > 0 ? patient.PatientId : saved.PatientId);
     }
     private async Task ReactivateAsync()
     {

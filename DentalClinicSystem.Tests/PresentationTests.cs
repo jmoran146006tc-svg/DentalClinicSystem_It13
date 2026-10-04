@@ -75,7 +75,7 @@ public class PresentationTests
         using var root = new Form(); using var grid = new DataGridView { AllowUserToAddRows = false };
         GridHelper.Bind(grid, new[] { new Patient { PatientId = 7, FirstName = "Ana", LastName = "Santos", DateOfBirth = new(1998, 4, 12) } });
         Assert.DoesNotContain(grid.Controls.Cast<Control>(), control => control is EmptyState);
-        root.Controls.Add(grid); root.CreateControl(); grid.BindingContext = new BindingContext();
+        root.Controls.Add(grid); PageLayoutTests.ShowOffscreen(root); grid.BindingContext = new BindingContext();
         Assert.False(grid.Columns["PatientId"]!.Visible); Assert.False(grid.Columns["FullName"]!.Visible);
         Assert.Equal("First name", grid.Columns["FirstName"]!.HeaderText);
         Assert.Equal("Contact", grid.Columns["ContactNumber"]!.HeaderText);
@@ -93,6 +93,25 @@ public class PresentationTests
         Assert.True(field.Box.Input.Parent!.Height >= field.Box.Input.Height);
         using var card = new KpiCard("Appointments"); var bounds = card.Content.Bounds;
         card.Elevation = ElevationLevel.E2; Assert.Equal(bounds, card.Content.Bounds);
+    });
+
+    [Fact]
+    public void GridBindsBeforeHandleCreationAndRebindsWithInheritedFonts() => Sta(() =>
+    {
+        using var host = new Form();
+        using var grid = new DataGridView { BindingContext = new BindingContext(), AllowUserToAddRows = false };
+        host.Controls.Add(grid);
+        Assert.False(grid.IsHandleCreated);
+        grid.HandleCreated += (_, _) => GridHelper.Bind(grid, new[] { new Appointment { AppointmentId = 3 } });
+        GridHelper.Bind(grid, new[] { new Appointment { AppointmentId = 1, AppointmentDateTime = DateTime.Today } });
+        Assert.False(grid.IsHandleCreated);
+        PageLayoutTests.ShowOffscreen(host);
+        Assert.Equal(3, ((Appointment)grid.Rows[0].DataBoundItem!).AppointmentId);
+        grid.DefaultCellStyle.Font = null; grid.ColumnHeadersDefaultCellStyle.Font = null;
+        GridHelper.Bind(grid, new[] { new Appointment { AppointmentId = 2, AppointmentDateTime = DateTime.Today } });
+        Assert.NotEmpty(grid.Columns.Cast<DataGridViewColumn>());
+        Assert.Equal(DataGridViewAutoSizeColumnsMode.Fill, grid.AutoSizeColumnsMode);
+        Assert.All(grid.Columns.Cast<DataGridViewColumn>(), column => Assert.True(column.MinimumWidth > 0));
     });
 
     internal static void Sta(Action action)

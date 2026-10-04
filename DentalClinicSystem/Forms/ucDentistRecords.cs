@@ -14,6 +14,7 @@ public partial class ucDentistRecords : UserControl
     private readonly CrudPageLayout _layout;
     private IReadOnlyList<Dentist> _dentists = [];
     private Dentist? _selected;
+    private Dentist? _savedDentist;
     private sealed record DentistRow(int DentistId, string Name, string? Specialization, string? ContactNumber, string? LicenseNumber, Dentist Record);
     public ucDentistRecords(IDentistService dentistService, User currentUser)
     {
@@ -27,9 +28,10 @@ public partial class ucDentistRecords : UserControl
         btnDelete.Text = "Deactivate"; btnDelete.Visible = true; btnDelete.Height = Metrics.ControlHeight; ButtonStyler.Attach(btnDelete, ButtonVariant.Danger);
         _layout.Actions.Controls.Add(btnDelete);
         dgvDentists.SelectionChanged += SelectionChanged; _layout.Search.TextChanged += (_, _) => BindRows();
-        btnAdd.Click += async (_, _) => await UiAction.RunAsync(this, SaveAsync, btnAdd); btnClear.Click += (_, _) => ClearForm();
+        btnClear.Click += (_, _) => ClearForm();
         btnDelete.Click += async (_, _) => await UiAction.RunAsync(this, DeactivateAsync, btnDelete);
         Enabled = RoleAccess.Can(currentUser, Permission.ManageDentists); ClearForm();
+        _layout.UseModal(SaveAsync, AfterSaveAsync);
     }
     private async void ucDentistRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await RefreshGridAsync(); });
     private async Task RefreshGridAsync() { _dentists = UiMessages.Items(await _dentistService.GetAllDentistsAsync(_currentUser)); if (!IsDisposed) BindRows(); }
@@ -46,15 +48,20 @@ public partial class ucDentistRecords : UserControl
         _selected = row.Record; txtFirstName.Text = _selected.FirstName; txtLastName.Text = _selected.LastName; txtSpecialization.Text = _selected.Specialization;
         txtContactNumber.Text = _selected.ContactNumber; txtLicenseNumber.Text = _selected.LicenseNumber; _layout.SetEditing(true); btnDelete.Enabled = true;
     }
-    private async Task SaveAsync()
+    private async Task<bool> SaveAsync()
     {
         var dentist = new Dentist { DentistId = _selected?.DentistId ?? 0, FirstName = txtFirstName.Text.Trim(), LastName = txtLastName.Text.Trim(),
             Specialization = InputRules.NullIfBlank(txtSpecialization.Text), ContactNumber = InputRules.NullIfBlank(txtContactNumber.Text), LicenseNumber = InputRules.NullIfBlank(txtLicenseNumber.Text) };
         var result = _selected is null ? await _dentistService.AddDentistAsync(_currentUser, dentist) : await _dentistService.UpdateDentistAsync(_currentUser, dentist);
-        if (!result.Success) { UiMessages.ShowError(result); return; }
-        await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("Dentist saved.");
+        if (!result.Success) { UiMessages.ShowError(result); return false; }
+        _savedDentist = dentist; return true;
+    }
+    private async Task AfterSaveAsync()
+    {
+        var dentist = _savedDentist!;
+        await RefreshGridAsync(); UiMessages.ShowSuccess("Dentist saved.");
         var saved = _dentists.Where(d => d.FullName == dentist.FullName && d.LicenseNumber == dentist.LicenseNumber).MaxBy(d => d.DentistId);
-        if (saved is not null) GridHelper.FlashRow(dgvDentists, dentist.DentistId > 0 ? dentist.DentistId : saved.DentistId);
+        if (saved is not null) GridTheme.SelectAndFlash(dgvDentists, dentist.DentistId > 0 ? dentist.DentistId : saved.DentistId);
     }
     private async Task DeactivateAsync()
     {

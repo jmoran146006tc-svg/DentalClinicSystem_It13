@@ -8,11 +8,16 @@ public sealed class PageHeader : TableLayoutPanel
     public PageHeader(string title, string? subtitle = null, params Control[] actions)
     {
         Theme.MarkPrimitive(this);
-        ColumnCount = 2; RowCount = 1; Dock = DockStyle.Top; Height = Metrics.FieldHeight; BackColor = Palette.Canvas; Margin = new Padding(0, 0, 0, Space.Xl);
+        ColumnCount = 2; RowCount = 1; Dock = DockStyle.Top; AutoSize = true; AutoSizeMode = AutoSizeMode.GrowAndShrink; MinimumSize = new(0, Typography.Title.Height + Typography.Caption.Height + Space.Lg); BackColor = Palette.Canvas; Margin = new Padding(0, 0, 0, Space.Lg);
         ColumnStyles.Add(new(SizeType.Percent, 100)); ColumnStyles.Add(new(SizeType.AutoSize));
-        var copy = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, BackColor = Palette.Canvas };
-        copy.Controls.Add(new Label { Text = title, AutoSize = true, Font = Typography.Title, ForeColor = Palette.Ink900 });
-        if (subtitle is not null) copy.Controls.Add(new Label { Text = subtitle, AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500 });
+        var copy = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, BackColor = Palette.Canvas, Margin = Padding.Empty };
+        copy.Controls.Add(new Label { Text = title, AutoSize = true, Font = Typography.Title, ForeColor = Palette.Ink900, Margin = Padding.Empty });
+        if (subtitle is not null)
+        {
+            var caption = new Label { Text = subtitle, AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500, Margin = new Padding(0, Space.Xs, 0, 0) };
+            copy.Controls.Add(caption);
+            copy.SizeChanged += (_, _) => caption.MaximumSize = new(Math.Max(1, copy.Width), 0);
+        }
         var buttons = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Right, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, BackColor = Palette.Canvas };
         buttons.Controls.AddRange(actions); Controls.Add(copy, 0, 0); Controls.Add(buttons, 1, 0);
     }
