@@ -12,6 +12,7 @@ public partial class ucDentistRecords : UserControl
     private readonly User _currentUser;
     private readonly IDentistService _dentistService;
     private readonly CrudPageLayout _layout;
+    private readonly AppButton _timeOff = UiFactory.Button("Time off", ButtonVariant.Ghost);
     private IReadOnlyList<Dentist> _dentists = [];
     private Dentist? _selected;
     private Dentist? _savedDentist;
@@ -27,6 +28,8 @@ public partial class ucDentistRecords : UserControl
         txtContactNumber.KeyPress += InputRules.PhoneKeyPress;
         btnDelete.Text = "Deactivate"; btnDelete.Visible = true; btnDelete.Height = Metrics.ControlHeight; ButtonStyler.Attach(btnDelete, ButtonVariant.Danger);
         _layout.Actions.Controls.Add(btnDelete);
+        _layout.Toolbar.Controls.Add(_timeOff);
+        _timeOff.Click += (_, _) => { if (_selected is { } dentist) { using var dialog = new frmDentistTimeOff(dentist, _dentistService, _currentUser); dialog.ShowDialog(FindForm()); } };
         dgvDentists.SelectionChanged += SelectionChanged; _layout.Search.TextChanged += (_, _) => BindRows();
         btnClear.Click += (_, _) => ClearForm();
         btnDelete.Click += async (_, _) => await UiAction.RunAsync(this, DeactivateAsync, btnDelete);
@@ -46,7 +49,7 @@ public partial class ucDentistRecords : UserControl
     {
         if (dgvDentists.SelectedRows.Count == 0 || dgvDentists.CurrentRow?.DataBoundItem is not DentistRow row) return;
         _selected = row.Record; txtFirstName.Text = _selected.FirstName; txtLastName.Text = _selected.LastName; txtSpecialization.Text = _selected.Specialization;
-        txtContactNumber.Text = _selected.ContactNumber; txtLicenseNumber.Text = _selected.LicenseNumber; _layout.SetEditing(true); btnDelete.Enabled = true;
+        txtContactNumber.Text = _selected.ContactNumber; txtLicenseNumber.Text = _selected.LicenseNumber; _layout.SetEditing(true); btnDelete.Enabled = true; _timeOff.Enabled = true;
     }
     private async Task<bool> SaveAsync()
     {
@@ -70,5 +73,5 @@ public partial class ucDentistRecords : UserControl
         if (!result.Success) { UiMessages.ShowError(result); return; }
         await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("Dentist deactivated.");
     }
-    private void ClearForm() { _selected = null; txtFirstName.Clear(); txtLastName.Clear(); txtSpecialization.Clear(); txtContactNumber.Clear(); txtLicenseNumber.Clear(); dgvDentists.ClearSelection(); btnDelete.Enabled = false; _layout?.SetEditing(false); _layout?.Alert.Dismiss(); }
+    private void ClearForm() { _selected = null; txtFirstName.Clear(); txtLastName.Clear(); txtSpecialization.Clear(); txtContactNumber.Clear(); txtLicenseNumber.Clear(); dgvDentists.ClearSelection(); btnDelete.Enabled = false; _timeOff.Enabled = false; _layout?.SetEditing(false); _layout?.Alert.Dismiss(); }
 }

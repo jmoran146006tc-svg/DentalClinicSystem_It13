@@ -42,7 +42,11 @@ public sealed class frmRescheduleAppointment : DialogShell
     {
         var version = ++_version; var when = _when.Value; var selected = _dentist.SelectedValue as int?;
         var options = await Task.WhenAll(_dentists.Where(d => d.IsActive).Select(async d =>
-            new DisplayOption(d.DentistId, d.FullName + (await _appointments.IsDentistAvailableAsync(d.DentistId, when, _appointment.AppointmentId) ? "" : " (busy)"))));
+        {
+            var result = await _appointments.ValidateSlotAsync(d.DentistId, when, _appointment.DurationMinutes, _appointment.AppointmentId);
+            var label = result.Success ? "" : result.ErrorMessage.EndsWith(ClinicRules.TimeOffSuffix, StringComparison.Ordinal) ? " (off)" : " (busy)";
+            return new DisplayOption(d.DentistId, d.FullName + label);
+        }));
         if (IsDisposed || version != _version) return;
         _dentist.DataSource = options; if (selected is int id) _dentist.SelectedValue = id;
     }

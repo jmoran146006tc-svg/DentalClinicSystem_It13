@@ -49,7 +49,7 @@ public class VisualPreviewTests
             UserControl Page(AppServices services) => name switch
             {
                 "patients" => new ucPatientRecords(services.Patients, actor), "dentists" => new ucDentistRecords(services.Dentists, actor),
-                "users" => new ucUserManagement(services.Users, services.Dentists, actor), "appointments" => new ucAppointmentScheduler(services.Appointments, services.Patients, services.Dentists, actor),
+                "users" => new ucUserManagement(services.Users, services.Dentists, actor), "appointments" => new ucAppointmentScheduler(services.Appointments, services.Patients, services.Dentists, services.TreatmentTypes, actor),
                 _ => new ucTreatmentRecords(services.Treatments, services.Appointments, services.TreatmentTypes, actor)
             };
             using var host = new Form { ClientSize = new(1440, 1000) };

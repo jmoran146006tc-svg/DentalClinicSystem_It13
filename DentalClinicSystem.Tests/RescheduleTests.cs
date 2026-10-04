@@ -24,7 +24,7 @@ public class RescheduleTests
             (nameof(IAppointmentRepository.GetByIdAsync), _ => Task.FromResult<Appointment?>(current)),
             (nameof(IAppointmentRepository.GetByDentistAndRangeAsync), _ => Task.FromResult<IReadOnlyList<Appointment>>([current])));
         var dentists = RepositoryStub.Create<IDentistRepository>((nameof(IDentistRepository.GetByIdAsync), _ => Task.FromResult<Dentist?>(new() { DentistId = 3, IsActive = active })));
-        var service = new AppointmentService(appointments, RepositoryStub.Create<IPatientRepository>(), dentists, new FixedTimeProvider(Now));
+        var service = new AppointmentService(appointments, RepositoryStub.Create<IPatientRepository>(), dentists, RepositoryStub.Create<IDentistTimeOffRepository>(), new FixedTimeProvider(Now));
         var result = await service.RescheduleAppointmentAsync(new() { Role = role }, 7, Now, 3);
         Assert.Equal(expected, result.Success);
         Assert.Equal(expected ? 1 : 0, RepositoryStub.Of(appointments).Calls.GetValueOrDefault(nameof(IAppointmentRepository.UpdateAsync)));

@@ -91,7 +91,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_TreatmentType_GetAll $$
 CREATE PROCEDURE sp_TreatmentType_GetAll()
 BEGIN
-    SELECT TreatmentTypeId, Name, DefaultCost, Description
+    SELECT TreatmentTypeId, Name, DefaultCost, DefaultDurationMinutes, Description
     FROM TreatmentTypes
     ORDER BY Name;
 END $$
@@ -99,21 +99,21 @@ END $$
 DROP PROCEDURE IF EXISTS sp_TreatmentType_GetById $$
 CREATE PROCEDURE sp_TreatmentType_GetById(IN p_TreatmentTypeId INT)
 BEGIN
-    SELECT TreatmentTypeId, Name, DefaultCost, Description
+    SELECT TreatmentTypeId, Name, DefaultCost, DefaultDurationMinutes, Description
     FROM TreatmentTypes
     WHERE TreatmentTypeId = p_TreatmentTypeId;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_TreatmentType_Add $$
-CREATE PROCEDURE sp_TreatmentType_Add(IN p_Name VARCHAR(100), IN p_DefaultCost DECIMAL(10,2), IN p_Description VARCHAR(255))
+CREATE PROCEDURE sp_TreatmentType_Add(IN p_Name VARCHAR(100), IN p_DefaultCost DECIMAL(10,2), IN p_DefaultDurationMinutes INT, IN p_Description VARCHAR(255))
 BEGIN
-    INSERT INTO TreatmentTypes (Name, DefaultCost, Description) VALUES (p_Name, p_DefaultCost, p_Description);
+    INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes, Description) VALUES (p_Name, p_DefaultCost, p_DefaultDurationMinutes, p_Description);
 END $$
 
 DROP PROCEDURE IF EXISTS sp_TreatmentType_Update $$
-CREATE PROCEDURE sp_TreatmentType_Update(IN p_TreatmentTypeId INT, IN p_Name VARCHAR(100), IN p_DefaultCost DECIMAL(10,2), IN p_Description VARCHAR(255))
+CREATE PROCEDURE sp_TreatmentType_Update(IN p_TreatmentTypeId INT, IN p_Name VARCHAR(100), IN p_DefaultCost DECIMAL(10,2), IN p_DefaultDurationMinutes INT, IN p_Description VARCHAR(255))
 BEGIN
-    UPDATE TreatmentTypes SET Name = p_Name, DefaultCost = p_DefaultCost, Description = p_Description
+    UPDATE TreatmentTypes SET Name = p_Name, DefaultCost = p_DefaultCost, DefaultDurationMinutes = p_DefaultDurationMinutes, Description = p_Description
     WHERE TreatmentTypeId = p_TreatmentTypeId;
 END $$
 
@@ -128,7 +128,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Appointment_GetAll $$
 CREATE PROCEDURE sp_Appointment_GetAll()
 BEGIN
-    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason, Notes, CreatedAt
+    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason, Notes, CreatedAt
     FROM Appointments
     ORDER BY AppointmentDateTime;
 END $$
@@ -136,7 +136,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Appointment_GetById $$
 CREATE PROCEDURE sp_Appointment_GetById(IN p_AppointmentId INT)
 BEGIN
-    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason, Notes, CreatedAt
+    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason, Notes, CreatedAt
     FROM Appointments
     WHERE AppointmentId = p_AppointmentId;
 END $$
@@ -144,7 +144,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Appointment_GetByDentistAndDate $$
 CREATE PROCEDURE sp_Appointment_GetByDentistAndDate(IN p_DentistId INT, IN p_Date DATE)
 BEGIN
-    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason, Notes, CreatedAt
+    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason, Notes, CreatedAt
     FROM Appointments
     WHERE DentistId = p_DentistId
       AND AppointmentDateTime >= p_Date
@@ -154,20 +154,20 @@ END $$
 
 DROP PROCEDURE IF EXISTS sp_Appointment_Add $$
 CREATE PROCEDURE sp_Appointment_Add(
-    IN p_PatientId INT, IN p_DentistId INT, IN p_AppointmentDateTime DATETIME,
+    IN p_PatientId INT, IN p_DentistId INT, IN p_AppointmentDateTime DATETIME, IN p_DurationMinutes INT,
     IN p_Status VARCHAR(20), IN p_Reason VARCHAR(255), IN p_CancellationReason VARCHAR(255), IN p_Notes VARCHAR(500))
 BEGIN
-    INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason, Notes)
-    VALUES (p_PatientId, p_DentistId, p_AppointmentDateTime, p_Status, p_Reason, p_CancellationReason, p_Notes);
+    INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason, Notes)
+    VALUES (p_PatientId, p_DentistId, p_AppointmentDateTime, p_DurationMinutes, p_Status, p_Reason, p_CancellationReason, p_Notes);
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Appointment_Update $$
 CREATE PROCEDURE sp_Appointment_Update(
-    IN p_AppointmentId INT, IN p_PatientId INT, IN p_DentistId INT, IN p_AppointmentDateTime DATETIME,
+    IN p_AppointmentId INT, IN p_PatientId INT, IN p_DentistId INT, IN p_AppointmentDateTime DATETIME, IN p_DurationMinutes INT,
     IN p_Status VARCHAR(20), IN p_Reason VARCHAR(255), IN p_CancellationReason VARCHAR(255), IN p_Notes VARCHAR(500))
 BEGIN
     UPDATE Appointments
-    SET PatientId = p_PatientId, DentistId = p_DentistId, AppointmentDateTime = p_AppointmentDateTime,
+    SET PatientId = p_PatientId, DentistId = p_DentistId, AppointmentDateTime = p_AppointmentDateTime, DurationMinutes = p_DurationMinutes,
         Status = p_Status, Reason = p_Reason, CancellationReason = p_CancellationReason, Notes = p_Notes
     WHERE AppointmentId = p_AppointmentId;
 END $$
@@ -299,19 +299,19 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Appointment_GetByPatientId $$
 CREATE PROCEDURE sp_Appointment_GetByPatientId(IN p_PatientId INT)
 BEGIN
-    SELECT * FROM Appointments WHERE PatientId = p_PatientId ORDER BY AppointmentDateTime DESC;
+    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason, Notes, CreatedAt FROM Appointments WHERE PatientId = p_PatientId ORDER BY AppointmentDateTime DESC;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Appointment_GetByDentistAndRange $$
 CREATE PROCEDURE sp_Appointment_GetByDentistAndRange(IN p_DentistId INT, IN p_From DATETIME, IN p_To DATETIME)
 BEGIN
-    SELECT * FROM Appointments WHERE DentistId = p_DentistId AND AppointmentDateTime >= p_From AND AppointmentDateTime < p_To ORDER BY AppointmentDateTime;
+    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason, Notes, CreatedAt FROM Appointments WHERE DentistId = p_DentistId AND AppointmentDateTime >= p_From AND AppointmentDateTime < p_To ORDER BY AppointmentDateTime;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Appointment_GetByRange $$
 CREATE PROCEDURE sp_Appointment_GetByRange(IN p_From DATETIME, IN p_To DATETIME)
 BEGIN
-    SELECT * FROM Appointments WHERE AppointmentDateTime >= p_From AND AppointmentDateTime < p_To ORDER BY AppointmentDateTime;
+    SELECT AppointmentId, PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason, Notes, CreatedAt FROM Appointments WHERE AppointmentDateTime >= p_From AND AppointmentDateTime < p_To ORDER BY AppointmentDateTime;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Treatment_GetByPatientId $$
@@ -359,6 +359,28 @@ BEGIN
                JOIN Appointments ap ON ap.AppointmentId = tr.AppointmentId
                WHERE tr.DatePerformed BETWEEN p_From AND p_To GROUP BY ap.DentistId) t ON t.DentistId = d.DentistId
     ORDER BY d.LastName, d.FirstName;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_DentistTimeOff_GetByDentist $$
+CREATE PROCEDURE sp_DentistTimeOff_GetByDentist(IN p_DentistId INT)
+BEGIN
+    SELECT TimeOffId, DentistId, StartDate, EndDate, Reason FROM DentistTimeOff WHERE DentistId = p_DentistId ORDER BY StartDate, EndDate;
+END $$
+DROP PROCEDURE IF EXISTS sp_DentistTimeOff_GetOverlapping $$
+CREATE PROCEDURE sp_DentistTimeOff_GetOverlapping(IN p_DentistId INT, IN p_From DATE, IN p_To DATE)
+BEGIN
+    SELECT TimeOffId, DentistId, StartDate, EndDate, Reason FROM DentistTimeOff
+    WHERE DentistId = p_DentistId AND StartDate <= p_To AND EndDate >= p_From ORDER BY StartDate;
+END $$
+DROP PROCEDURE IF EXISTS sp_DentistTimeOff_Add $$
+CREATE PROCEDURE sp_DentistTimeOff_Add(IN p_DentistId INT, IN p_StartDate DATE, IN p_EndDate DATE, IN p_Reason VARCHAR(100))
+BEGIN
+    INSERT INTO DentistTimeOff (DentistId, StartDate, EndDate, Reason) VALUES (p_DentistId, p_StartDate, p_EndDate, p_Reason);
+END $$
+DROP PROCEDURE IF EXISTS sp_DentistTimeOff_Delete $$
+CREATE PROCEDURE sp_DentistTimeOff_Delete(IN p_TimeOffId INT)
+BEGIN
+    DELETE FROM DentistTimeOff WHERE TimeOffId = p_TimeOffId;
 END $$
 
 DROP EVENT IF EXISTS ev_deactivate_stale_patients $$

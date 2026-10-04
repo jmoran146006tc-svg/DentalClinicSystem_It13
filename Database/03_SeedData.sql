@@ -7,17 +7,17 @@ SELECT 'Maria', 'Santos', 'General Dentistry', '09171234567', 'PRC-00123' FROM D
 INSERT INTO Dentists (FirstName, LastName, Specialization, ContactNumber, LicenseNumber)
 SELECT 'Carlos', 'Reyes', 'Orthodontics', '09181234567', 'PRC-00456' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM Dentists WHERE LicenseNumber = 'PRC-00456');
 
-INSERT INTO TreatmentTypes (Name, DefaultCost)
-SELECT 'Dental Cleaning', 800 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Dental Cleaning');
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Dental Cleaning', 800, 45 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Dental Cleaning');
 
-INSERT INTO TreatmentTypes (Name, DefaultCost)
-SELECT 'Tooth Extraction', 1500 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Tooth Extraction');
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Tooth Extraction', 1500, 45 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Tooth Extraction');
 
-INSERT INTO TreatmentTypes (Name, DefaultCost)
-SELECT 'Root Canal', 6000 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Root Canal');
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Root Canal', 6000, 90 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Root Canal');
 
-INSERT INTO TreatmentTypes (Name, DefaultCost)
-SELECT 'Filling', 1200 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Filling');
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Filling', 1200, 60 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Filling');
 
 INSERT INTO Patients (FirstName, LastName, DateOfBirth, ContactNumber)
 SELECT 'Juan', 'Dela Cruz', '1998-04-12', '09981234567' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM Patients WHERE FirstName = 'Juan' AND LastName = 'Dela Cruz' AND DateOfBirth = '1998-04-12');
@@ -36,31 +36,32 @@ SELECT 'drsantos', '$2a$11$CqzW7tBTUEIjEWgJ0.tXp.W76Gx0xwofe.dQsFtl12Hgd2MYk7n3S
 
 SET @seed_appointments = (SELECT COUNT(*) = 0 FROM Appointments);
 SET @week_start = DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY);
+SET @demo_day = IF(DAYOFWEEK(CURDATE()) = 1, DATE_ADD(CURDATE(), INTERVAL 1 DAY), CURDATE());
 SET @juan = (SELECT MIN(PatientId) FROM Patients WHERE FirstName = 'Juan' AND LastName = 'Dela Cruz');
 SET @ana = (SELECT MIN(PatientId) FROM Patients WHERE FirstName = 'Ana' AND LastName = 'Lopez');
 SET @maria = (SELECT MIN(DentistId) FROM Dentists WHERE FirstName = 'Maria' AND LastName = 'Santos');
 SET @carlos = (SELECT MIN(DentistId) FROM Dentists WHERE FirstName = 'Carlos' AND LastName = 'Reyes');
 
-INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @juan, @maria, DATE_ADD(LEAST(DATE_ADD(@week_start, INTERVAL 0 DAY), CURDATE()), INTERVAL 9 HOUR), 'Completed', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
-INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @ana, @carlos, DATE_ADD(LEAST(DATE_ADD(@week_start, INTERVAL 0 DAY), CURDATE()), INTERVAL 11 HOUR), 'Completed', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
-INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @juan, @maria, DATE_ADD(DATE_ADD(@week_start, INTERVAL 1 DAY), INTERVAL 10 HOUR), 'Cancelled', 'Demo consultation', 'Patient Rescheduled' FROM DUAL WHERE @seed_appointments;
-INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @ana, @carlos, DATE_ADD(DATE_ADD(@week_start, INTERVAL 2 DAY), INTERVAL 14 HOUR), 'NoShow', 'Demo consultation', 'No Show' FROM DUAL WHERE @seed_appointments;
-INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @juan, @maria, DATE_ADD(DATE_ADD(@week_start, INTERVAL 3 DAY), INTERVAL 9 HOUR), 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
-INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @ana, @carlos, DATE_ADD(DATE_ADD(@week_start, INTERVAL 4 DAY), INTERVAL 10 HOUR), 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
-INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @juan, @maria, DATE_ADD(DATE_ADD(@week_start, INTERVAL 5 DAY), INTERVAL 11 HOUR), 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
-INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @ana, @carlos, DATE_ADD(DATE_ADD(@week_start, INTERVAL 6 DAY), INTERVAL 16 HOUR), 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
-INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @juan, @maria, DATE_ADD(CURDATE(), INTERVAL 14 HOUR), 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
-INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, Status, Reason, CancellationReason)
-SELECT @ana, @carlos, DATE_ADD(CURDATE(), INTERVAL 15 HOUR), 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
+INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
+SELECT @juan, @maria, DATE_ADD(LEAST(DATE_ADD(@week_start, INTERVAL 0 DAY), CURDATE()), INTERVAL 9 HOUR), 45, 'Completed', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
+INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
+SELECT @ana, @carlos, DATE_ADD(LEAST(DATE_ADD(@week_start, INTERVAL 0 DAY), CURDATE()), INTERVAL 11 HOUR), 45, 'Completed', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
+INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
+SELECT @juan, @maria, DATE_ADD(DATE_ADD(@week_start, INTERVAL 1 DAY), INTERVAL 10 HOUR), 30, 'Cancelled', 'Demo consultation', 'Patient Rescheduled' FROM DUAL WHERE @seed_appointments;
+INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
+SELECT @ana, @carlos, DATE_ADD(DATE_ADD(@week_start, INTERVAL 2 DAY), INTERVAL 14 HOUR), 30, 'NoShow', 'Demo consultation', 'No Show' FROM DUAL WHERE @seed_appointments;
+INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
+SELECT @juan, @maria, DATE_ADD(DATE_ADD(@week_start, INTERVAL 3 DAY), INTERVAL 9 HOUR), 30, 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
+INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
+SELECT @ana, @carlos, DATE_ADD(DATE_ADD(@week_start, INTERVAL 4 DAY), INTERVAL 10 HOUR), 30, 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
+INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
+SELECT @juan, @maria, DATE_ADD(DATE_ADD(@week_start, INTERVAL 5 DAY), INTERVAL 11 HOUR), 30, 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
+INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
+SELECT @ana, @carlos, DATE_ADD(DATE_ADD(@week_start, INTERVAL 5 DAY), INTERVAL 16 HOUR), 30, 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
+INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
+SELECT @juan, @maria, DATE_ADD(@demo_day, INTERVAL 14 HOUR), 30, 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
+INSERT INTO Appointments (PatientId, DentistId, AppointmentDateTime, DurationMinutes, Status, Reason, CancellationReason)
+SELECT @ana, @carlos, DATE_ADD(@demo_day, INTERVAL 15 HOUR), 30, 'Scheduled', 'Demo consultation', NULL FROM DUAL WHERE @seed_appointments;
 
 INSERT INTO Treatments (AppointmentId, TreatmentTypeId, Cost, DatePerformed, Notes)
 SELECT a.AppointmentId, tt.TreatmentTypeId, tt.DefaultCost, DATE(a.AppointmentDateTime), 'Demo treatment'

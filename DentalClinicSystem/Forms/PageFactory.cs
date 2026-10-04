@@ -14,8 +14,8 @@ namespace DentalClinicSystem.Forms
             new ucDentistRecords(dentists, currentUser);
 
         public static Control CreateAppointments(IAppointmentService appointments, IPatientService patients,
-            IDentistService dentists, User currentUser) =>
-            new ucAppointmentScheduler(appointments, patients, dentists, currentUser);
+            IDentistService dentists, ITreatmentTypeService treatmentTypes, User currentUser) =>
+            new ucAppointmentScheduler(appointments, patients, dentists, treatmentTypes, currentUser);
 
         public static Control CreateTreatments(ITreatmentService treatments, IAppointmentService appointments,
             ITreatmentTypeService treatmentTypes, User currentUser) =>

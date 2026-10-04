@@ -6,6 +6,7 @@ namespace DentalClinicSystem.Models
         public int PatientId { get; set; }
         public int DentistId { get; set; }
         public DateTime AppointmentDateTime { get; set; }
+        public int DurationMinutes { get; set; } = Service.ClinicRules.DefaultDurationMinutes;
         public string Status { get; set; } = AppointmentStatus.Scheduled;
         public string? Reason { get; set; }
         public string? CancellationReason { get; set; }

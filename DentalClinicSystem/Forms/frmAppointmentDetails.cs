@@ -25,7 +25,7 @@ public sealed class frmAppointmentDetails : DialogShell
         content.ColumnStyles.Add(new(SizeType.Percent, 50)); content.ColumnStyles.Add(new(SizeType.Percent, 50));
         var a = details.Appointment; var p = details.Patient;
         content.Controls.Add(new StatusBadge(a.Status), 0, 0);
-        content.Controls.Add(Copy(DisplayFormat.DateTime(a.AppointmentDateTime), Typography.Heading), 1, 0);
+        content.Controls.Add(Copy($"{DisplayFormat.Date(a.AppointmentDateTime)}\n{DisplayFormat.Time(a.AppointmentDateTime)} – {DisplayFormat.Time(a.AppointmentDateTime.AddMinutes(a.DurationMinutes))}", Typography.Heading), 1, 0);
         var appointment = Column(("Patient", p.FullName), ("Dentist", details.Dentist.FullName), ("Reason", DisplayFormat.Optional(a.Reason)),
             ("Notes", DisplayFormat.Optional(a.Notes)), ("Cancellation reason", DisplayFormat.Optional(a.CancellationReason)));
         var patient = Column(("Patient details", p.FullName), ("Contact", DisplayFormat.Phone(p.ContactNumber)), ("Date of birth", DisplayFormat.Date(p.DateOfBirth)), ("Email", DisplayFormat.Optional(p.Email)));

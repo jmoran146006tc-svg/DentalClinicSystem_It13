@@ -47,7 +47,7 @@ public class AppointmentTests
         try
         {
             var services = TestServices.Empty;
-            using var page = new ucAppointmentScheduler(services.Appointments, services.Patients, services.Dentists, new User { Role = Roles.Dentist });
+            using var page = new ucAppointmentScheduler(services.Appointments, services.Patients, services.Dentists, services.TreatmentTypes, new User { Role = Roles.Dentist });
             using var host = new Form { ClientSize = new(1440, 1000) }; page.Dock = DockStyle.Fill; host.Controls.Add(page); PageLayoutTests.ShowOffscreen(host);
             Assert.DoesNotContain(PageLayoutTests.Descendants(page), c => c.Name is "cboStatus" or "btnUpdateStatus");
             Assert.False(PageLayoutTests.Named<Button>(page, "btnSchedule").Visible);

@@ -136,7 +136,7 @@ public class UiAmendmentTests
             var patientService = TestServices.Create<IPatientService>((nameof(IPatientService.GetAllPatientsAsync), Task.FromResult(ServiceResult<IReadOnlyList<Patient>>.Ok(patients))));
             var dentistService = TestServices.Create<IDentistService>((nameof(IDentistService.GetAllDentistsAsync), Task.FromResult(ServiceResult<IReadOnlyList<Dentist>>.Ok([new() { DentistId = 2, FirstName = "Miguel", LastName = "Reyes" }]))));
             var appointmentService = TestServices.Create<IAppointmentService>((nameof(IAppointmentService.GetAllAppointmentsAsync), Task.FromResult(ServiceResult<IReadOnlyList<Appointment>>.Ok(appointments))));
-            using UserControl page = name == "patients" ? new ucPatientRecords(patientService, actor) : new ucAppointmentScheduler(appointmentService, patientService, dentistService, actor);
+            using UserControl page = name == "patients" ? new ucPatientRecords(patientService, actor) : new ucAppointmentScheduler(appointmentService, patientService, dentistService, TestServices.Create<ITreatmentTypeService>(), actor);
             using var host = new Form { ClientSize = new(1100, 800) }; host.Controls.Add(page); page.Dock = DockStyle.Fill; PageLayoutTests.ShowOffscreen(host);
             var grid = PageLayoutTests.Descendants(page).OfType<DataGridView>().Single(); Assert.Equal(600, grid.Rows.Count);
             Assert.False(page.AutoScroll); Assert.DoesNotContain(PageLayoutTests.Descendants(page), control => control is ScrollableControl panel && panel.AutoScroll && control.Contains(grid));

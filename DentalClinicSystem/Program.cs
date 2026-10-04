@@ -54,14 +54,15 @@ namespace DentalClinicSystem
             IPatientRepository patientRepository = new MySqlPatientRepository();
             IDentistRepository dentistRepository = new MySqlDentistRepository();
             IAppointmentRepository appointmentRepository = new MySqlAppointmentRepository();
+            IDentistTimeOffRepository timeOffRepository = new MySqlDentistTimeOffRepository();
             ITreatmentRepository treatmentRepository = new MySqlTreatmentRepository();
             ITreatmentTypeRepository treatmentTypeRepository = new MySqlTreatmentTypeRepository();
             IUserRepository userRepository = new MySqlUserRepository();
 
             var time = TimeProvider.System;
             IPatientService patientService = new PatientService(patientRepository, time);
-            IDentistService dentistService = new DentistService(dentistRepository, time);
-            IAppointmentService appointmentService = new AppointmentService(appointmentRepository, patientRepository, dentistRepository, time);
+            IDentistService dentistService = new DentistService(dentistRepository, appointmentRepository, timeOffRepository, time);
+            IAppointmentService appointmentService = new AppointmentService(appointmentRepository, patientRepository, dentistRepository, timeOffRepository, time);
             ITreatmentService treatmentService = new TreatmentService(treatmentRepository, appointmentRepository, treatmentTypeRepository, time);
             ITreatmentTypeService treatmentTypeService = new TreatmentTypeService(treatmentTypeRepository);
             IAuthService authService = new AuthService(userRepository);

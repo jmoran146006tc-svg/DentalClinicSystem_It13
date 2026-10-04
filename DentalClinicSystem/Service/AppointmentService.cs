@@ -4,10 +4,9 @@ using DentalClinicSystem.Models;
 namespace DentalClinicSystem.Service
 {
     public class AppointmentService(IAppointmentRepository appointments, IPatientRepository patients,
-        IDentistRepository dentists, TimeProvider? timeProvider = null) : IAppointmentService
+        IDentistRepository dentists, IDentistTimeOffRepository timeOff, TimeProvider? timeProvider = null) : IAppointmentService
     {
         private readonly TimeProvider time = timeProvider ?? TimeProvider.System;
-        public const int ConflictMinutes = 30;
         public async Task<ServiceResult<IReadOnlyList<Appointment>>> GetAllAppointmentsAsync(User actor)
         {
             if (!RoleAccess.Can(actor, Permission.ViewAppointments)) return RoleAccess.Denied<IReadOnlyList<Appointment>>();
@@ -35,8 +34,8 @@ namespace DentalClinicSystem.Service
                 return ServiceResult.Fail("Select an active patient.");
             if (await dentists.GetByIdAsync(appointment.DentistId) is not { IsActive: true })
                 return ServiceResult.Fail("Select an active dentist.");
-            if (!await IsDentistAvailableAsync(appointment.DentistId, appointment.AppointmentDateTime))
-                return ServiceResult.Fail("This dentist already has an appointment within 30 minutes of the selected time.");
+            var slot = await ValidateSlotAsync(appointment.DentistId, appointment.AppointmentDateTime, appointment.DurationMinutes);
+            if (!slot.Success) return slot;
             appointment.Status = AppointmentStatus.Scheduled;
             appointment.CancellationReason = null;
             return await ServiceOperation.SaveAsync(() => appointments.AddAsync(appointment));
@@ -51,23 +50,35 @@ namespace DentalClinicSystem.Service
             {
                 AppointmentId = current.AppointmentId, PatientId = current.PatientId, DentistId = newDentistId,
                 AppointmentDateTime = newDateTime, Status = current.Status, Reason = current.Reason,
-                Notes = current.Notes, CancellationReason = current.CancellationReason, CreatedAt = current.CreatedAt
+                DurationMinutes = current.DurationMinutes, Notes = current.Notes, CancellationReason = current.CancellationReason, CreatedAt = current.CreatedAt
             };
             var validation = Validator.Appointment(changed, time.GetLocalNow().DateTime);
             if (!validation.Success) return validation;
             if (await dentists.GetByIdAsync(newDentistId) is not { IsActive: true }) return ServiceResult.Fail("Select an active dentist.");
-            if (!await IsDentistAvailableAsync(newDentistId, newDateTime, appointmentId))
-                return ServiceResult.Fail("This dentist already has an appointment within 30 minutes of the selected time.");
+            var slot = await ValidateSlotAsync(newDentistId, newDateTime, changed.DurationMinutes, appointmentId);
+            if (!slot.Success) return slot;
             return await ServiceOperation.SaveAsync(() => appointments.UpdateAsync(changed));
         }
-        public async Task<bool> IsDentistAvailableAsync(int dentistId, DateTime when, int? excludeAppointmentId = null)
+        public async Task<ServiceResult> ValidateSlotAsync(int dentistId, DateTime start, int durationMinutes, int? excludeAppointmentId = null)
         {
-            if (await dentists.GetByIdAsync(dentistId) is not { IsActive: true }) return false;
-            var nearby = await appointments.GetByDentistAndRangeAsync(dentistId,
-                when.AddMinutes(-ConflictMinutes), when.AddMinutes(ConflictMinutes));
-            return !nearby.Any(a => a.AppointmentId != excludeAppointmentId && a.Status != AppointmentStatus.Cancelled &&
-                Math.Abs((a.AppointmentDateTime - when).TotalMinutes) < ConflictMinutes);
+            var duration = Validator.Duration(durationMinutes);
+            if (!duration.Success) return duration;
+            if (!ClinicRules.IsOpen(start, durationMinutes))
+                return ServiceResult.Fail($"The clinic is closed at that time ({ClinicRules.HoursDescription}).");
+            var dentist = await dentists.GetByIdAsync(dentistId);
+            if (dentist is not { IsActive: true }) return ServiceResult.Fail("Select an active dentist.");
+            if ((await timeOff.GetOverlappingAsync(dentistId, start.Date, start.Date)).Count > 0)
+                return ServiceResult.Fail(dentist.FullName + ClinicRules.TimeOffSuffix);
+            var end = start.AddMinutes(durationMinutes);
+            var nearby = await appointments.GetByDentistAndRangeAsync(dentistId, start.AddMinutes(-ClinicRules.MaxDurationMinutes), end);
+            var conflict = nearby.Where(a => a.AppointmentId != excludeAppointmentId && a.Status != AppointmentStatus.Cancelled &&
+                a.AppointmentDateTime < end && a.AppointmentDateTime.AddMinutes(a.DurationMinutes) > start)
+                .OrderBy(a => a.AppointmentDateTime).FirstOrDefault();
+            return conflict is null ? ServiceResult.Ok() : ServiceResult.Fail(
+                $"This dentist is already booked from {conflict.AppointmentDateTime.ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture)} to {conflict.AppointmentDateTime.AddMinutes(conflict.DurationMinutes).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture)}.");
         }
+        public async Task<bool> IsDentistAvailableAsync(int dentistId, DateTime when, int durationMinutes, int? excludeAppointmentId = null) =>
+            (await ValidateSlotAsync(dentistId, when, durationMinutes, excludeAppointmentId)).Success;
         public async Task<ServiceResult> UpdateAppointmentStatusAsync(User actor, int appointmentId, string status, string? cancellationReason = null)
         {
             var appointment = await appointments.GetByIdAsync(appointmentId);

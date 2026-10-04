@@ -20,6 +20,7 @@ namespace DentalClinicSystem.DBContent
             => ExecuteAsync("sp_TreatmentType_Add",
                 Parameter("@p_Name", treatmentType.Name),
                 Parameter("@p_DefaultCost", treatmentType.DefaultCost),
+                Parameter("@p_DefaultDurationMinutes", treatmentType.DefaultDurationMinutes),
                 Parameter("@p_Description", treatmentType.Description));
 
         public Task UpdateAsync(TreatmentType treatmentType)
@@ -27,6 +28,7 @@ namespace DentalClinicSystem.DBContent
                 Parameter("@p_TreatmentTypeId", treatmentType.TreatmentTypeId),
                 Parameter("@p_Name", treatmentType.Name),
                 Parameter("@p_DefaultCost", treatmentType.DefaultCost),
+                Parameter("@p_DefaultDurationMinutes", treatmentType.DefaultDurationMinutes),
                 Parameter("@p_Description", treatmentType.Description));
 
         public Task DeleteAsync(int treatmentTypeId)
@@ -38,6 +40,7 @@ namespace DentalClinicSystem.DBContent
         {
             TreatmentTypeId = (int)reader["TreatmentTypeId"],
             Name = (string)reader["Name"],
+            DefaultDurationMinutes = reader.GetInt32("DefaultDurationMinutes"),
             DefaultCost = (decimal)reader["DefaultCost"],
             Description = reader.GetNullableString("Description")
         };

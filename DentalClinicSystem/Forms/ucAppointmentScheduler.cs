@@ -13,6 +13,7 @@ public partial class ucAppointmentScheduler : UserControl
     private readonly IAppointmentService _appointmentService;
     private readonly IPatientService _patientService;
     private readonly IDentistService _dentistService;
+    private readonly ITreatmentTypeService _treatmentTypes;
     private readonly CrudPageLayout _layout;
     private readonly TextBox _notes = new() { Multiline = true, MaxLength = FieldLimits.Notes };
     private readonly ComboBox _statusFilter = new();
@@ -27,10 +28,10 @@ public partial class ucAppointmentScheduler : UserControl
     private Appointment? _savedAppointment;
     private bool _updatingAvailability;
     private int _availabilityVersion;
-    private sealed record AppointmentRow(int AppointmentId, string Patient, string Dentist, DateTime AppointmentDateTime, string? Reason, string Status, Appointment Record);
-    public ucAppointmentScheduler(IAppointmentService appointmentService, IPatientService patientService, IDentistService dentistService, User currentUser)
+    private sealed record AppointmentRow(int AppointmentId, string Patient, string Dentist, DateTime AppointmentDateTime, int DurationMinutes, string? Reason, string Status, Appointment Record);
+    public ucAppointmentScheduler(IAppointmentService appointmentService, IPatientService patientService, IDentistService dentistService, ITreatmentTypeService treatmentTypes, User currentUser)
     {
-        InitializeComponent(); _currentUser = currentUser; _appointmentService = appointmentService; _patientService = patientService; _dentistService = dentistService;
+        InitializeComponent(); _currentUser = currentUser; _appointmentService = appointmentService; _patientService = patientService; _dentistService = dentistService; _treatmentTypes = treatmentTypes;
         cboStatus.Dispose(); btnUpdateStatus.Dispose(); lblStatus.Visible = false;
         _layout = new(this, "Appointments", "appointment", "Scheduling and appointment status", dgvAppointments, btnSchedule, _clear, ClearForm);
         _layout.AddRow(UiFactory.Field(cboPatient, "Patient", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(cboDentist, "Dentist", FieldKind.Choice));
@@ -42,13 +43,17 @@ public partial class ucAppointmentScheduler : UserControl
             {
                 var now = DateTime.Now;
                 dtpAppointmentDateTime.Value = new DateTime((now.Ticks + TimeSpan.TicksPerMinute / 2) / TimeSpan.TicksPerMinute * TimeSpan.TicksPerMinute, now.Kind);
-                if (string.IsNullOrWhiteSpace(cmbReason.Text)) cmbReason.Text = "Consultation / Check-up";
+                if (string.IsNullOrWhiteSpace(cmbReason.Text)) cmbReason.Text = ClinicRules.ConsultationReason;
             }
         };
         _layout.AddRow(UiFactory.Field(dtpAppointmentDateTime, "Date and time", FieldKind.Date));
         _layout.AddRow(UiFactory.Field(cmbReason, "Reason", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(_notes, "Notes (optional)"));
         cmbReason.DropDownStyle = ComboBoxStyle.DropDown; cmbReason.MaxLength = FieldLimits.Reason;
-        cmbReason.Items.Clear(); cmbReason.Items.AddRange(["Oral Prophylaxis Package", "Consultation & Check up", "Promo Bundles", "Tooth Extraction", "Filling / Restoration", "Root Canal", "Braces Adjustment", "Dentures", "Teeth Whitening", "Other"]);
+        _layout.AddRow(UiFactory.Field(cboDuration, "Duration (minutes)", FieldKind.Choice));
+        cboDuration.Items.AddRange(ClinicRules.Durations.Cast<object>().ToArray()); cboDuration.SelectedItem = ClinicRules.DefaultDurationMinutes;
+        cmbReason.DisplayMember = nameof(VisitReason.Name);
+        cmbReason.SelectedIndexChanged += (_, _) => { if (cmbReason.SelectedItem is VisitReason reason) cboDuration.SelectedItem = reason.DurationMinutes; };
+        cboDuration.SelectedIndexChanged += AvailabilityChanged;
         dtpAppointmentDateTime.Format = DateTimePickerFormat.Custom; dtpAppointmentDateTime.CustomFormat = DisplayFormat.DateTimePattern;
         _statusFilter.DisplayMember = nameof(DisplayOption.Display); _statusFilter.ValueMember = nameof(DisplayOption.Id);
         _statusFilter.Items.Add(new DisplayOption(0, "All statuses"));
@@ -83,6 +88,9 @@ public partial class ucAppointmentScheduler : UserControl
             _dentistNamesById = _dentists.ToDictionary(d => d.DentistId, d => d.FullName);
             cboDentist.DisplayMember = nameof(DisplayOption.Display); cboDentist.ValueMember = nameof(DisplayOption.Id);
             cboDentist.DataSource = _dentists.Where(d => d.IsActive).Select(d => new DisplayOption(d.DentistId, d.FullName)).ToList();
+            var reasons = UiMessages.Items(await _treatmentTypes.GetVisitReasonsAsync(_currentUser));
+            if (IsDisposed) return;
+            cmbReason.DataSource = reasons.ToList(); cmbReason.SelectedIndex = -1;
             _lookupsLoaded = true; await RefreshAvailabilityAsync();
         }
         await RefreshGridAsync();
@@ -104,7 +112,7 @@ public partial class ucAppointmentScheduler : UserControl
         var filtered = AppointmentFilter.Apply(_appointments, _currentUser, _layout.Search.Text, _statusFilter.SelectedIndex > 0 ? AppointmentStatus.All[_statusFilter.SelectedIndex - 1] : null,
             (AppointmentDateFilter)Math.Max(0, _dateFilter.SelectedIndex), DateTime.Today, id => _patientNamesById.GetValueOrDefault(id, $"Patient #{id}"));
         var rows = filtered.Select(a => new AppointmentRow(a.AppointmentId, _patientNamesById.GetValueOrDefault(a.PatientId, $"Patient #{a.PatientId}"),
-            _dentistNamesById.GetValueOrDefault(a.DentistId, $"Dentist #{a.DentistId}"), a.AppointmentDateTime, a.Reason, a.Status, a));
+            _dentistNamesById.GetValueOrDefault(a.DentistId, $"Dentist #{a.DentistId}"), a.AppointmentDateTime, a.DurationMinutes, a.Reason, a.Status, a));
         GridHelper.Bind(dgvAppointments, rows, row => row.AppointmentId, RoleAccess.IsDentist(_currentUser) && _currentUser.DentistId is null ? "Your account has no linked dentist. Ask an Admin to link it." : "No appointments match these filters.", "AppointmentId", "Record");
         GridHelper.IdentityColumn<AppointmentRow>(dgvAppointments, "Patient", row => (row.Patient, row.Reason ?? "Appointment"));
         _details.Enabled = false;
@@ -116,24 +124,25 @@ public partial class ucAppointmentScheduler : UserControl
     }
     private async Task RefreshAvailabilityAsync()
     {
+        var duration = cboDuration.SelectedItem is int minutes ? minutes : ClinicRules.DefaultDurationMinutes;
         var version = ++_availabilityVersion; var when = dtpAppointmentDateTime.Value; var selected = cboDentist.SelectedValue as int?;
         var options = await Task.WhenAll(_dentists.Where(d => d.IsActive).Select(async d =>
         {
-            var available = await _appointmentService.IsDentistAvailableAsync(d.DentistId, when);
-            return new DisplayOption(d.DentistId, d.FullName + (available ? "" : " (busy)"), !available);
+            var available = await _appointmentService.IsDentistAvailableAsync(d.DentistId, when, duration);
+            return new DisplayOption(d.DentistId, d.FullName + (available ? "" : " (unavailable)"), !available);
         }));
         if (IsDisposed || version != _availabilityVersion) return;
         _updatingAvailability = true;
         try { cboDentist.DataSource = options; if (selected is int id) cboDentist.SelectedValue = id; }
         finally { _updatingAvailability = false; }
-        if (cboDentist.SelectedItem is DisplayOption { Busy: true }) _layout.ActiveAlert.ShowMessage("This dentist already has an appointment at that time. Choose another time or dentist.", Semantic.Warning);
+        if (cboDentist.SelectedItem is DisplayOption { Busy: true }) _layout.ActiveAlert.ShowMessage("This dentist is unavailable for that slot. Choose another time or dentist.", Semantic.Warning);
         else _layout.ActiveAlert.Dismiss();
     }
     private async void btnSchedule_Click(object? sender, EventArgs e) => await _layout.OpenEditorAsync();
     private async Task<bool> ScheduleAsync()
     {
         if (cboPatient.SelectedValue is not int patientId || cboDentist.SelectedValue is not int dentistId) { UiMessages.ShowError(ServiceResult.Fail("Pick a patient and a dentist first.")); return false; }
-        var appointment = new Appointment { PatientId = patientId, DentistId = dentistId, AppointmentDateTime = dtpAppointmentDateTime.Value, Reason = InputRules.NullIfBlank(cmbReason.Text), Notes = InputRules.NullIfBlank(_notes.Text) };
+        var appointment = new Appointment { PatientId = patientId, DentistId = dentistId, AppointmentDateTime = dtpAppointmentDateTime.Value, DurationMinutes = cboDuration.SelectedItem is int minutes ? minutes : ClinicRules.DefaultDurationMinutes, Reason = InputRules.NullIfBlank(cmbReason.Text), Notes = InputRules.NullIfBlank(_notes.Text) };
         var result = await _appointmentService.ScheduleAppointmentAsync(_currentUser, appointment);
         if (!result.Success) { UiMessages.ShowError(result); return false; }
         _savedAppointment = appointment; return true;
@@ -155,6 +164,6 @@ public partial class ucAppointmentScheduler : UserControl
         using var dialog = new frmAppointmentDetails(result.Data, _appointmentService, _currentUser, async id => { await RefreshGridAsync(); GridHelper.FlashRow(dgvAppointments, id); }, _dentistService);
         dialog.ShowDialog(FindForm());
     }
-    private void ClearForm() { tglWalkIn.Checked = false; cmbReason.SelectedIndex = -1; cmbReason.Text = ""; _notes.Clear(); dgvAppointments.ClearSelection(); _layout?.SetEditing(false); if (_layout is not null) _layout.NewButton.Text = "Schedule"; btnSchedule.Text = "Schedule appointment"; }
+    private void ClearForm() { tglWalkIn.Checked = false; cboDuration.SelectedItem = ClinicRules.DefaultDurationMinutes; cmbReason.SelectedIndex = -1; cmbReason.Text = ""; _notes.Clear(); dgvAppointments.ClearSelection(); _layout?.SetEditing(false); if (_layout is not null) _layout.NewButton.Text = "Schedule"; btnSchedule.Text = "Schedule appointment"; }
     private void btnUpdateStatus_Click(object? sender, EventArgs e) { } // Disposed legacy Designer control.
 }

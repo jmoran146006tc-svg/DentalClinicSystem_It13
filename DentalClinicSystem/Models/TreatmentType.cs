@@ -4,6 +4,7 @@ namespace DentalClinicSystem.Models
     {
         public int TreatmentTypeId { get; set; }
         public string Name { get; set; } = string.Empty;
+        public int DefaultDurationMinutes { get; set; } = Service.ClinicRules.DefaultDurationMinutes;
         public decimal DefaultCost { get; set; }
         public string? Description { get; set; }
     }

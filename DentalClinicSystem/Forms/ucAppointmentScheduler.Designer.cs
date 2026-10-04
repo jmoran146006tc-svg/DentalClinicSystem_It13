@@ -2,6 +2,7 @@ namespace DentalClinicSystem.Forms
 {
     partial class ucAppointmentScheduler
     {
+        private ComboBox cboDuration;
         private Helpers.Design.Controls.Toggle tglWalkIn;
         private System.ComponentModel.IContainer components = null;
 
@@ -18,6 +19,7 @@ namespace DentalClinicSystem.Forms
 
         private void InitializeComponent()
         {
+            cboDuration = new ComboBox { Name = "cboDuration" };
             tglWalkIn = new Helpers.Design.Controls.Toggle("Walk-in (now)") { Name = "tglWalkIn" };
             dgvAppointments = new DataGridView();
             lblPatient = new Label();

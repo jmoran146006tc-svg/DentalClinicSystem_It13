@@ -23,7 +23,7 @@ namespace DentalClinicSystem.Helpers
                     }
                     var column = ends.FindIndex(end => end <= appointment.AppointmentDateTime);
                     if (column < 0) { column = ends.Count; ends.Add(DateTime.MinValue); }
-                    ends[column] = appointment.AppointmentDateTime.AddMinutes(AppointmentService.ConflictMinutes);
+                    ends[column] = appointment.AppointmentDateTime.AddMinutes(appointment.DurationMinutes);
                     group.Add((appointment, column));
                 }
                 result.AddRange(group.Select(item => new CalendarSlot(item.Appointment, item.Column, ends.Count)));

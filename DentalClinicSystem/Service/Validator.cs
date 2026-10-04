@@ -59,7 +59,7 @@ namespace DentalClinicSystem.Service
         {
             appointment.Reason = Optional(appointment.Reason);
             appointment.Notes = Optional(appointment.Notes);
-            return First(MaxLength(appointment.Reason, FieldLimits.Reason, "Reason"),
+            return First(Duration(appointment.DurationMinutes), DatabaseDate(appointment.AppointmentDateTime, "Appointment date"), MaxLength(appointment.Reason, FieldLimits.Reason, "Reason"),
                 MaxLength(appointment.Notes, FieldLimits.Notes, "Notes"),
                 appointment.AppointmentDateTime < now.AddMinutes(-ClinicRules.PastGraceMinutes) ? ServiceResult.Fail($"Appointment time cannot be more than {ClinicRules.PastGraceMinutes} minutes in the past.") : ServiceResult.Ok());
         }
@@ -90,7 +90,7 @@ namespace DentalClinicSystem.Service
             type.Name = Sanitize(type.Name);
             type.Description = Optional(type.Description);
             return First(Required(type.Name, "Treatment type name"), MaxLength(type.Name, FieldLimits.TreatmentTypeName, "Treatment type name"),
-                Cost(type.DefaultCost), MaxLength(type.Description, FieldLimits.Description, "Description"));
+                Duration(type.DefaultDurationMinutes), Cost(type.DefaultCost), MaxLength(type.Description, FieldLimits.Description, "Description"));
         }
         public static ServiceResult User(User user, string? password, bool isNew)
         {
@@ -102,6 +102,13 @@ namespace DentalClinicSystem.Service
                 isNew ? Required(password, "Password") : ServiceResult.Ok(),
                 !string.IsNullOrEmpty(password) && (password.Length < 6 || Encoding.UTF8.GetByteCount(password) > FieldLimits.Password)
                     ? ServiceResult.Fail("Password must be at least 6 characters and at most 72 UTF-8 bytes.") : ServiceResult.Ok());
+        }
+        public static ServiceResult Duration(int minutes) => minutes >= ClinicRules.MinDurationMinutes && minutes <= ClinicRules.MaxDurationMinutes && minutes % ClinicRules.DurationStepMinutes == 0
+            ? ServiceResult.Ok() : ServiceResult.Fail($"Duration must be {ClinicRules.MinDurationMinutes} to {ClinicRules.MaxDurationMinutes} minutes in {ClinicRules.DurationStepMinutes}-minute steps.");
+        public static ServiceResult TimeOff(DentistTimeOff timeOff)
+        {
+            timeOff.StartDate = timeOff.StartDate.Date; timeOff.EndDate = timeOff.EndDate.Date; timeOff.Reason = Optional(timeOff.Reason);
+            return First(DateRange(timeOff.StartDate, timeOff.EndDate), MaxLength(timeOff.Reason, FieldLimits.TimeOffReason, "Reason"));
         }
         public static ServiceResult Cost(decimal cost) => cost < 0 || cost > FieldLimits.MaximumCost
             ? ServiceResult.Fail("Cost must be between 0 and 99,999,999.99.") : ServiceResult.Ok();

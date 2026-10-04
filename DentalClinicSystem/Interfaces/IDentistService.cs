@@ -9,6 +9,9 @@ namespace DentalClinicSystem.Interfaces
         Task<ServiceResult<Dentist>> GetDentistByIdAsync(User actor, int dentistId);
         Task<ServiceResult> AddDentistAsync(User actor, Dentist dentist);
         Task<ServiceResult> UpdateDentistAsync(User actor, Dentist dentist);
+        Task<ServiceResult<IReadOnlyList<DentistTimeOff>>> GetTimeOffAsync(User actor, int dentistId);
+        Task<ServiceResult> AddTimeOffAsync(User actor, DentistTimeOff timeOff);
+        Task<ServiceResult> RemoveTimeOffAsync(User actor, int dentistId, int timeOffId);
         Task<ServiceResult> DeleteDentistAsync(User actor, int dentistId);
     }
 }

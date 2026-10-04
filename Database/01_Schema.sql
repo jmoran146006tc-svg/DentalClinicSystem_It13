@@ -24,11 +24,24 @@ CREATE TABLE IF NOT EXISTS Dentists (
     IsActive TINYINT(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS DentistTimeOff (
+    TimeOffId INT AUTO_INCREMENT PRIMARY KEY,
+    DentistId INT NOT NULL,
+    StartDate DATE NOT NULL,
+    EndDate DATE NOT NULL,
+    Reason VARCHAR(100) NULL,
+    INDEX IX_DentistTimeOff_Range (DentistId, StartDate, EndDate),
+    CONSTRAINT FK_DentistTimeOff_Dentist FOREIGN KEY (DentistId) REFERENCES Dentists(DentistId),
+    CONSTRAINT CK_DentistTimeOff_Dates CHECK (EndDate >= StartDate)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS TreatmentTypes (
     TreatmentTypeId INT AUTO_INCREMENT PRIMARY KEY,
     Name VARCHAR(100) NOT NULL,
     DefaultCost DECIMAL(10,2) NOT NULL,
-    Description VARCHAR(255) NULL
+    DefaultDurationMinutes INT NOT NULL DEFAULT 30,
+    Description VARCHAR(255) NULL,
+    CONSTRAINT CK_TreatmentTypes_Duration CHECK (DefaultDurationMinutes BETWEEN 15 AND 240)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS Appointments (
@@ -36,6 +49,7 @@ CREATE TABLE IF NOT EXISTS Appointments (
     PatientId INT NOT NULL,
     DentistId INT NOT NULL,
     AppointmentDateTime DATETIME NOT NULL,
+    DurationMinutes INT NOT NULL DEFAULT 30,
     Status VARCHAR(20) NOT NULL DEFAULT 'Scheduled',
     Reason VARCHAR(255) NULL,
     CancellationReason VARCHAR(255) NULL,
@@ -45,6 +59,7 @@ CREATE TABLE IF NOT EXISTS Appointments (
     INDEX IX_Appointments_PatientId (PatientId),
     CONSTRAINT FK_Appointments_Patient FOREIGN KEY (PatientId) REFERENCES Patients(PatientId),
     CONSTRAINT FK_Appointments_Dentist FOREIGN KEY (DentistId) REFERENCES Dentists(DentistId),
+    CONSTRAINT CK_Appointments_Duration CHECK (DurationMinutes BETWEEN 15 AND 240),
     CONSTRAINT CK_Appointments_Status CHECK (Status IN ('Scheduled','CheckedIn','Completed','Cancelled','NoShow'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
