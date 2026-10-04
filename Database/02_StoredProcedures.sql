@@ -5,7 +5,7 @@ DELIMITER $$
 DROP PROCEDURE IF EXISTS sp_Patient_GetAll $$
 CREATE PROCEDURE sp_Patient_GetAll()
 BEGIN
-    SELECT PatientId, FirstName, LastName, DateOfBirth, ContactNumber, Email, Address, IsActive, CreatedAt
+    SELECT PatientId, FirstName, LastName, DateOfBirth, ContactNumber, Email, Address, GuardianName, GuardianContact, Allergies, MedicalNotes, IsActive, CreatedAt
     FROM Patients
     WHERE IsActive = 1
     ORDER BY LastName, FirstName;
@@ -14,7 +14,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Patient_GetById $$
 CREATE PROCEDURE sp_Patient_GetById(IN p_PatientId INT)
 BEGIN
-    SELECT PatientId, FirstName, LastName, DateOfBirth, ContactNumber, Email, Address, IsActive, CreatedAt
+    SELECT PatientId, FirstName, LastName, DateOfBirth, ContactNumber, Email, Address, GuardianName, GuardianContact, Allergies, MedicalNotes, IsActive, CreatedAt
     FROM Patients
     WHERE PatientId = p_PatientId;
 END $$
@@ -22,20 +22,23 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Patient_Add $$
 CREATE PROCEDURE sp_Patient_Add(
     IN p_FirstName VARCHAR(50), IN p_LastName VARCHAR(50), IN p_DateOfBirth DATE,
-    IN p_ContactNumber VARCHAR(20), IN p_Email VARCHAR(100), IN p_Address VARCHAR(200))
+    IN p_ContactNumber VARCHAR(20), IN p_Email VARCHAR(100), IN p_Address VARCHAR(200),
+    IN p_GuardianName VARCHAR(100), IN p_GuardianContact VARCHAR(20), IN p_Allergies VARCHAR(255), IN p_MedicalNotes VARCHAR(500))
 BEGIN
-    INSERT INTO Patients (FirstName, LastName, DateOfBirth, ContactNumber, Email, Address)
-    VALUES (p_FirstName, p_LastName, p_DateOfBirth, p_ContactNumber, p_Email, p_Address);
+    INSERT INTO Patients (FirstName, LastName, DateOfBirth, ContactNumber, Email, Address, GuardianName, GuardianContact, Allergies, MedicalNotes)
+    VALUES (p_FirstName, p_LastName, p_DateOfBirth, p_ContactNumber, p_Email, p_Address, p_GuardianName, p_GuardianContact, p_Allergies, p_MedicalNotes);
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Patient_Update $$
 CREATE PROCEDURE sp_Patient_Update(
     IN p_PatientId INT, IN p_FirstName VARCHAR(50), IN p_LastName VARCHAR(50), IN p_DateOfBirth DATE,
-    IN p_ContactNumber VARCHAR(20), IN p_Email VARCHAR(100), IN p_Address VARCHAR(200))
+    IN p_ContactNumber VARCHAR(20), IN p_Email VARCHAR(100), IN p_Address VARCHAR(200),
+    IN p_GuardianName VARCHAR(100), IN p_GuardianContact VARCHAR(20), IN p_Allergies VARCHAR(255), IN p_MedicalNotes VARCHAR(500))
 BEGIN
     UPDATE Patients
     SET FirstName = p_FirstName, LastName = p_LastName, DateOfBirth = p_DateOfBirth,
-        ContactNumber = p_ContactNumber, Email = p_Email, Address = p_Address
+        ContactNumber = p_ContactNumber, Email = p_Email, Address = p_Address, GuardianName = p_GuardianName, GuardianContact = p_GuardianContact,
+        Allergies = p_Allergies, MedicalNotes = p_MedicalNotes
     WHERE PatientId = p_PatientId;
 END $$
 
@@ -276,7 +279,15 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Patient_GetAllIncludingInactive $$
 CREATE PROCEDURE sp_Patient_GetAllIncludingInactive()
 BEGIN
-    SELECT * FROM Patients ORDER BY LastName, FirstName;
+    SELECT PatientId, FirstName, LastName, DateOfBirth, ContactNumber, Email, Address, GuardianName, GuardianContact, Allergies, MedicalNotes, IsActive, CreatedAt FROM Patients ORDER BY LastName, FirstName;
+END $$
+
+DROP PROCEDURE IF EXISTS sp_Patient_FindByNameAndDob $$
+CREATE PROCEDURE sp_Patient_FindByNameAndDob(IN p_FirstName VARCHAR(50), IN p_LastName VARCHAR(50), IN p_DateOfBirth DATE)
+BEGIN
+    SELECT PatientId, FirstName, LastName, DateOfBirth, ContactNumber, Email, Address, GuardianName, GuardianContact, Allergies, MedicalNotes, IsActive, CreatedAt FROM Patients
+    WHERE FirstName = p_FirstName AND LastName = p_LastName AND DateOfBirth = p_DateOfBirth
+    ORDER BY IsActive DESC, PatientId;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Patient_Reactivate $$

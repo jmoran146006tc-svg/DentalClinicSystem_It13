@@ -11,6 +11,7 @@ namespace DentalClinicSystem.Interfaces
         // Retained for SQL compatibility; patient inactivity is handled by the database event.
         Task DeleteAsync(int patientId);
         Task<IReadOnlyList<Patient>> GetAllIncludingInactiveAsync();
+        Task<IReadOnlyList<Patient>> FindByNameAndDateOfBirthAsync(string first, string last, DateTime dob);
         Task ReactivateAsync(int patientId);
     }
 }

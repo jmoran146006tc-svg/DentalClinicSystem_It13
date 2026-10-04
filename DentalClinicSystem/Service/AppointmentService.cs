@@ -30,7 +30,8 @@ namespace DentalClinicSystem.Service
             if (!RoleAccess.Can(actor, Permission.ManageAppointments)) return RoleAccess.Denied();
             var validation = Validator.Appointment(appointment, time.GetLocalNow().DateTime);
             if (!validation.Success) return validation;
-            if (await patients.GetByIdAsync(appointment.PatientId) is not { IsActive: true })
+            var patient = await patients.GetByIdAsync(appointment.PatientId);
+            if (patient is null)
                 return ServiceResult.Fail("Select an active patient.");
             if (await dentists.GetByIdAsync(appointment.DentistId) is not { IsActive: true })
                 return ServiceResult.Fail("Select an active dentist.");
@@ -38,7 +39,11 @@ namespace DentalClinicSystem.Service
             if (!slot.Success) return slot;
             appointment.Status = AppointmentStatus.Scheduled;
             appointment.CancellationReason = null;
-            return await ServiceOperation.SaveAsync(() => appointments.AddAsync(appointment));
+            return await ServiceOperation.SaveAsync(async () =>
+            {
+                if (!patient.IsActive) await patients.ReactivateAsync(patient.PatientId);
+                await appointments.AddAsync(appointment);
+            });
         }
         public async Task<ServiceResult> RescheduleAppointmentAsync(User actor, int appointmentId, DateTime newDateTime, int newDentistId)
         {

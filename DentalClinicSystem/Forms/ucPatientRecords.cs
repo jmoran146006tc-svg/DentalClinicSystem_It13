@@ -12,6 +12,7 @@ public partial class ucPatientRecords : UserControl
     private readonly IPatientService _patientService;
     private readonly User _currentUser;
     private readonly CrudPageLayout _layout;
+    private readonly FormField _guardianName, _guardianContact;
     private readonly AppButton _reactivate = UiFactory.Button("Reactivate", ButtonVariant.Secondary);
     private IReadOnlyList<Patient> _patients = [];
     private Patient? _selected;
@@ -26,6 +27,12 @@ public partial class ucPatientRecords : UserControl
         _layout.AddRow(UiFactory.Field(txtContactNumber, "Contact"), UiFactory.Field(txtEmail, "Email"));
         _layout.AddRow(UiFactory.Field(dtpDateOfBirth, "Date of birth", FieldKind.Date));
         _layout.AddRow(UiFactory.Field(txtAddress, "Address"));
+        _guardianName = UiFactory.Field(txtGuardianName, "Guardian name"); _guardianContact = UiFactory.Field(txtGuardianContact, "Guardian contact");
+        _layout.AddRow(_guardianName, _guardianContact);
+        _layout.AddRow(UiFactory.Field(txtAllergies, "Allergies")); _layout.AddRow(UiFactory.Field(txtMedicalNotes, "Medical notes"));
+        InputRules.ApplyMaxLengths((txtGuardianName, FieldLimits.GuardianName), (txtGuardianContact, FieldLimits.GuardianContact), (txtAllergies, FieldLimits.Allergies), (txtMedicalNotes, FieldLimits.MedicalNotes));
+        txtGuardianContact.KeyPress += InputRules.PhoneKeyPress;
+        dtpDateOfBirth.ValueChanged += (_, _) => UpdateGuardianHelpers(); UpdateGuardianHelpers();
         dtpDateOfBirth.MaxDate = DateTime.Today; dtpDateOfBirth.Format = DateTimePickerFormat.Custom; dtpDateOfBirth.CustomFormat = DisplayFormat.DatePattern;
         InputRules.ApplyMaxLengths((txtFirstName, FieldLimits.Name), (txtLastName, FieldLimits.Name), (txtContactNumber, FieldLimits.ContactNumber), (txtEmail, FieldLimits.Email), (txtAddress, FieldLimits.Address));
         txtContactNumber.KeyPress += InputRules.PhoneKeyPress;
@@ -61,12 +68,14 @@ public partial class ucPatientRecords : UserControl
         if (dgvPatients.SelectedRows.Count == 0 || dgvPatients.CurrentRow?.DataBoundItem is not PatientRow row) return;
         _selected = row.Record; txtFirstName.Text = _selected.FirstName; txtLastName.Text = _selected.LastName;
         txtContactNumber.Text = _selected.ContactNumber; txtEmail.Text = _selected.Email; txtAddress.Text = _selected.Address;
+        txtGuardianName.Text = _selected.GuardianName; txtGuardianContact.Text = _selected.GuardianContact; txtAllergies.Text = _selected.Allergies; txtMedicalNotes.Text = _selected.MedicalNotes;
         InputRules.SetDate(dtpDateOfBirth, _selected.DateOfBirth); _layout.SetEditing(true); _reactivate.Visible = !_selected.IsActive;
     }
     private async Task<bool> SaveAsync()
     {
         var patient = new Patient { PatientId = _selected?.PatientId ?? 0, FirstName = txtFirstName.Text.Trim(), LastName = txtLastName.Text.Trim(), ContactNumber = txtContactNumber.Text.Trim(),
-            Email = InputRules.NullIfBlank(txtEmail.Text), Address = InputRules.NullIfBlank(txtAddress.Text), DateOfBirth = dtpDateOfBirth.Value.Date };
+            Email = InputRules.NullIfBlank(txtEmail.Text), Address = InputRules.NullIfBlank(txtAddress.Text), DateOfBirth = dtpDateOfBirth.Value.Date,
+            GuardianName = InputRules.NullIfBlank(txtGuardianName.Text), GuardianContact = InputRules.NullIfBlank(txtGuardianContact.Text), Allergies = InputRules.NullIfBlank(txtAllergies.Text), MedicalNotes = InputRules.NullIfBlank(txtMedicalNotes.Text) };
         var result = _selected is null ? await _patientService.AddPatientAsync(_currentUser, patient) : await _patientService.UpdatePatientAsync(_currentUser, patient);
         if (!result.Success) { UiMessages.ShowError(result); return false; }
         _savedPatient = patient; return true;
@@ -85,9 +94,15 @@ public partial class ucPatientRecords : UserControl
         if (!result.Success) { UiMessages.ShowError(result); return; }
         await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("Patient reactivated."); GridHelper.FlashRow(dgvPatients, patient.PatientId);
     }
+    private void UpdateGuardianHelpers()
+    {
+        var helper = Validator.IsMinor(dtpDateOfBirth.Value, DateTime.Today) ? "Required for patients under 18" : "Optional for patients 18 or older";
+        _guardianName.SetHelper(helper); _guardianContact.SetHelper(helper);
+    }
     private void ClearForm()
     {
         _selected = null; txtFirstName.Clear(); txtLastName.Clear(); txtContactNumber.Clear(); txtEmail.Clear(); txtAddress.Clear();
-        dtpDateOfBirth.Value = DateTime.Today; dgvPatients.ClearSelection(); _reactivate.Visible = false; _layout?.SetEditing(false); _layout?.Alert.Dismiss();
+        txtGuardianName.Clear(); txtGuardianContact.Clear(); txtAllergies.Clear(); txtMedicalNotes.Clear();
+        dtpDateOfBirth.Value = DateTime.Today; UpdateGuardianHelpers(); dgvPatients.ClearSelection(); _reactivate.Visible = false; _layout?.SetEditing(false); _layout?.Alert.Dismiss();
     }
 }

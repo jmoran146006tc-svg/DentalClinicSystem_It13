@@ -78,10 +78,10 @@ public partial class ucAppointmentScheduler : UserControl
     {
         if (RoleAccess.Can(_currentUser, Permission.ManageAppointments))
         {
-            var patients = UiMessages.Items(await _patientService.GetAllPatientsAsync(_currentUser));
+            var patients = UiMessages.Items(await _patientService.GetAllIncludingInactiveAsync(_currentUser));
             if (IsDisposed) return;
             _patientNamesById = patients.ToDictionary(p => p.PatientId, p => p.FullName);
-            cboPatient.DataSource = patients.Where(p => p.IsActive).Select(p => new DisplayOption(p.PatientId, p.FullName)).ToList();
+            cboPatient.DataSource = patients.Select(p => new DisplayOption(p.PatientId, p.FullName + (p.IsActive ? "" : " (inactive, will reactivate)"))).ToList();
             cboPatient.DisplayMember = nameof(DisplayOption.Display); cboPatient.ValueMember = nameof(DisplayOption.Id);
             _dentists = UiMessages.Items(await _dentistService.GetAllDentistsAsync(_currentUser));
             if (IsDisposed) return;

@@ -25,6 +25,10 @@ END$$
 DROP PROCEDURE IF EXISTS sp_Migrate_RealWorldFixes$$
 CREATE PROCEDURE sp_Migrate_RealWorldFixes()
 BEGIN
+    CALL sp_Migrate_AddColumn('Patients', 'GuardianName', 'VARCHAR(100) NULL');
+    CALL sp_Migrate_AddColumn('Patients', 'GuardianContact', 'VARCHAR(20) NULL');
+    CALL sp_Migrate_AddColumn('Patients', 'Allergies', 'VARCHAR(255) NULL');
+    CALL sp_Migrate_AddColumn('Patients', 'MedicalNotes', 'VARCHAR(500) NULL');
     CALL sp_Migrate_AddColumn('Appointments', 'DurationMinutes', 'INT NOT NULL DEFAULT 30');
     CALL sp_Migrate_AddColumn('TreatmentTypes', 'DefaultDurationMinutes', 'INT NOT NULL DEFAULT 30');
     CALL sp_Migrate_AddCheck('Appointments', 'CK_Appointments_Duration', 'DurationMinutes BETWEEN 15 AND 240');

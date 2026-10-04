@@ -29,6 +29,13 @@ public sealed class frmAppointmentDetails : DialogShell
         var appointment = Column(("Patient", p.FullName), ("Dentist", details.Dentist.FullName), ("Reason", DisplayFormat.Optional(a.Reason)),
             ("Notes", DisplayFormat.Optional(a.Notes)), ("Cancellation reason", DisplayFormat.Optional(a.CancellationReason)));
         var patient = Column(("Patient details", p.FullName), ("Contact", DisplayFormat.Phone(p.ContactNumber)), ("Date of birth", DisplayFormat.Date(p.DateOfBirth)), ("Email", DisplayFormat.Optional(p.Email)));
+        if (RoleAccess.IsAdmin(actor) || RoleAccess.IsDentist(actor))
+        {
+            var allergyCaption = Copy("Allergies", Typography.Label); allergyCaption.ForeColor = Palette.Danger.Text;
+            var allergies = Copy(DisplayFormat.Optional(p.Allergies), Typography.Label); allergies.ForeColor = Palette.Danger.Text;
+            patient.Controls.Add(allergyCaption); patient.Controls.Add(allergies);
+            patient.Controls.Add(Copy("Medical notes", Typography.Label)); patient.Controls.Add(Copy(DisplayFormat.Optional(p.MedicalNotes), Typography.Body));
+        }
         content.Controls.Add(appointment, 0, 1); content.Controls.Add(patient, 1, 1);
         Body.Controls.Add(content); Body.Controls.Add(_alert); _alert.BringToFront(); UiMessages.RegisterAlertHost(this, _alert);
         ConfirmButton.Visible = a.Status is AppointmentStatus.Scheduled or AppointmentStatus.CheckedIn && RoleAccess.CanChangeStatus(actor, a, AppointmentStatus.Completed);

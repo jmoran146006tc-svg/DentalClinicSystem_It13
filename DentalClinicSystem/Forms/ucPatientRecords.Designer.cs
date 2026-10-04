@@ -31,6 +31,10 @@ namespace DentalClinicSystem.Forms
             dgvPatients = new DataGridView();
             txtFirstName = new TextBox();
             txtEmail = new TextBox();
+            txtGuardianName = new TextBox { Name = "txtGuardianName" };
+            txtGuardianContact = new TextBox { Name = "txtGuardianContact" };
+            txtAllergies = new TextBox { Name = "txtAllergies" };
+            txtMedicalNotes = new TextBox { Name = "txtMedicalNotes", Multiline = true };
             txtAddress = new TextBox();
             txtContactNumber = new TextBox();
             txtLastName = new TextBox();
@@ -238,6 +242,7 @@ namespace DentalClinicSystem.Forms
         private DataGridView dgvPatients;
         private TextBox txtFirstName;
         private TextBox txtEmail;
+        private TextBox txtGuardianName, txtGuardianContact, txtAllergies, txtMedicalNotes;
         private TextBox txtAddress;
         private TextBox txtContactNumber;
         private TextBox txtLastName;

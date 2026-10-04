@@ -23,7 +23,9 @@ namespace DentalClinicSystem.DBContent
                 Parameter("@p_DateOfBirth", patient.DateOfBirth),
                 Parameter("@p_ContactNumber", patient.ContactNumber),
                 Parameter("@p_Email", patient.Email),
-                Parameter("@p_Address", patient.Address));
+                Parameter("@p_Address", patient.Address),
+                Parameter("@p_GuardianName", patient.GuardianName), Parameter("@p_GuardianContact", patient.GuardianContact),
+                Parameter("@p_Allergies", patient.Allergies), Parameter("@p_MedicalNotes", patient.MedicalNotes));
 
         public Task UpdateAsync(Patient patient)
             => ExecuteAsync("sp_Patient_Update",
@@ -33,7 +35,9 @@ namespace DentalClinicSystem.DBContent
                 Parameter("@p_DateOfBirth", patient.DateOfBirth),
                 Parameter("@p_ContactNumber", patient.ContactNumber),
                 Parameter("@p_Email", patient.Email),
-                Parameter("@p_Address", patient.Address));
+                Parameter("@p_Address", patient.Address),
+                Parameter("@p_GuardianName", patient.GuardianName), Parameter("@p_GuardianContact", patient.GuardianContact),
+                Parameter("@p_Allergies", patient.Allergies), Parameter("@p_MedicalNotes", patient.MedicalNotes));
 
         public Task DeleteAsync(int patientId)
             => ExecuteAsync("sp_Patient_Delete",
@@ -42,6 +46,8 @@ namespace DentalClinicSystem.DBContent
         public Task<IReadOnlyList<Patient>> GetAllIncludingInactiveAsync()
             => QueryAsync("sp_Patient_GetAllIncludingInactive", MapPatient);
 
+        public Task<IReadOnlyList<Patient>> FindByNameAndDateOfBirthAsync(string first, string last, DateTime dob) =>
+            QueryAsync("sp_Patient_FindByNameAndDob", MapPatient, Parameter("@p_FirstName", first), Parameter("@p_LastName", last), Parameter("@p_DateOfBirth", dob.Date));
         public Task ReactivateAsync(int patientId)
             => ExecuteAsync("sp_Patient_Reactivate", Parameter("@p_PatientId", patientId));
 
@@ -54,6 +60,8 @@ namespace DentalClinicSystem.DBContent
             ContactNumber = (string)reader["ContactNumber"],
             Email = reader.GetNullableString("Email"),
             Address = reader.GetNullableString("Address"),
+            GuardianName = reader.GetNullableString("GuardianName"), GuardianContact = reader.GetNullableString("GuardianContact"),
+            Allergies = reader.GetNullableString("Allergies"), MedicalNotes = reader.GetNullableString("MedicalNotes"),
             IsActive = reader.GetBool("IsActive"),
             CreatedAt = (DateTime)reader["CreatedAt"]
         };

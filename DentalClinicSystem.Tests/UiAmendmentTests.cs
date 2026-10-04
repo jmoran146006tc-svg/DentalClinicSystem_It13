@@ -133,7 +133,8 @@ public class UiAmendmentTests
             var actor = new User { Role = Roles.Admin };
             var patients = Enumerable.Range(1, 600).Select(id => new Patient { PatientId = id, FirstName = "Patient", LastName = id.ToString(), DateOfBirth = new(1998, 4, 12) }).ToArray();
             var appointments = Enumerable.Range(1, 600).Select(id => new Appointment { AppointmentId = id, PatientId = id, DentistId = 2, AppointmentDateTime = DateTime.Today.AddMinutes(id * 15) }).ToArray();
-            var patientService = TestServices.Create<IPatientService>((nameof(IPatientService.GetAllPatientsAsync), Task.FromResult(ServiceResult<IReadOnlyList<Patient>>.Ok(patients))));
+            var patientService = TestServices.Create<IPatientService>((nameof(IPatientService.GetAllPatientsAsync), Task.FromResult(ServiceResult<IReadOnlyList<Patient>>.Ok(patients))),
+                (nameof(IPatientService.GetAllIncludingInactiveAsync), Task.FromResult(ServiceResult<IReadOnlyList<Patient>>.Ok(patients))));
             var dentistService = TestServices.Create<IDentistService>((nameof(IDentistService.GetAllDentistsAsync), Task.FromResult(ServiceResult<IReadOnlyList<Dentist>>.Ok([new() { DentistId = 2, FirstName = "Miguel", LastName = "Reyes" }]))));
             var appointmentService = TestServices.Create<IAppointmentService>((nameof(IAppointmentService.GetAllAppointmentsAsync), Task.FromResult(ServiceResult<IReadOnlyList<Appointment>>.Ok(appointments))));
             using UserControl page = name == "patients" ? new ucPatientRecords(patientService, actor) : new ucAppointmentScheduler(appointmentService, patientService, dentistService, TestServices.Create<ITreatmentTypeService>(), actor);

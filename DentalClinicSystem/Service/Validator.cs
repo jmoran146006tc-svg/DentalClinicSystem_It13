@@ -39,11 +39,20 @@ namespace DentalClinicSystem.Service
             patient.ContactNumber = Sanitize(patient.ContactNumber);
             patient.Email = Optional(patient.Email);
             patient.Address = Optional(patient.Address);
+            patient.GuardianName = Optional(Sanitize(patient.GuardianName)); patient.GuardianContact = Optional(Sanitize(patient.GuardianContact));
+            patient.Allergies = Optional(patient.Allergies); patient.MedicalNotes = Optional(patient.MedicalNotes);
+            var minor = IsMinor(patient.DateOfBirth, now);
             return First(Name(patient.FirstName, "First name"), Name(patient.LastName, "Last name"),
                 Phone(patient.ContactNumber), Email(patient.Email), MaxLength(patient.Address, FieldLimits.Address, "Address"),
                 patient.DateOfBirth.Date > now.Date ? ServiceResult.Fail("Date of birth cannot be in the future.") : ServiceResult.Ok(),
-                DatabaseDate(patient.DateOfBirth, "Date of birth"));
+                DatabaseDate(patient.DateOfBirth, "Date of birth"),
+                minor ? Required(patient.GuardianName, "Guardian name") : ServiceResult.Ok(),
+                MaxLength(patient.GuardianName, FieldLimits.GuardianName, "Guardian name"),
+                minor ? Required(patient.GuardianContact, "Guardian contact") : ServiceResult.Ok(),
+                Phone(patient.GuardianContact, minor), MaxLength(patient.GuardianContact, FieldLimits.GuardianContact, "Guardian contact"),
+                MaxLength(patient.Allergies, FieldLimits.Allergies, "Allergies"), MaxLength(patient.MedicalNotes, FieldLimits.MedicalNotes, "Medical notes"));
         }
+        public static bool IsMinor(DateTime birthDate, DateTime now) => now.Year - birthDate.Year < 18 || now.Year - birthDate.Year == 18 && birthDate.Date.AddYears(18) > now.Date;
         public static ServiceResult Dentist(Dentist dentist)
         {
             dentist.FirstName = Sanitize(dentist.FirstName);

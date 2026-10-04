@@ -31,6 +31,10 @@ namespace DentalClinicSystem.Service
             var validation = Validator.Patient(patient, time.GetLocalNow().DateTime);
             if (!validation.Success) return validation;
             if (update && await repository.GetByIdAsync(patient.PatientId) is null) return ServiceResult.Fail("Patient not found.");
+            var duplicates = (await repository.FindByNameAndDateOfBirthAsync(patient.FirstName, patient.LastName, patient.DateOfBirth))
+                .Where(p => !update || p.PatientId != patient.PatientId).ToList();
+            if (duplicates.Any(p => p.IsActive)) return ServiceResult.Fail("A patient with the same name and date of birth already exists.");
+            if (duplicates.Count > 0) return ServiceResult.Fail("That patient exists but is inactive. Reactivate the existing record instead.");
             return await ServiceOperation.SaveAsync(() => update ? repository.UpdateAsync(patient) : repository.AddAsync(patient));
         }
         public async Task<ServiceResult> ReactivatePatientAsync(User actor, int patientId)
