@@ -36,7 +36,7 @@ namespace DentalClinicSystem.Forms
             label3 = new Label();
             label4 = new Label();
             txtContactNumber = new TextBox();
-            txtSpecialization = new TextBox();
+            cboSpecialization = new ComboBox();
             label5 = new Label();
             txtLicenseNumber = new TextBox();
             btnClear = new Button();
@@ -116,12 +116,12 @@ namespace DentalClinicSystem.Forms
             txtContactNumber.Size = new Size(258, 31);
             txtContactNumber.TabIndex = 13;
             // 
-            // txtSpecialization
+            // cboSpecialization
             // 
-            txtSpecialization.Location = new Point(52, 308);
-            txtSpecialization.Name = "txtSpecialization";
-            txtSpecialization.Size = new Size(251, 31);
-            txtSpecialization.TabIndex = 12;
+            cboSpecialization.Location = new Point(52, 308);
+            cboSpecialization.Name = "cboSpecialization";
+            cboSpecialization.Size = new Size(251, 31);
+            cboSpecialization.TabIndex = 12;
             // 
             // label5
             // 
@@ -194,7 +194,7 @@ namespace DentalClinicSystem.Forms
             Controls.Add(label3);
             Controls.Add(label4);
             Controls.Add(txtContactNumber);
-            Controls.Add(txtSpecialization);
+            Controls.Add(cboSpecialization);
             Controls.Add(label2);
             Controls.Add(label1);
             Controls.Add(txtLastName);
@@ -218,7 +218,7 @@ namespace DentalClinicSystem.Forms
         private Label label3;
         private Label label4;
         private TextBox txtContactNumber;
-        private TextBox txtSpecialization;
+        private ComboBox cboSpecialization;
         private Label label5;
         private TextBox txtLicenseNumber;
         private Button btnClear;

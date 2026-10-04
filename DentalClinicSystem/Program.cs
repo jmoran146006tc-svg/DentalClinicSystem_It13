@@ -65,7 +65,7 @@ namespace DentalClinicSystem
             IAppointmentService appointmentService = new AppointmentService(appointmentRepository, patientRepository, dentistRepository, timeOffRepository, time);
             ITreatmentService treatmentService = new TreatmentService(treatmentRepository, appointmentRepository, treatmentTypeRepository, time);
             ITreatmentTypeService treatmentTypeService = new TreatmentTypeService(treatmentTypeRepository);
-            IAuthService authService = new AuthService(userRepository);
+            IAuthService authService = new AuthService(userRepository, dentistRepository);
             IUserService userService = new UserService(userRepository, dentistRepository);
 
             IReportRepository reportRepository = new MySqlReportRepository();

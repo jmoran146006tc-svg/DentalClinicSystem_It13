@@ -6,8 +6,10 @@ namespace DentalClinicSystem.Service
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IDentistRepository _dentists;
 
-        public AuthService(IUserRepository userRepository) => _userRepository = userRepository;
+        public AuthService(IUserRepository userRepository, IDentistRepository dentists)
+        { _userRepository = userRepository; _dentists = dentists; }
 
         public async Task<ServiceResult<User>> LoginAsync(string username, string password)
         {
@@ -20,6 +22,10 @@ namespace DentalClinicSystem.Service
                 return ServiceResult<User>.Fail("Invalid username or password.");
 
             if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+                return ServiceResult<User>.Fail("Invalid username or password.");
+
+            if (RoleAccess.IsDentist(user) && (user.DentistId is not int dentistId ||
+                await _dentists.GetByIdAsync(dentistId) is not { IsActive: true }))
                 return ServiceResult<User>.Fail("Invalid username or password.");
 
             return ServiceResult<User>.Ok(new User

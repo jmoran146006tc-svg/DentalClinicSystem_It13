@@ -59,6 +59,13 @@ namespace DentalClinicSystem.DBContent
         public Task<IReadOnlyList<Appointment>> GetByDentistAndRangeAsync(int dentistId, DateTime from, DateTime to)
             => QueryAsync("sp_Appointment_GetByDentistAndRange", MapAppointment, Parameter("@p_DentistId", dentistId), Parameter("@p_From", from), Parameter("@p_To", to));
 
+        public async Task<int> CountUpcomingByDentistAsync(int dentistId, DateTime from)
+        {
+            var rows = await QueryAsync("sp_Appointment_CountUpcomingByDentist", reader => reader.GetInt32("Total"),
+                Parameter("@p_DentistId", dentistId), Parameter("@p_From", from));
+            return rows.FirstOrDefault();
+        }
+
         private static Appointment MapAppointment(MySqlDataReader reader) => new()
         {
             AppointmentId = (int)reader["AppointmentId"],

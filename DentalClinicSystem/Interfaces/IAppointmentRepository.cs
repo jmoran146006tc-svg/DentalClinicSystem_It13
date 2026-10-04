@@ -13,5 +13,6 @@ namespace DentalClinicSystem.Interfaces
         Task<IReadOnlyList<Appointment>> GetByPatientIdAsync(int patientId);
         Task<IReadOnlyList<Appointment>> GetByRangeAsync(DateTime from, DateTime to);
         Task<IReadOnlyList<Appointment>> GetByDentistAndRangeAsync(int dentistId, DateTime from, DateTime to);
+        Task<int> CountUpcomingByDentistAsync(int dentistId, DateTime from);
     }
 }

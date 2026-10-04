@@ -22,9 +22,11 @@ public partial class ucDentistRecords : UserControl
         InitializeComponent(); _currentUser = currentUser; _dentistService = dentistService;
         _layout = new(this, "Dentists", "dentist", "Clinic practitioners and contact details", dgvDentists, btnAdd, btnClear, ClearForm);
         _layout.AddRow(UiFactory.Field(txtFirstName, "First name"), UiFactory.Field(txtLastName, "Last name"));
-        _layout.AddRow(UiFactory.Field(txtSpecialization, "Specialization"));
+        _layout.AddRow(UiFactory.Field(cboSpecialization, "Specialization", FieldKind.Choice));
+        cboSpecialization.DropDownStyle = ComboBoxStyle.DropDown; cboSpecialization.MaxLength = FieldLimits.Specialization;
+        cboSpecialization.Items.AddRange(DentalSpecializations.All);
         _layout.AddRow(UiFactory.Field(txtContactNumber, "Contact"), UiFactory.Field(txtLicenseNumber, "License"));
-        InputRules.ApplyMaxLengths((txtFirstName, FieldLimits.Name), (txtLastName, FieldLimits.Name), (txtSpecialization, FieldLimits.Specialization), (txtContactNumber, FieldLimits.ContactNumber), (txtLicenseNumber, FieldLimits.LicenseNumber));
+        InputRules.ApplyMaxLengths((txtFirstName, FieldLimits.Name), (txtLastName, FieldLimits.Name), (txtContactNumber, FieldLimits.ContactNumber), (txtLicenseNumber, FieldLimits.LicenseNumber));
         txtContactNumber.KeyPress += InputRules.PhoneKeyPress;
         btnDelete.Text = "Deactivate"; btnDelete.Visible = true; btnDelete.Height = Metrics.ControlHeight; ButtonStyler.Attach(btnDelete, ButtonVariant.Danger);
         _layout.Actions.Controls.Add(btnDelete);
@@ -48,13 +50,13 @@ public partial class ucDentistRecords : UserControl
     private void SelectionChanged(object? sender, EventArgs e)
     {
         if (dgvDentists.SelectedRows.Count == 0 || dgvDentists.CurrentRow?.DataBoundItem is not DentistRow row) return;
-        _selected = row.Record; txtFirstName.Text = _selected.FirstName; txtLastName.Text = _selected.LastName; txtSpecialization.Text = _selected.Specialization;
+        _selected = row.Record; txtFirstName.Text = _selected.FirstName; txtLastName.Text = _selected.LastName; cboSpecialization.Text = _selected.Specialization;
         txtContactNumber.Text = _selected.ContactNumber; txtLicenseNumber.Text = _selected.LicenseNumber; _layout.SetEditing(true); btnDelete.Enabled = true; _timeOff.Enabled = true;
     }
     private async Task<bool> SaveAsync()
     {
         var dentist = new Dentist { DentistId = _selected?.DentistId ?? 0, FirstName = txtFirstName.Text.Trim(), LastName = txtLastName.Text.Trim(),
-            Specialization = InputRules.NullIfBlank(txtSpecialization.Text), ContactNumber = InputRules.NullIfBlank(txtContactNumber.Text), LicenseNumber = InputRules.NullIfBlank(txtLicenseNumber.Text) };
+            Specialization = InputRules.NullIfBlank(cboSpecialization.Text), ContactNumber = InputRules.NullIfBlank(txtContactNumber.Text), LicenseNumber = InputRules.NullIfBlank(txtLicenseNumber.Text) };
         var result = _selected is null ? await _dentistService.AddDentistAsync(_currentUser, dentist) : await _dentistService.UpdateDentistAsync(_currentUser, dentist);
         if (!result.Success) { UiMessages.ShowError(result); return false; }
         _savedDentist = dentist; return true;
@@ -73,5 +75,5 @@ public partial class ucDentistRecords : UserControl
         if (!result.Success) { UiMessages.ShowError(result); return; }
         await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("Dentist deactivated.");
     }
-    private void ClearForm() { _selected = null; txtFirstName.Clear(); txtLastName.Clear(); txtSpecialization.Clear(); txtContactNumber.Clear(); txtLicenseNumber.Clear(); dgvDentists.ClearSelection(); btnDelete.Enabled = false; _timeOff.Enabled = false; _layout?.SetEditing(false); _layout?.Alert.Dismiss(); }
+    private void ClearForm() { _selected = null; txtFirstName.Clear(); txtLastName.Clear(); cboSpecialization.SelectedIndex = -1; cboSpecialization.Text = ""; txtContactNumber.Clear(); txtLicenseNumber.Clear(); dgvDentists.ClearSelection(); btnDelete.Enabled = false; _timeOff.Enabled = false; _layout?.SetEditing(false); _layout?.Alert.Dismiss(); }
 }

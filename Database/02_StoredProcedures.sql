@@ -372,6 +372,13 @@ BEGIN
     ORDER BY d.LastName, d.FirstName;
 END $$
 
+DROP PROCEDURE IF EXISTS sp_Appointment_CountUpcomingByDentist $$
+CREATE PROCEDURE sp_Appointment_CountUpcomingByDentist(IN p_DentistId INT, IN p_From DATETIME)
+BEGIN
+    SELECT COUNT(*) AS Total FROM Appointments
+    WHERE DentistId = p_DentistId AND AppointmentDateTime >= p_From AND Status IN ('Scheduled','CheckedIn');
+END $$
+
 DROP PROCEDURE IF EXISTS sp_DentistTimeOff_GetByDentist $$
 CREATE PROCEDURE sp_DentistTimeOff_GetByDentist(IN p_DentistId INT)
 BEGIN

@@ -54,7 +54,10 @@ namespace DentalClinicSystem.Service
         public async Task<ServiceResult> DeleteDentistAsync(User actor, int dentistId)
         {
             if (!RoleAccess.Can(actor, Permission.ManageDentists)) return RoleAccess.Denied();
-            if (await repository.GetByIdAsync(dentistId) is null) return ServiceResult.Fail("Dentist not found.");
+            var dentist = await repository.GetByIdAsync(dentistId);
+            if (dentist is null) return ServiceResult.Fail("Dentist not found.");
+            var count = await appointments.CountUpcomingByDentistAsync(dentistId, time.GetLocalNow().DateTime);
+            if (count > 0) return ServiceResult.Fail($"{dentist.FullName} still has {count} upcoming appointment(s). Reschedule or cancel them first.");
             return await ServiceOperation.SaveAsync(() => repository.DeleteAsync(dentistId));
         }
     }
