@@ -22,7 +22,11 @@ For an existing database, run `Database/04_Migration_RealWorldFixes.sql`, then `
 
 DEMO ONLY: `admin / admin123`, `reception / reception123`, `drsantos / dentist123`.
 
-The sidebar follows each account's role permissions, highlights the active page, and keeps the section title and clock visible during navigation. Login and record pages use the shared design system and responsive runtime layouts. Appointments support walk-ins, check-in, rescheduling with a dentist change, editable visit reasons and durations, overlap checks, and dentist time off. Admins and Receptionists can check in patients; Dentists can complete their own appointments. Only Scheduled appointments can be rescheduled or cancelled; CheckedIn appointments can only become Completed.
+Login uses a full-bleed photo with a floating card, a teal scrim for readable brand copy, and the shared design system. The embedded `Resources/dentist.jpg` determines the window aspect ratio and is decoded once; the backdrop composition is cached by size and DPI. The form has no demo credential hints, keeps Enter to submit, and supports the password eye toggle (also Alt+P). The brand enters over 220 ms; the card fades and settles over 320 ms. Reduced motion shows the final state immediately.
+
+Login photo by Benyamin Bohlouli on Unsplash.
+
+The sidebar follows each account's role permissions, highlights the active page, and keeps the section title and clock visible during navigation. Record pages use the shared design system and responsive runtime layouts. Appointments support walk-ins, check-in, rescheduling with a dentist change, editable visit reasons and durations, overlap checks, and dentist time off. Admins and Receptionists can check in patients; Dentists can complete their own appointments. Only Scheduled appointments can be rescheduled or cancelled; CheckedIn appointments can only become Completed.
 
 The dashboard shows Admins and Receptionists today's appointment count, active patients, cancellations for appointments dated this week, and a Monday–Sunday calendar with week navigation, dentist filtering, overlap columns and appointment details. Only Admins see the weekly net billed amount. Dentists see their own patients today, with patient history and completion actions for Scheduled or CheckedIn appointments. History is read-only and includes treatments and past appointments; Receptionists have no treatment-history access. Refresh reloads dashboard data. The calendar displays 8:00 AM–6:00 PM for context; booking still enforces the clinic hours below.
 

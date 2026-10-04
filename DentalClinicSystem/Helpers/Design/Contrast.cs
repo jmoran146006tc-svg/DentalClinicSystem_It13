@@ -2,6 +2,12 @@ namespace DentalClinicSystem.Helpers.Design;
 
 public static class Contrast
 {
+    public static Color Composite(Color foreground, Color background)
+    {
+        var alpha = foreground.A / 255d;
+        return Color.FromArgb(Channel(foreground.R, background.R), Channel(foreground.G, background.G), Channel(foreground.B, background.B));
+        int Channel(byte front, byte back) => (int)Math.Round(front * alpha + back * (1 - alpha));
+    }
     public static double Luminance(Color color) => .2126 * Channel(color.R) + .7152 * Channel(color.G) + .0722 * Channel(color.B);
     public static double Ratio(Color foreground, Color background)
     {
@@ -32,5 +38,12 @@ public static class Contrast
         }
         yield return ("BrandSoftText/BrandSoft", Palette.BrandSoftText, Palette.BrandSoft);
         yield return ("Danger/Surface", Palette.Danger.Text, Palette.Surface);
+        var loginBackground = Composite(Palette.LoginScrimBrandEdge, Composite(Palette.LoginPhotoWash, Palette.Surface));
+        yield return ("Login headline/scrim", Palette.Surface, loginBackground);
+        yield return ("Login caption/scrim", Composite(Palette.LoginCaption, Palette.BrandPressed), loginBackground);
+        yield return ("Login footer/scrim", Composite(Palette.LoginFooter, Palette.BrandPressed), loginBackground);
+        yield return ("Login chip/scrim", Palette.Surface, Composite(Palette.LoginChipFill, loginBackground));
+        yield return ("Login mark/badge", Palette.Surface, Composite(Palette.LoginBadgeFill, loginBackground));
+        yield return ("Caps Lock/Surface", Palette.Warning.Text, Palette.Surface);
     }
 }
