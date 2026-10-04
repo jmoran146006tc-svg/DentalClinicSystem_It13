@@ -29,11 +29,14 @@ public partial class ucTreatmentRecords : UserControl
         InitializeComponent(); _treatmentService = treatmentService; _appointmentService = appointmentService; _treatmentTypeService = treatmentTypeService; _currentUser = currentUser;
         _layout = new(this, "Treatments", "treatment", "Clinical records, procedures and costs", dgvTreatments, btnAddTreatment, _clear, ClearForm);
         _layout.AddRow(UiFactory.Field(cboAppointment, "Appointment", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(cboTreatmentType, "Treatment type", FieldKind.Choice));
-        _layout.AddRow(UiFactory.Field(txtToothNumber, "Tooth #"), UiFactory.Field(txtCost, "Cost"));
+        var tooth = UiFactory.Field(txtToothNumber, "Tooth #"); tooth.SetHelper("FDI number");
+        _layout.AddRow(tooth, UiFactory.Field(txtCost, "Cost"));
+        txtToothNumber.KeyPress += (_, e) => { if (!char.IsControl(e.KeyChar) && e.KeyChar is not (>= '0' and <= '9')) e.Handled = true; };
         _layout.AddRow(UiFactory.Field(dtpDatePerformed, "Date performed", FieldKind.Date));
         txtNotes.Multiline = true; _layout.AddRow(UiFactory.Field(txtNotes, "Notes"));
         InputRules.ApplyMaxLengths((txtToothNumber, FieldLimits.ToothNumber), (txtNotes, FieldLimits.Notes), (txtCost, FieldLimits.ContactNumber));
-        dtpDatePerformed.MaxDate = DateTime.Today; dtpDatePerformed.Format = DateTimePickerFormat.Custom; dtpDatePerformed.CustomFormat = DisplayFormat.DatePattern;
+        dtpDatePerformed.Enabled = false; dtpDatePerformed.Format = DateTimePickerFormat.Custom; dtpDatePerformed.CustomFormat = DisplayFormat.DatePattern;
+        cboAppointment.SelectedIndexChanged += (_, _) => SetAppointmentDate();
         cboTreatmentType.SelectedIndexChanged += cboTreatmentType_SelectedIndexChanged; dgvTreatments.SelectionChanged += SelectionChanged;
         _layout.Search.TextChanged += (_, _) => BindRows(); _clear.Click += (_, _) => ClearForm();
         Enabled = RoleAccess.Can(currentUser, Permission.ViewTreatments);
@@ -51,8 +54,7 @@ public partial class ucTreatmentRecords : UserControl
             if (IsDisposed) return;
             _patientNamesByAppointmentId[appointment.AppointmentId] = result.Data?.Patient.FullName ?? $"Patient #{appointment.PatientId}";
         }
-        var options = appointments.Select(a => new DisplayOption(a.AppointmentId, AppointmentLabels.Format(a, _patientNamesByAppointmentId[a.AppointmentId]))).ToList();
-        cboAppointment.DisplayMember = nameof(DisplayOption.Display); cboAppointment.ValueMember = nameof(DisplayOption.Id); cboAppointment.DataSource = options;
+        cboAppointment.DisplayMember = nameof(DisplayOption.Display); cboAppointment.ValueMember = nameof(DisplayOption.Id); BindAppointmentOptions();
         var types = UiMessages.Items(await _treatmentTypeService.GetAllTreatmentTypesAsync(_currentUser));
         if (IsDisposed) return;
         _treatmentTypesById = types.ToDictionary(t => t.TreatmentTypeId);
@@ -77,9 +79,20 @@ public partial class ucTreatmentRecords : UserControl
     private void SelectionChanged(object? sender, EventArgs e)
     {
         if (dgvTreatments.SelectedRows.Count == 0 || dgvTreatments.CurrentRow?.DataBoundItem is not TreatmentRow row) return;
-        _selected = row.Record; cboAppointment.SelectedValue = _selected.AppointmentId; cboTreatmentType.SelectedValue = _selected.TreatmentTypeId;
+        _selected = row.Record; BindAppointmentOptions(); cboAppointment.SelectedValue = _selected.AppointmentId; cboTreatmentType.SelectedValue = _selected.TreatmentTypeId;
         txtCost.Text = _selected.Cost.ToString("0.00", CultureInfo.InvariantCulture); txtToothNumber.Text = _selected.ToothNumber; txtNotes.Text = _selected.Notes;
-        InputRules.SetDate(dtpDatePerformed, _selected.DatePerformed); _layout.SetEditing(true);
+        SetAppointmentDate(); _layout.SetEditing(true);
+    }
+    private void BindAppointmentOptions()
+    {
+        cboAppointment.DataSource = _appointmentsById.Values.Where(a => a.AppointmentId == _selected?.AppointmentId ||
+            a.Status is not (AppointmentStatus.Cancelled or AppointmentStatus.NoShow) && a.AppointmentDateTime.Date <= DateTime.Today)
+            .Select(a => new DisplayOption(a.AppointmentId, AppointmentLabels.Format(a, _patientNamesByAppointmentId.GetValueOrDefault(a.AppointmentId, $"Patient #{a.PatientId}")))).ToList();
+    }
+    private void SetAppointmentDate()
+    {
+        if (cboAppointment.SelectedValue is int id && _appointmentsById.TryGetValue(id, out var appointment))
+            InputRules.SetDate(dtpDatePerformed, appointment.AppointmentDateTime.Date);
     }
     private void cboTreatmentType_SelectedIndexChanged(object? sender, EventArgs e)
     {
@@ -106,7 +119,7 @@ public partial class ucTreatmentRecords : UserControl
     }
     private void ClearForm()
     {
-        _selected = null; cboAppointment.SelectedIndex = -1; cboTreatmentType.SelectedIndex = -1; txtToothNumber.Clear(); txtCost.Clear(); txtNotes.Clear();
+        _selected = null; BindAppointmentOptions(); cboAppointment.SelectedIndex = -1; cboTreatmentType.SelectedIndex = -1; txtToothNumber.Clear(); txtCost.Clear(); txtNotes.Clear();
         dtpDatePerformed.Value = DateTime.Today; dgvTreatments.ClearSelection(); _layout?.SetEditing(false); _layout?.Alert.Dismiss();
     }
 }

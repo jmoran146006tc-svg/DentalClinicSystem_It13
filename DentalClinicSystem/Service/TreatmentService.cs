@@ -36,11 +36,17 @@ namespace DentalClinicSystem.Service
         private async Task<ServiceResult> SaveAsync(User actor, Treatment treatment, bool update)
         {
             if (!RoleAccess.Can(actor, Permission.ManageTreatments)) return RoleAccess.Denied();
-            var validation = Validator.Treatment(treatment, time.GetLocalNow().DateTime);
-            if (!validation.Success) return validation;
             var appointment = await appointments.GetByIdAsync(treatment.AppointmentId);
             if (appointment is null) return ServiceResult.Fail("Appointment not found.");
             if (!RoleAccess.CanAccessAppointment(actor, appointment)) return RoleAccess.Denied();
+            if (appointment.Status is AppointmentStatus.Cancelled or AppointmentStatus.NoShow)
+                return ServiceResult.Fail("Treatments can't be added to a cancelled or no-show appointment.");
+            if (appointment.AppointmentDateTime.Date > time.GetLocalNow().DateTime.Date)
+                return ServiceResult.Fail("That appointment hasn't happened yet.");
+            if (treatment.DatePerformed.Date != appointment.AppointmentDateTime.Date)
+                return ServiceResult.Fail("Date performed must match the appointment date.");
+            var validation = Validator.Treatment(treatment, time.GetLocalNow().DateTime);
+            if (!validation.Success) return validation;
             if (await types.GetByIdAsync(treatment.TreatmentTypeId) is null) return ServiceResult.Fail("Treatment type not found.");
             if (update)
             {

@@ -38,6 +38,9 @@ public class TreatmentTests
             var edit = PageLayoutTests.Descendants(page).OfType<AppButton>().Single(button => button.Text == "Edit treatment");
             PageLayoutTests.InspectNextDialog(host, dialog =>
             {
+                var performed = PageLayoutTests.Named<DateTimePicker>(dialog, "dtpDatePerformed");
+                Assert.False(performed.Enabled); Assert.Equal(a.AppointmentDateTime.Date, performed.Value.Date);
+                Assert.Equal(2, PageLayoutTests.Named<TextBox>(dialog, "txtToothNumber").MaxLength);
                 Assert.Equal("300.00", PageLayoutTests.Named<TextBox>(dialog, "txtCost").Text);
                 PageLayoutTests.Named<TextBox>(dialog, "txtCost").Text = "325.50"; dialog.ConfirmButton.PerformClick();
             }, edit.PerformClick, save: true);

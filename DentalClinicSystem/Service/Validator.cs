@@ -82,6 +82,7 @@ namespace DentalClinicSystem.Service
             treatment.ToothNumber = Optional(treatment.ToothNumber);
             treatment.Notes = Optional(treatment.Notes);
             return First(Cost(treatment.Cost), MaxLength(treatment.ToothNumber, FieldLimits.ToothNumber, "Tooth number"),
+                ToothNumbering.IsValid(treatment.ToothNumber) ? ServiceResult.Ok() : ServiceResult.Fail("Enter a valid FDI tooth number (for example 11 to 48) or leave it blank."),
                 MaxLength(treatment.Notes, FieldLimits.Notes, "Notes"), DatabaseDate(treatment.DatePerformed, "Date performed"),
                 treatment.DatePerformed.Date > now.Date ? ServiceResult.Fail("Date performed cannot be in the future.") : ServiceResult.Ok());
         }

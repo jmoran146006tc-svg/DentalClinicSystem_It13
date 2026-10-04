@@ -1,3 +1,4 @@
+-- All treatment prices are placeholders; confirm real prices with the clinic.
 -- DEMO accounts only. Never use these passwords for a real clinic.
 USE dentalclinicdb;
 
@@ -18,6 +19,31 @@ SELECT 'Root Canal', 6000, 90 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM Treatmen
 
 INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
 SELECT 'Filling', 1200, 60 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Filling');
+
+-- Placeholder prices and durations: confirm real prices and procedure times with the clinic.
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Consultation / Check-up', 500, 30 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Consultation / Check-up');
+
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Dental X-ray (Periapical)', 400, 15 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Dental X-ray (Periapical)');
+
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Surgical Extraction / Wisdom Tooth', 5000, 90 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Surgical Extraction / Wisdom Tooth');
+
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Teeth Whitening', 8000, 90 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Teeth Whitening');
+
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Braces Adjustment', 1000, 30 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Braces Adjustment');
+
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Dentures (per arch)', 10000, 60 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Dentures (per arch)');
+
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Dental Crown', 8000, 60 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Dental Crown');
+
+INSERT INTO TreatmentTypes (Name, DefaultCost, DefaultDurationMinutes)
+SELECT 'Fluoride Treatment', 500, 30 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM TreatmentTypes WHERE Name = 'Fluoride Treatment');
 
 INSERT INTO Patients (FirstName, LastName, DateOfBirth, ContactNumber)
 SELECT 'Juan', 'Dela Cruz', '1998-04-12', '09981234567' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM Patients WHERE FirstName = 'Juan' AND LastName = 'Dela Cruz' AND DateOfBirth = '1998-04-12');
