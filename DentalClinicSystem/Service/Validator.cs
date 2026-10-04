@@ -90,7 +90,7 @@ namespace DentalClinicSystem.Service
         {
             treatment.ToothNumber = Optional(treatment.ToothNumber);
             treatment.Notes = Optional(treatment.Notes);
-            return First(Cost(treatment.Cost), MaxLength(treatment.ToothNumber, FieldLimits.ToothNumber, "Tooth number"),
+            return First(Cost(treatment.Cost), Discount(treatment.DiscountType, treatment.DiscountPercent), MaxLength(treatment.ToothNumber, FieldLimits.ToothNumber, "Tooth number"),
                 ToothNumbering.IsValid(treatment.ToothNumber) ? ServiceResult.Ok() : ServiceResult.Fail("Enter a valid FDI tooth number (for example 11 to 48) or leave it blank."),
                 MaxLength(treatment.Notes, FieldLimits.Notes, "Notes"), DatabaseDate(treatment.DatePerformed, "Date performed"),
                 treatment.DatePerformed.Date > now.Date ? ServiceResult.Fail("Date performed cannot be in the future.") : ServiceResult.Ok());
@@ -115,6 +115,14 @@ namespace DentalClinicSystem.Service
         }
         public static ServiceResult Duration(int minutes) => minutes >= ClinicRules.MinDurationMinutes && minutes <= ClinicRules.MaxDurationMinutes && minutes % ClinicRules.DurationStepMinutes == 0
             ? ServiceResult.Ok() : ServiceResult.Fail($"Duration must be {ClinicRules.MinDurationMinutes} to {ClinicRules.MaxDurationMinutes} minutes in {ClinicRules.DurationStepMinutes}-minute steps.");
+        public static ServiceResult Discount(string type, decimal percent)
+        {
+            if (!DiscountTypes.All.Contains(type)) return ServiceResult.Fail("Select a valid discount type.");
+            if (percent < 0 || percent > 100) return ServiceResult.Fail("Discount must be between 0% and 100%.");
+            if (type == DiscountTypes.None && percent != 0) return ServiceResult.Fail("Choose a discount type or set the discount to 0%.");
+            if (decimal.Round(percent, 2) != percent) return ServiceResult.Fail("Use at most two decimal places for the discount.");
+            return ServiceResult.Ok();
+        }
         public static ServiceResult TimeOff(DentistTimeOff timeOff)
         {
             timeOff.StartDate = timeOff.StartDate.Date; timeOff.EndDate = timeOff.EndDate.Date; timeOff.Reason = Optional(timeOff.Reason);

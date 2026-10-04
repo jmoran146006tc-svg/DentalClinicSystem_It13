@@ -9,6 +9,8 @@ public static class ClinicRules
     public const int DefaultDurationMinutes = 30, MinDurationMinutes = 15, MaxDurationMinutes = 240, DurationStepMinutes = 15;
     public const string ConsultationReason = "Consultation / Check-up";
     public const string TimeOffSuffix = " is on leave on that date.";
+    // Clinic assumption, not a determination of statutory discount eligibility.
+    public const decimal StandardDiscountPercent = 20m;
     public static IEnumerable<int> Durations => Enumerable.Range(0, (MaxDurationMinutes - MinDurationMinutes) / DurationStepMinutes + 1)
         .Select(i => MinDurationMinutes + i * DurationStepMinutes);
     public static bool IsOpen(DateTime start, int durationMinutes)

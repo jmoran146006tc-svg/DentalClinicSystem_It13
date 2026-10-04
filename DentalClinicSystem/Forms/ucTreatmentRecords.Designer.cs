@@ -17,6 +17,9 @@ namespace DentalClinicSystem.Forms
 
         private void InitializeComponent()
         {
+            cboDiscountType = new ComboBox { Name = "cboDiscountType" };
+            nudDiscountPercent = new NumericUpDown { Name = "nudDiscountPercent", DecimalPlaces = 2, Maximum = 100, Minimum = 0 };
+            lblNet = new Label { Name = "lblNet", AutoSize = true };
             dgvTreatments = new DataGridView();
             lblAppointment = new Label();
             cboAppointment = new ComboBox();
@@ -210,6 +213,9 @@ namespace DentalClinicSystem.Forms
 
         #endregion
 
+        private ComboBox cboDiscountType;
+        private NumericUpDown nudDiscountPercent;
+        private Label lblNet;
         private DataGridView dgvTreatments;
         private Label lblAppointment;
         private ComboBox cboAppointment;

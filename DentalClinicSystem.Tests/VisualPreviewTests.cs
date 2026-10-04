@@ -119,6 +119,7 @@ public class VisualPreviewTests
         host.Controls.Add(page); PageLayoutTests.ShowOffscreen(host);
         var tabs = PageLayoutTests.Descendants(page).OfType<TabControl>().Single();
         Assert.Equal(4, tabs.TabCount);
+        Assert.Equal("Billed by day", tabs.TabPages[1].Text);
         // All sources are assigned while three tabs still have no grid handles.
         Assert.All(PageLayoutTests.Descendants(page).OfType<DataGridView>(), grid => Assert.NotNull(grid.DataSource));
         foreach (TabPage tab in tabs.TabPages)

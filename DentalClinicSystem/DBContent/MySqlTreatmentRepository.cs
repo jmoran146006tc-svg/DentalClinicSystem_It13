@@ -27,6 +27,7 @@ namespace DentalClinicSystem.DBContent
                 Parameter("@p_TreatmentTypeId", treatment.TreatmentTypeId),
                 Parameter("@p_ToothNumber", treatment.ToothNumber),
                 Parameter("@p_Cost", treatment.Cost),
+                Parameter("@p_DiscountType", treatment.DiscountType), Parameter("@p_DiscountPercent", treatment.DiscountPercent),
                 Parameter("@p_DatePerformed", treatment.DatePerformed),
                 Parameter("@p_Notes", treatment.Notes));
 
@@ -37,6 +38,7 @@ namespace DentalClinicSystem.DBContent
                 Parameter("@p_TreatmentTypeId", treatment.TreatmentTypeId),
                 Parameter("@p_ToothNumber", treatment.ToothNumber),
                 Parameter("@p_Cost", treatment.Cost),
+                Parameter("@p_DiscountType", treatment.DiscountType), Parameter("@p_DiscountPercent", treatment.DiscountPercent),
                 Parameter("@p_DatePerformed", treatment.DatePerformed),
                 Parameter("@p_Notes", treatment.Notes));
 
@@ -54,6 +56,7 @@ namespace DentalClinicSystem.DBContent
             TreatmentTypeId = (int)reader["TreatmentTypeId"],
             ToothNumber = reader.GetNullableString("ToothNumber"),
             Cost = (decimal)reader["Cost"],
+            DiscountType = reader.GetString("DiscountType"), DiscountPercent = reader.GetDecimal("DiscountPercent"),
             DatePerformed = (DateTime)reader["DatePerformed"],
             Notes = reader.GetNullableString("Notes")
         };

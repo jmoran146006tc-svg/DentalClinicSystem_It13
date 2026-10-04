@@ -25,6 +25,10 @@ END$$
 DROP PROCEDURE IF EXISTS sp_Migrate_RealWorldFixes$$
 CREATE PROCEDURE sp_Migrate_RealWorldFixes()
 BEGIN
+    CALL sp_Migrate_AddColumn('Treatments', 'DiscountType', 'VARCHAR(20) NOT NULL DEFAULT ''None''');
+    CALL sp_Migrate_AddColumn('Treatments', 'DiscountPercent', 'DECIMAL(5,2) NOT NULL DEFAULT 0');
+    CALL sp_Migrate_AddCheck('Treatments', 'CK_Treatments_DiscountType', 'DiscountType IN (''None'',''Senior'',''PWD'',''Other'')');
+    CALL sp_Migrate_AddCheck('Treatments', 'CK_Treatments_DiscountPercent', 'DiscountPercent BETWEEN 0 AND 100');
     CALL sp_Migrate_AddColumn('Patients', 'GuardianName', 'VARCHAR(100) NULL');
     CALL sp_Migrate_AddColumn('Patients', 'GuardianContact', 'VARCHAR(20) NULL');
     CALL sp_Migrate_AddColumn('Patients', 'Allergies', 'VARCHAR(255) NULL');

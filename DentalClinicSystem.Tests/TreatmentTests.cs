@@ -47,6 +47,7 @@ public class TreatmentTests
             var proxy = (TestServices)(object)treatments; Assert.Equal(1, proxy.Calls.GetValueOrDefault(nameof(ITreatmentService.UpdateTreatmentAsync)));
             Assert.Equal(0, proxy.Calls.GetValueOrDefault(nameof(ITreatmentService.AddTreatmentAsync)));
             var saved = Assert.IsType<Treatment>(proxy.Arguments[nameof(ITreatmentService.UpdateTreatmentAsync)][1]); Assert.Equal(7, saved.TreatmentId); Assert.Equal(325.50m, saved.Cost);
+            Assert.Equal(DiscountTypes.None, saved.DiscountType); Assert.Equal(0, saved.DiscountPercent); Assert.Equal(saved.Cost, saved.Net);
             foreach (var field in PageLayoutTests.Descendants(page).OfType<FormField>()) Assert.True(field.Box.Input.Parent!.Height >= field.Box.Input.Height);
         }
         finally { MotionSystem.UseSystemPreference(); }

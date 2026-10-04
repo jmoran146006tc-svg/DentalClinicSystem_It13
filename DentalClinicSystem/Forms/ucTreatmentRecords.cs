@@ -22,7 +22,7 @@ public partial class ucTreatmentRecords : UserControl
     private IReadOnlyList<Treatment> _treatments = [];
     private Treatment? _selected;
     private Treatment? _savedTreatment;
-    private sealed record TreatmentRow(int TreatmentId, string Patient, DateTime? AppointmentDateTime, string TreatmentType, string? ToothNumber, decimal Cost, DateTime DatePerformed, string? Notes, Treatment Record);
+    private sealed record TreatmentRow(int TreatmentId, string Patient, DateTime? AppointmentDateTime, string TreatmentType, string? ToothNumber, decimal Cost, string Discount, decimal Net, DateTime DatePerformed, string? Notes, Treatment Record);
 
     public ucTreatmentRecords(ITreatmentService treatmentService, IAppointmentService appointmentService, ITreatmentTypeService treatmentTypeService, User currentUser)
     {
@@ -32,6 +32,12 @@ public partial class ucTreatmentRecords : UserControl
         var tooth = UiFactory.Field(txtToothNumber, "Tooth #"); tooth.SetHelper("FDI number");
         _layout.AddRow(tooth, UiFactory.Field(txtCost, "Cost"));
         txtToothNumber.KeyPress += (_, e) => { if (!char.IsControl(e.KeyChar) && e.KeyChar is not (>= '0' and <= '9')) e.Handled = true; };
+        _layout.AddRow(UiFactory.Field(cboDiscountType, "Discount", FieldKind.Choice), UiFactory.Field(nudDiscountPercent, "Discount (%)"));
+        _layout.AddRow(UiFactory.Field(lblNet, "Net billed"));
+        cboDiscountType.Items.AddRange(DiscountTypes.All.Select(DiscountTypes.Display).Cast<object>().ToArray());
+        cboDiscountType.SelectedIndexChanged += (_, _) => SetDiscountDefaults();
+        nudDiscountPercent.ValueChanged += (_, _) => UpdateNet(); txtCost.TextChanged += (_, _) => UpdateNet();
+        cboDiscountType.SelectedIndex = 0;
         _layout.AddRow(UiFactory.Field(dtpDatePerformed, "Date performed", FieldKind.Date));
         txtNotes.Multiline = true; _layout.AddRow(UiFactory.Field(txtNotes, "Notes"));
         InputRules.ApplyMaxLengths((txtToothNumber, FieldLimits.ToothNumber), (txtNotes, FieldLimits.Notes), (txtCost, FieldLimits.ContactNumber));
@@ -70,7 +76,7 @@ public partial class ucTreatmentRecords : UserControl
     {
         var rows = _treatments.Where(t => _appointmentsById.ContainsKey(t.AppointmentId))
             .Select(t => new TreatmentRow(t.TreatmentId, _patientNamesByAppointmentId.GetValueOrDefault(t.AppointmentId, "n/a"),
-                _appointmentsById.GetValueOrDefault(t.AppointmentId)?.AppointmentDateTime, _treatmentTypesById.GetValueOrDefault(t.TreatmentTypeId)?.Name ?? "n/a", t.ToothNumber, t.Cost, t.DatePerformed, t.Notes, t))
+                _appointmentsById.GetValueOrDefault(t.AppointmentId)?.AppointmentDateTime, _treatmentTypesById.GetValueOrDefault(t.TreatmentTypeId)?.Name ?? "n/a", t.ToothNumber, t.Cost, t.DiscountType == DiscountTypes.None ? DiscountTypes.Display(t.DiscountType) : $"{DiscountTypes.Display(t.DiscountType)} ({t.DiscountPercent.ToString("0.##", CultureInfo.InvariantCulture)}%)", t.Net, t.DatePerformed, t.Notes, t))
             .Where(t => new[] { t.Patient, t.TreatmentType, t.Notes ?? "" }.Any(v => v.Contains(_layout.Search.Text.Trim(), StringComparison.OrdinalIgnoreCase)));
         GridHelper.Bind(dgvTreatments, rows, row => row.TreatmentId, "No treatments match your search.", "TreatmentId", "Record");
         GridHelper.IdentityColumn<TreatmentRow>(dgvTreatments, "Patient", row => (row.Patient, "Treatment record"));
@@ -81,7 +87,22 @@ public partial class ucTreatmentRecords : UserControl
         if (dgvTreatments.SelectedRows.Count == 0 || dgvTreatments.CurrentRow?.DataBoundItem is not TreatmentRow row) return;
         _selected = row.Record; BindAppointmentOptions(); cboAppointment.SelectedValue = _selected.AppointmentId; cboTreatmentType.SelectedValue = _selected.TreatmentTypeId;
         txtCost.Text = _selected.Cost.ToString("0.00", CultureInfo.InvariantCulture); txtToothNumber.Text = _selected.ToothNumber; txtNotes.Text = _selected.Notes;
+        cboDiscountType.SelectedIndex = Array.IndexOf(DiscountTypes.All, _selected.DiscountType); nudDiscountPercent.Value = Math.Clamp(_selected.DiscountPercent, 0, 100); UpdateNet();
         SetAppointmentDate(); _layout.SetEditing(true);
+    }
+    private string SelectedDiscount => cboDiscountType.SelectedIndex >= 0 ? DiscountTypes.All[cboDiscountType.SelectedIndex] : DiscountTypes.None;
+    private void SetDiscountDefaults()
+    {
+        var type = SelectedDiscount;
+        nudDiscountPercent.Enabled = type == DiscountTypes.Other;
+        if (type == DiscountTypes.None) nudDiscountPercent.Value = 0;
+        else if (DiscountTypes.IsStandard(type)) nudDiscountPercent.Value = ClinicRules.StandardDiscountPercent;
+        UpdateNet();
+    }
+    private void UpdateNet()
+    {
+        lblNet.Text = InputRules.TryCost(txtCost.Text, out var cost)
+            ? DisplayFormat.Currency(new Treatment { Cost = cost, DiscountPercent = nudDiscountPercent.Value }.Net) : DisplayFormat.Currency(0);
     }
     private void BindAppointmentOptions()
     {
@@ -105,7 +126,7 @@ public partial class ucTreatmentRecords : UserControl
         if (cboAppointment.SelectedValue is not int appointmentId || cboTreatmentType.SelectedValue is not int typeId) { UiMessages.ShowError(ServiceResult.Fail("Pick an appointment and a treatment type first.")); return false; }
         if (!InputRules.TryCost(txtCost.Text, out var cost)) { UiMessages.ShowError(ServiceResult.Fail("Enter a cost between 0 and 99,999,999.99 using a decimal point, for example 1250.50.")); txtCost.Focus(); return false; }
         var treatment = new Treatment { TreatmentId = _selected?.TreatmentId ?? 0, AppointmentId = appointmentId, TreatmentTypeId = typeId,
-            Cost = cost, ToothNumber = InputRules.NullIfBlank(txtToothNumber.Text), DatePerformed = dtpDatePerformed.Value.Date, Notes = InputRules.NullIfBlank(txtNotes.Text) };
+            Cost = cost, DiscountType = SelectedDiscount, DiscountPercent = nudDiscountPercent.Value, ToothNumber = InputRules.NullIfBlank(txtToothNumber.Text), DatePerformed = dtpDatePerformed.Value.Date, Notes = InputRules.NullIfBlank(txtNotes.Text) };
         var result = _selected is null ? await _treatmentService.AddTreatmentAsync(_currentUser, treatment) : await _treatmentService.UpdateTreatmentAsync(_currentUser, treatment);
         if (!result.Success) { UiMessages.ShowError(result); return false; }
         _savedTreatment = treatment; return true;
@@ -120,6 +141,7 @@ public partial class ucTreatmentRecords : UserControl
     private void ClearForm()
     {
         _selected = null; BindAppointmentOptions(); cboAppointment.SelectedIndex = -1; cboTreatmentType.SelectedIndex = -1; txtToothNumber.Clear(); txtCost.Clear(); txtNotes.Clear();
+        cboDiscountType.SelectedIndex = 0; nudDiscountPercent.Value = 0; SetDiscountDefaults();
         dtpDatePerformed.Value = DateTime.Today; dgvTreatments.ClearSelection(); _layout?.SetEditing(false); _layout?.Alert.Dismiss();
     }
 }

@@ -90,7 +90,7 @@ public static class GridTheme
             var name = grid.Columns[e.ColumnIndex].Name;
             e.Value = date.ToString(DisplayFormat.ColumnDatePattern(name), System.Globalization.CultureInfo.InvariantCulture); e.FormattingApplied = true;
         }
-        else if (e.Value is decimal value && grid.Columns[e.ColumnIndex].Name is "Cost" or "Revenue" or "TotalRevenue") { e.Value = DisplayFormat.Currency(value); e.FormattingApplied = true; }
+        else if (e.Value is decimal value && grid.Columns[e.ColumnIndex].Name is "Cost" or "Net" or "Billed") { e.Value = DisplayFormat.Currency(value); e.FormattingApplied = true; }
     }
     private static void PaintCell(DataGridView grid, State state, DataGridViewCellPaintingEventArgs e)
     {

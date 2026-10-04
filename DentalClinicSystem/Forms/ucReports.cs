@@ -42,7 +42,7 @@ namespace DentalClinicSystem.Forms
             ]);
             var sections = new TabControl { Dock = DockStyle.Fill };
             AddSection(sections, "Appointments by status", _status);
-            AddSection(sections, "Revenue by day", _revenue);
+            AddSection(sections, "Billed by day", _revenue);
             AddSection(sections, "Top treatment types", _types);
             AddSection(sections, "Dentist workload", _workload);
             layout.Controls.Add(toolbar, 0, 0);

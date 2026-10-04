@@ -74,9 +74,13 @@ CREATE TABLE IF NOT EXISTS Treatments (
     TreatmentTypeId INT NOT NULL,
     ToothNumber VARCHAR(10) NULL,
     Cost DECIMAL(10,2) NOT NULL,
+    DiscountType VARCHAR(20) NOT NULL DEFAULT 'None',
+    DiscountPercent DECIMAL(5,2) NOT NULL DEFAULT 0,
     DatePerformed DATE NOT NULL,
     Notes VARCHAR(500) NULL,
     INDEX IX_Treatments_AppointmentId (AppointmentId),
+    CONSTRAINT CK_Treatments_DiscountType CHECK (DiscountType IN ('None','Senior','PWD','Other')),
+    CONSTRAINT CK_Treatments_DiscountPercent CHECK (DiscountPercent BETWEEN 0 AND 100),
     CONSTRAINT FK_Treatments_Appointment FOREIGN KEY (AppointmentId) REFERENCES Appointments(AppointmentId),
     CONSTRAINT FK_Treatments_TreatmentType FOREIGN KEY (TreatmentTypeId) REFERENCES TreatmentTypes(TreatmentTypeId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

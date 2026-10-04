@@ -184,7 +184,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Treatment_GetAll $$
 CREATE PROCEDURE sp_Treatment_GetAll()
 BEGIN
-    SELECT TreatmentId, AppointmentId, TreatmentTypeId, ToothNumber, Cost, DatePerformed, Notes
+    SELECT TreatmentId, AppointmentId, TreatmentTypeId, ToothNumber, Cost, DiscountType, DiscountPercent, DatePerformed, Notes
     FROM Treatments
     ORDER BY DatePerformed DESC;
 END $$
@@ -192,7 +192,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Treatment_GetById $$
 CREATE PROCEDURE sp_Treatment_GetById(IN p_TreatmentId INT)
 BEGIN
-    SELECT TreatmentId, AppointmentId, TreatmentTypeId, ToothNumber, Cost, DatePerformed, Notes
+    SELECT TreatmentId, AppointmentId, TreatmentTypeId, ToothNumber, Cost, DiscountType, DiscountPercent, DatePerformed, Notes
     FROM Treatments
     WHERE TreatmentId = p_TreatmentId;
 END $$
@@ -200,7 +200,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Treatment_GetByAppointmentId $$
 CREATE PROCEDURE sp_Treatment_GetByAppointmentId(IN p_AppointmentId INT)
 BEGIN
-    SELECT TreatmentId, AppointmentId, TreatmentTypeId, ToothNumber, Cost, DatePerformed, Notes
+    SELECT TreatmentId, AppointmentId, TreatmentTypeId, ToothNumber, Cost, DiscountType, DiscountPercent, DatePerformed, Notes
     FROM Treatments
     WHERE AppointmentId = p_AppointmentId;
 END $$
@@ -208,20 +208,20 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Treatment_Add $$
 CREATE PROCEDURE sp_Treatment_Add(
     IN p_AppointmentId INT, IN p_TreatmentTypeId INT, IN p_ToothNumber VARCHAR(10),
-    IN p_Cost DECIMAL(10,2), IN p_DatePerformed DATE, IN p_Notes VARCHAR(500))
+    IN p_Cost DECIMAL(10,2), IN p_DiscountType VARCHAR(20), IN p_DiscountPercent DECIMAL(5,2), IN p_DatePerformed DATE, IN p_Notes VARCHAR(500))
 BEGIN
-    INSERT INTO Treatments (AppointmentId, TreatmentTypeId, ToothNumber, Cost, DatePerformed, Notes)
-    VALUES (p_AppointmentId, p_TreatmentTypeId, p_ToothNumber, p_Cost, p_DatePerformed, p_Notes);
+    INSERT INTO Treatments (AppointmentId, TreatmentTypeId, ToothNumber, Cost, DiscountType, DiscountPercent, DatePerformed, Notes)
+    VALUES (p_AppointmentId, p_TreatmentTypeId, p_ToothNumber, p_Cost, p_DiscountType, p_DiscountPercent, p_DatePerformed, p_Notes);
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Treatment_Update $$
 CREATE PROCEDURE sp_Treatment_Update(
     IN p_TreatmentId INT, IN p_AppointmentId INT, IN p_TreatmentTypeId INT, IN p_ToothNumber VARCHAR(10),
-    IN p_Cost DECIMAL(10,2), IN p_DatePerformed DATE, IN p_Notes VARCHAR(500))
+    IN p_Cost DECIMAL(10,2), IN p_DiscountType VARCHAR(20), IN p_DiscountPercent DECIMAL(5,2), IN p_DatePerformed DATE, IN p_Notes VARCHAR(500))
 BEGIN
     UPDATE Treatments
     SET AppointmentId = p_AppointmentId, TreatmentTypeId = p_TreatmentTypeId, ToothNumber = p_ToothNumber,
-        Cost = p_Cost, DatePerformed = p_DatePerformed, Notes = p_Notes
+        Cost = p_Cost, DiscountType = p_DiscountType, DiscountPercent = p_DiscountPercent, DatePerformed = p_DatePerformed, Notes = p_Notes
     WHERE TreatmentId = p_TreatmentId;
 END $$
 
@@ -328,7 +328,7 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Treatment_GetByPatientId $$
 CREATE PROCEDURE sp_Treatment_GetByPatientId(IN p_PatientId INT)
 BEGIN
-    SELECT t.* FROM Treatments t JOIN Appointments a ON a.AppointmentId = t.AppointmentId WHERE a.PatientId = p_PatientId ORDER BY t.DatePerformed DESC;
+    SELECT t.TreatmentId, t.AppointmentId, t.TreatmentTypeId, t.ToothNumber, t.Cost, t.DiscountType, t.DiscountPercent, t.DatePerformed, t.Notes FROM Treatments t JOIN Appointments a ON a.AppointmentId = t.AppointmentId WHERE a.PatientId = p_PatientId ORDER BY t.DatePerformed DESC;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Report_AppointmentsByStatus $$
@@ -342,17 +342,17 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Report_RevenueByDay $$
 CREATE PROCEDURE sp_Report_RevenueByDay(IN p_From DATE, IN p_To DATE)
 BEGIN
-    SELECT DatePerformed AS Day, SUM(Cost) AS Revenue FROM Treatments
+    SELECT DatePerformed AS Day, SUM(Cost - Cost * DiscountPercent / 100) AS Billed FROM Treatments
     WHERE DatePerformed BETWEEN p_From AND p_To GROUP BY DatePerformed ORDER BY DatePerformed;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Report_TopTreatmentTypes $$
 CREATE PROCEDURE sp_Report_TopTreatmentTypes(IN p_From DATE, IN p_To DATE, IN p_Top INT)
 BEGIN
-    SELECT tt.Name, COUNT(*) AS Total, SUM(t.Cost) AS Revenue FROM Treatments t
+    SELECT tt.Name, COUNT(*) AS Total, SUM(t.Cost - t.Cost * t.DiscountPercent / 100) AS Billed FROM Treatments t
     JOIN TreatmentTypes tt ON tt.TreatmentTypeId = t.TreatmentTypeId
     WHERE t.DatePerformed BETWEEN p_From AND p_To
-    GROUP BY tt.TreatmentTypeId, tt.Name ORDER BY Total DESC, Revenue DESC, tt.Name LIMIT p_Top;
+    GROUP BY tt.TreatmentTypeId, tt.Name ORDER BY Total DESC, Billed DESC, tt.Name LIMIT p_Top;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Report_DentistWorkload $$
@@ -361,12 +361,12 @@ BEGIN
     -- Separate aggregates avoid multiplying appointments with several treatments.
     SELECT CONCAT('Dr. ', d.FirstName, ' ', d.LastName) AS Dentist,
            COALESCE(a.Total, 0) AS Total, COALESCE(a.Completed, 0) AS Completed,
-           COALESCE(t.Revenue, 0) AS Revenue
+           COALESCE(t.Billed, 0) AS Billed
     FROM Dentists d
     LEFT JOIN (SELECT DentistId, COUNT(*) AS Total, SUM(Status = 'Completed') AS Completed
                FROM Appointments WHERE AppointmentDateTime >= p_From AND AppointmentDateTime < DATE_ADD(p_To, INTERVAL 1 DAY)
                GROUP BY DentistId) a ON a.DentistId = d.DentistId
-    LEFT JOIN (SELECT ap.DentistId, SUM(tr.Cost) AS Revenue FROM Treatments tr
+    LEFT JOIN (SELECT ap.DentistId, SUM(tr.Cost - tr.Cost * tr.DiscountPercent / 100) AS Billed FROM Treatments tr
                JOIN Appointments ap ON ap.AppointmentId = tr.AppointmentId
                WHERE tr.DatePerformed BETWEEN p_From AND p_To GROUP BY ap.DentistId) t ON t.DentistId = d.DentistId
     ORDER BY d.LastName, d.FirstName;
