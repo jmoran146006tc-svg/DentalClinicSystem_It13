@@ -15,11 +15,11 @@ public sealed class frmStyleGuide : Form
     private readonly Label _activity = new() { Width = Metrics.FormWidth / 2, Height = Metrics.ControlHeight, ForeColor = Palette.Ink500, Font = Typography.Caption };
     public frmStyleGuide()
     {
-        Text = "Dental Care — Phase 6 style guide"; Size = Metrics.MinimumWindow; MinimumSize = Metrics.MinimumWindow; BackColor = Palette.Canvas;
+        Text = "Dental Care — style guide"; Size = Metrics.MinimumWindow; MinimumSize = Metrics.MinimumWindow; BackColor = Palette.Canvas;
         Controls.Add(_sections);
         _sections.Controls.Add(new Label { Text = "Design system", Font = Typography.Display, ForeColor = Palette.Ink900, AutoSize = true });
         _sections.Controls.Add(new Label { Text = "Review at 100%, 125% and 150%. Use Tab and Shift+Tab to inspect keyboard focus.", Font = Typography.Body, ForeColor = Palette.Ink500, AutoSize = true });
-        Colors(); TypeScale(); Buttons(); Fields(); Components(); IconsSection(); Grids(); MotionSection();
+        Colors(); TypeScale(); Buttons(); Fields(); Components(); IconsSection(); Grids(); Dashboards(); MotionSection();
         _sections.SizeChanged += (_, _) => ResizeSections(); ResizeSections();
         WindowChrome.Apply(this); MotionSystem.Animator.ActivityChanged += OnActivity;
         OnActivity(this, EventArgs.Empty);
@@ -117,6 +117,31 @@ public sealed class frmStyleGuide : Form
         GridHelper.IdentityColumn<Sample>(grid, nameof(Sample.Patient), row => (row.Patient, "Patient identity")); grids.Controls.Add(grid);
         var empty = new DataGridView { Size = new(Metrics.FormWidth, Metrics.EmptyHeight), AllowUserToAddRows = false };
         GridHelper.Bind(empty, Array.Empty<Sample>()); grids.Controls.Add(empty);
+    }
+    private void Dashboards()
+    {
+        var kpis = Section("Dashboard metrics · sample data");
+        foreach (var (title, value) in new[] { ("Today's appointments", 12), ("Active patients", 156), ("Cancellations this week", 2) })
+        {
+            var kpi = new KpiCard(title, "Style guide sample", IconKind.Appointments); kpis.Controls.Add(kpi);
+            kpi.VisibleChanged += (_, _) => { if (kpi.Visible) kpi.SetValue(value); };
+        }
+        var calendars = Section("Week calendar · overlap, filter, scroll and keyboard activation");
+        var calendar = new ucWeekCalendar { Dock = DockStyle.None, Width = Metrics.FormWidth * 2, Height = Metrics.CalendarViewportHeight };
+        calendars.Controls.Add(calendar);
+        void ShowWeek(DateTime week, int direction)
+        {
+            Appointment[] appointments = [
+                new() { AppointmentId = 1, PatientId = 1, DentistId = 1, AppointmentDateTime = week.AddHours(9), DurationMinutes = 90, Reason = "Consultation", Status = AppointmentStatus.Scheduled },
+                new() { AppointmentId = 2, PatientId = 2, DentistId = 2, AppointmentDateTime = week.AddHours(9).AddMinutes(15), DurationMinutes = 60, Reason = "Cleaning", Status = AppointmentStatus.CheckedIn },
+                new() { AppointmentId = 3, PatientId = 1, DentistId = 1, AppointmentDateTime = week.AddDays(2).AddHours(14), DurationMinutes = 60, Status = AppointmentStatus.Completed },
+                new() { AppointmentId = 4, PatientId = 2, DentistId = 2, AppointmentDateTime = week.AddDays(4).AddHours(11), DurationMinutes = 45, Status = AppointmentStatus.Cancelled }];
+            calendar.SetAppointments(week, DateTime.Today, appointments, new Dictionary<int, string> { [1] = "Ana Santos", [2] = "Miguel Cruz" },
+                new Dictionary<int, string> { [1] = "Dr. Reyes", [2] = "Dr. Santos" }, direction);
+        }
+        calendar.WeekRequested += ShowWeek;
+        calendar.AppointmentActivated += id => { using var owner = UiMessages.UseOwner(this); UiMessages.ShowInfo($"Sample appointment #{id} selected."); };
+        Shown += (_, _) => ShowWeek(DashboardPresentation.WeekStart(DateTime.Today), 0);
     }
     private void MotionSection()
     {

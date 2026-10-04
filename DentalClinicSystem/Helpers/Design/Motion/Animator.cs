@@ -24,6 +24,8 @@ public sealed class Animator : IDisposable
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = Motion.FrameInterval };
     private readonly Dictionary<(Control, string), Animation> _animations = [];
     private readonly HashSet<Control> _owners = [];
+    private readonly Dictionary<Control, Control[]> _parentChains = [];
+    private readonly Dictionary<Control, int> _ancestorOwners = [];
     public int ActiveCount => _animations.Count;
     public bool IsRunning => _timer.Enabled;
     public event EventHandler? ActivityChanged;
@@ -79,6 +81,8 @@ public sealed class Animator : IDisposable
         {
             animation.Owner.Disposed += OwnerUnavailable;
             animation.Owner.VisibleChanged += OwnerVisibilityChanged;
+            animation.Owner.ParentChanged += OwnerHierarchyChanged;
+            LinkAncestors(animation.Owner);
         }
         _timer.Start();
         ActivityChanged?.Invoke(this, EventArgs.Empty);
@@ -110,12 +114,46 @@ public sealed class Animator : IDisposable
         {
             owner.Disposed -= OwnerUnavailable;
             owner.VisibleChanged -= OwnerVisibilityChanged;
+            owner.ParentChanged -= OwnerHierarchyChanged;
+            UnlinkAncestors(owner);
         }
         if (_animations.Count == 0) _timer.Stop();
         if (count != _animations.Count) ActivityChanged?.Invoke(this, EventArgs.Empty);
     }
     private void OwnerUnavailable(object? sender, EventArgs e) { if (sender is Control owner) Cancel(owner); }
     private void OwnerVisibilityChanged(object? sender, EventArgs e) { if (sender is Control { Visible: false } owner) Settle(owner); }
+    private void LinkAncestors(Control owner)
+    {
+        List<Control> parents = [];
+        for (var parent = owner.Parent; parent is not null; parent = parent.Parent)
+        {
+            parents.Add(parent);
+            var count = _ancestorOwners.GetValueOrDefault(parent);
+            if (count == 0) parent.VisibleChanged += AncestorVisibilityChanged;
+            _ancestorOwners[parent] = count + 1;
+        }
+        _parentChains[owner] = parents.ToArray();
+    }
+    private void UnlinkAncestors(Control owner)
+    {
+        if (!_parentChains.Remove(owner, out var parents)) return;
+        foreach (var parent in parents)
+        {
+            var count = _ancestorOwners[parent] - 1;
+            if (count == 0) { _ancestorOwners.Remove(parent); parent.VisibleChanged -= AncestorVisibilityChanged; }
+            else _ancestorOwners[parent] = count;
+        }
+    }
+    private void OwnerHierarchyChanged(object? sender, EventArgs e)
+    {
+        if (sender is not Control owner || !_owners.Contains(owner)) return;
+        UnlinkAncestors(owner); LinkAncestors(owner);
+        if (!owner.Visible) Settle(owner);
+    }
+    private void AncestorVisibilityChanged(object? sender, EventArgs e)
+    {
+        foreach (var owner in _owners.Where(owner => !owner.Visible).ToArray()) Settle(owner);
+    }
     private void Settle(Control owner)
     {
         var animations = _animations.Values.Where(a => a.Owner == owner && a.Visual).ToArray();

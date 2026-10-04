@@ -1,11 +1,16 @@
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
+using DentalClinicSystem.Service;
 
 namespace DentalClinicSystem.Forms
 {
     public static class PageFactory
     {
-        public static Control CreateDashboard(User currentUser) => new ucDashboardHome(currentUser);
+        public static Control CreateDashboard(AppServices services, User currentUser) =>
+            new ucDashboardHome(services.Appointments, services.Patients, services.Dentists, services.Reports, services.PatientHistory, currentUser);
+
+        public static Control CreatePatientHistory(IPatientHistoryService history, User currentUser, int appointmentId, DateTime now) =>
+            new ucPatientHistory(history, currentUser, appointmentId, now);
 
         public static Control CreatePatients(IPatientService patients, User currentUser) =>
             new ucPatientRecords(patients, currentUser);

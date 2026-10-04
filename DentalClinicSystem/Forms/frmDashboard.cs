@@ -83,7 +83,7 @@ namespace DentalClinicSystem.Forms
                 UseVisualStyleBackColor = false
             };
             return [
-                new("Dashboard", Permission.ViewDashboard, () => PageFactory.CreateDashboard(_currentUser), btnDashboard),
+                new("Dashboard", Permission.ViewDashboard, () => PageFactory.CreateDashboard(_services, _currentUser), btnDashboard),
                 new("Patients", Permission.ViewPatients, () => PageFactory.CreatePatients(_services.Patients, _currentUser), btnPatients),
                 new("Dentists", Permission.ViewDentists, () => PageFactory.CreateDentists(_services.Dentists, _currentUser), btnDentists),
                 new("Appointments", Permission.ViewAppointments, () => PageFactory.CreateAppointments(_services.Appointments, _services.Patients, _services.Dentists, _services.TreatmentTypes, _currentUser), btnAppointments),

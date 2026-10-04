@@ -1,4 +1,3 @@
 <Solution>
   <Project Path="DentalClinicSystem/DentalClinicSystem.csproj" />
-  <Project Path="DentalClinicSystem.Tests/DentalClinicSystem.Tests.csproj" />
 </Solution>
