@@ -21,11 +21,30 @@ public static class Palette
     public static Color BrandSoftText { get; } = Color.FromArgb(0x0F, 0x5C, 0x61);
     public static Color LoginTint => WithAlpha(BrandSoft, .14f);
     public static Color LoginVignette => WithAlpha(Ink900, .16f);
-    public static Color GlassWash => WithAlpha(Surface, .82f);
-    public static Color LoginPillWash => WithAlpha(Surface, .92f);
+    public static Color GlassWash => WithAlpha(Surface, .94f);
     public static Color GlassEdge => WithAlpha(Surface, .90f);
-    public static Color LoginBodyInk => Ink700;
+    public static Color LoginBodyInk => Ink500;
     public static Color LoginFieldBorder => Ink500;
+    // Decorative-only colors and opacity: never used for interactive chrome.
+    public static Color DecorAqua { get; } = Color.FromArgb(0x8F, 0xE3, 0xE6);
+    public static Color DecorSky { get; } = Color.FromArgb(0x7D, 0xB7, 0xFF);
+    public static Color DecorLilac { get; } = Color.FromArgb(0xB9, 0xA7, 0xF5);
+    public static Color DecorOrbAqua => WithAlpha(DecorAqua, .22f);
+    public static Color DecorOrbLilac => WithAlpha(DecorLilac, .20f);
+    public static Color DecorOrbAccent => WithAlpha(BrandAccent, .16f);
+    public static Color DecorWashSky => WithAlpha(DecorSky, .04f);
+    public static Color DecorWashAccent => WithAlpha(BrandAccent, .03f);
+    public static Color DecorGlassWhite => WithAlpha(Surface, .20f);
+    public static Color DecorGlassAccent => WithAlpha(BrandAccent, .12f);
+    public static Color DecorGlassEdge => WithAlpha(Surface, .55f);
+    public static Color DecorShadow => WithAlpha(Ink900, .03f);
+    public static Color DecorRing => WithAlpha(BrandAccent, .28f);
+    public static Color DecorRingWhite => WithAlpha(Surface, .28f);
+    public static Color DecorTooth => WithAlpha(BrandAccent, .12f);
+    public static Color DecorToothWhite => WithAlpha(Surface, .14f);
+    public static Color DecorSparkle => WithAlpha(Surface, .35f);
+    public static Color DecorSparkleAccent => WithAlpha(BrandAccent, .30f);
+    public static Color DecorAccent => WithAlpha(BrandAccent, .24f);
     public static Color SidebarBg => Surface;
     public static SemanticStyle Info { get; } = new(Color.FromArgb(0xE7, 0xF0, 0xFE), Color.FromArgb(0x1D, 0x4E, 0xD8));
     public static SemanticStyle Success { get; } = new(Color.FromArgb(0xE3, 0xF6, 0xEA), Color.FromArgb(0x15, 0x7F, 0x3D));
@@ -58,8 +77,33 @@ public static class Metrics
     public const int TopBarHeight = 56, LoginWidth = 1120, LoginHeight = 600, LoginFormWidth = 360;
     public const int LoginTargetHeight = 749, LoginCardWidth = 440, HeroRadius = 20;
     public const int LoginMinimumWidth = 960, LoginBadgeSize = 80, LoginMarkSize = 56;
-    public const int LoginBlurScale = 10, LoginBlurPasses = 3, LoginBlurRadius = 2;
-    public const int LoginFieldHeight = 48, LoginPillWidth = 264;
+    public const int LoginBlurScale = 32, LoginBlurPasses = 3, LoginBlurRadius = 4;
+    public const int LoginFieldHeight = 48, LoginDecorClearHeight = 600;
+    public const float LoginDecorStroke = 1.75f, LoginDecorPillAspect = .46f;
+    public const float LoginDecorMinimumVisibleArea = .40f, LoginGlassMaxLuminanceSpread = .04f;
+    public const int LoginDecorGridColumns = 5, LoginDecorGridRows = 4;
+    public const int LoginOrbAquaSize = 640, LoginOrbLilacSize = 720, LoginOrbAccentSize = 440;
+    public static IReadOnlyList<LoginDecorSpec> LoginDecorations { get; } = Array.AsReadOnly(new LoginDecorSpec[]
+    {
+        new(LoginDecorKind.GlassSquare, .025f, .16f, 128, 18),
+        new(LoginDecorKind.GlassCircle, .97f, .12f, 120),
+        new(LoginDecorKind.GlassPill, .04f, .90f, 136),
+        new(LoginDecorKind.GlassSquare, .98f, .85f, 112, -16),
+        new(LoginDecorKind.Ring, .17f, .20f, 72),
+        new(LoginDecorKind.Ring, .88f, .74f, 86),
+        new(LoginDecorKind.Arc, .08f, .91f, 144),
+        new(LoginDecorKind.Tooth, .14f, .79f, 100, -12),
+        new(LoginDecorKind.Sparkle, .11f, .06f, 24),
+        new(LoginDecorKind.Sparkle, .90f, .30f, 22),
+        new(LoginDecorKind.Sparkle, .18f, .56f, 28),
+        new(LoginDecorKind.Sparkle, .90f, .95f, 18),
+        new(LoginDecorKind.Cross, .055f, .50f, 18),
+        new(LoginDecorKind.Cross, .84f, .07f, 20),
+        new(LoginDecorKind.Dot, .17f, .36f, 8),
+        new(LoginDecorKind.Dot, .94f, .58f, 10),
+        new(LoginDecorKind.Dot, .05f, .73f, 6),
+        new(LoginDecorKind.DotGrid, .85f, .88f, 64)
+    });
     public const int CalendarHeaderHeight = 48, CalendarHourHeight = 72, CalendarGutter = 64;
     public const int CalendarDayWidth = 100, CalendarViewportHeight = 560, CalendarStatusBar = 3;
     public const int DashboardKpiHeight = KpiHeight, WorklistHeight = 216, HistoryRowHeight = 156;

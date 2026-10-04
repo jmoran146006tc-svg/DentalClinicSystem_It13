@@ -42,7 +42,6 @@ public static class Contrast
         yield return ("Login body/darkest glass", Palette.LoginBodyInk, darkestGlass);
         yield return ("Login greeting/darkest glass", Palette.BrandSoftText, darkestGlass);
         yield return ("Login Caps Lock/darkest glass", Palette.Warning.Text, darkestGlass);
-        yield return ("Login pill/darkest photo", Palette.LoginBodyInk, Composite(Palette.LoginPillWash, Color.Black));
         yield return ("Caps Lock/Surface", Palette.Warning.Text, Palette.Surface);
     }
 }

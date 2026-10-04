@@ -1,6 +1,8 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using DentalClinicSystem.Helpers.Design.Motion;
+using MotionSystem = DentalClinicSystem.Helpers.Design.Motion.Motion;
 
 namespace DentalClinicSystem.Helpers.Design.Controls;
 
@@ -24,21 +26,26 @@ public static class LoginArtwork
 // size/DPI cache; neither runs during entrance, focus or feedback animation.
 public sealed class ClinicLoginBackdrop : DesignControl
 {
-    private Bitmap? _composite, _blurred;
+    private Bitmap? _photo, _softDecor, _crispDecor, _composite, _blurred;
+    private readonly ImageAttributes _decorAttributes = new();
+    private readonly ColorMatrix _decorAlpha = new();
+    public float DecorationProgress { get; private set; } = 1;
+    public Size DecorationCacheSize => _crispDecor?.Size ?? Size.Empty;
+    public IReadOnlyList<LoginDecorPlacement> Decorations { get; private set; } = Array.Empty<LoginDecorPlacement>();
     private (Size Size, int Dpi) _cacheKey;
     public RectangleF PhotoBounds { get; private set; }
     public event EventHandler? CompositionChanged;
-    public ClinicLoginBackdrop() { Dock = DockStyle.Fill; AccessibleName = "Dental Care clinic"; }
+    public ClinicLoginBackdrop() { Dock = DockStyle.Fill; AccessibleName = "Dental Care clinic"; VisibleChanged += (_, _) => { if (!Visible) SettleEntrance(); }; }
     protected override void OnSizeChanged(EventArgs e) { base.OnSizeChanged(e); Rebuild(); }
     protected override void OnDpiChangedAfterParent(EventArgs e) { base.OnDpiChangedAfterParent(e); Rebuild(); }
     private void Rebuild()
     {
         if (_composite is not null && _cacheKey == (Size, DeviceDpi)) return;
-        _composite?.Dispose(); _blurred?.Dispose(); _composite = _blurred = null;
+        SettleEntrance(); DisposeCache();
         if (Width <= 0 || Height <= 0) return;
         _cacheKey = (Size, DeviceDpi);
-        _composite = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
-        using (var graphics = Graphics.FromImage(_composite))
+        _photo = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
+        using (var graphics = Graphics.FromImage(_photo))
         {
             DesignPaint.Prepare(graphics);
             graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
@@ -58,6 +65,14 @@ public sealed class ClinicLoginBackdrop : DesignControl
             };
             graphics.FillRectangle(vignette, ClientRectangle);
         }
+        _softDecor = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
+        using (var graphics = Graphics.FromImage(_softDecor)) LoginDecoration.DrawSoft(graphics, this);
+        _composite = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
+        using (var graphics = Graphics.FromImage(_composite))
+        {
+            Blit(graphics, _photo); Blit(graphics, _softDecor);
+        }
+        // Capture only photo + luminous gradients. Crisp motifs never enter the frost.
         _blurred = new Bitmap(Math.Max(1, Width / Metrics.LoginBlurScale), Math.Max(1, Height / Metrics.LoginBlurScale), PixelFormat.Format32bppArgb);
         using (var graphics = Graphics.FromImage(_blurred))
         {
@@ -65,6 +80,10 @@ public sealed class ClinicLoginBackdrop : DesignControl
             graphics.DrawImage(_composite, new Rectangle(Point.Empty, _blurred.Size));
         }
         Blur(_blurred);
+        _crispDecor = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
+        Decorations = LoginDecoration.Place(this);
+        using (var graphics = Graphics.FromImage(_crispDecor)) LoginDecoration.DrawCrisp(graphics, this, Decorations);
+        using (var graphics = Graphics.FromImage(_composite)) Blit(graphics, _crispDecor);
         Invalidate(); CompositionChanged?.Invoke(this, EventArgs.Empty);
     }
     private static void Blur(Bitmap image)
@@ -114,19 +133,43 @@ public sealed class ClinicLoginBackdrop : DesignControl
         using var brush = new SolidBrush(wash); graphics.FillRectangle(brush, new Rectangle(Point.Empty, result.Size));
         return result;
     }
+    private static void Blit(Graphics graphics, Bitmap bitmap) => graphics.DrawImage(bitmap,
+        new Rectangle(Point.Empty, bitmap.Size), 0, 0, bitmap.Width, bitmap.Height, GraphicsUnit.Pixel);
     public void PaintCrop(Graphics graphics, Rectangle destination, Point origin)
     {
+        var source = new Rectangle(origin, destination.Size);
         if (_composite is null) { graphics.Clear(Palette.Canvas); return; }
-        graphics.DrawImage(_composite, destination, new Rectangle(origin, destination.Size), GraphicsUnit.Pixel);
+        if (DecorationProgress >= 1)
+        {
+            graphics.DrawImage(_composite, destination, source, GraphicsUnit.Pixel); return;
+        }
+        graphics.DrawImage(_photo!, destination, source, GraphicsUnit.Pixel);
+        if (DecorationProgress <= 0) return;
+        _decorAlpha.Matrix33 = DecorationProgress; _decorAttributes.SetColorMatrix(_decorAlpha);
+        graphics.DrawImage(_softDecor!, destination, source.X, source.Y, source.Width, source.Height, GraphicsUnit.Pixel, _decorAttributes);
+        graphics.DrawImage(_crispDecor!, destination, source.X, source.Y, source.Width, source.Height, GraphicsUnit.Pixel, _decorAttributes);
     }
-    protected override void OnPaintBackground(PaintEventArgs e) { }
-    protected override void OnPaint(PaintEventArgs e)
+    public void StartEntrance()
     {
-        if (_composite is not null) e.Graphics.DrawImage(_composite, ClientRectangle, 0, 0, _composite.Width, _composite.Height, GraphicsUnit.Pixel);
+        SettleEntrance();
+        if (!MotionSystem.Enabled || !Visible) return;
+        SetProgress(0);
+        MotionSystem.Animator.Schedule(this, "decor-delay", TimeSpan.FromMilliseconds(MotionSystem.StaggerStep), () =>
+            MotionSystem.Animator.Run(this, "decor", 0, 1, MotionSystem.Slow, Easing.EaseOutCubic, SetProgress));
+    }
+    private void SetProgress(float value) { DecorationProgress = Math.Clamp(value, 0, 1); Invalidate(true); }
+    public void SettleEntrance() { MotionSystem.Animator.Cancel(this); SetProgress(1); }
+    protected override void OnPaintBackground(PaintEventArgs e) { }
+    protected override void OnPaint(PaintEventArgs e) => PaintCrop(e.Graphics, ClientRectangle, Point.Empty);
+    private void DisposeCache()
+    {
+        _photo?.Dispose(); _softDecor?.Dispose(); _crispDecor?.Dispose(); _composite?.Dispose(); _blurred?.Dispose();
+        _photo = _softDecor = _crispDecor = _composite = _blurred = null;
+        Decorations = Array.Empty<LoginDecorPlacement>();
     }
     protected override void Dispose(bool disposing)
     {
-        if (disposing) { _composite?.Dispose(); _blurred?.Dispose(); }
+        if (disposing) { MotionSystem.Animator.Cancel(this); DisposeCache(); _decorAttributes.Dispose(); }
         base.Dispose(disposing);
     }
 }

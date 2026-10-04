@@ -12,23 +12,16 @@ namespace DentalClinicSystem
     public partial class frmLogin : Form
     {
         private readonly AppServices _services;
-        private readonly RememberedUsernameStore _rememberedUsername;
         private readonly InlineAlert _alert = new() { Visible = false, TabStop = false, Dock = DockStyle.None };
         private readonly ClinicLoginBackdrop _backdrop = new();
         private FieldBox _username = null!, _password = null!;
         private LoginHero _hero = null!;
-        private readonly bool _hasRememberedUsername;
 
-        public frmLogin(AppServices services) : this(services, RememberedUsernameStore.ForCurrentUser()) { }
-
-        public frmLogin(AppServices services, RememberedUsernameStore rememberedUsername)
+        public frmLogin(AppServices services)
         {
             InitializeComponent();
-            _services = services; _rememberedUsername = rememberedUsername;
+            _services = services;
             BuildLoginLayout();
-            txtUsername.Text = rememberedUsername.Read();
-            _hasRememberedUsername = txtUsername.TextLength > 0;
-            _hero.Remember.Checked = _hasRememberedUsername;
             AcceptButton = btnLogin;
             WindowChrome.Apply(this);
         }
@@ -48,7 +41,7 @@ namespace DentalClinicSystem
             txtUsername.TabIndex = 0; txtPassword.TabIndex = 0;
             InputRules.ApplyMaxLengths((txtUsername, FieldLimits.Username), (txtPassword, FieldLimits.Password));
             var eye = _password.Controls.OfType<Button>().Single(); eye.TabStop = false;
-            btnLogin.Text = "Sign in"; btnLogin.Dock = DockStyle.None; btnLogin.Margin = Padding.Empty; btnLogin.TabIndex = 3;
+            btnLogin.Text = "Sign in"; btnLogin.Dock = DockStyle.None; btnLogin.Margin = Padding.Empty; btnLogin.TabIndex = 2;
             ButtonStyler.Attach(btnLogin, ButtonVariant.Primary);
             _hero = new LoginHero(_backdrop, _username, _password, btnLogin, _alert);
             _backdrop.Controls.Add(_hero); Controls.Add(_backdrop); _backdrop.BringToFront();
@@ -60,14 +53,13 @@ namespace DentalClinicSystem
             ResumeLayout(true); _hero.Bounds = _backdrop.ClientRectangle; _hero.Relayout();
             Shown += (_, _) =>
             {
-                FocusInitialInput();
-                _hero.StartEntrance();
+                txtUsername.Focus();
+                _backdrop.StartEntrance(); _hero.StartEntrance();
                 if (!MotionSystem.Enabled) { Opacity = 1; return; }
                 MotionSystem.Animator.Run(this, "login-enter", 0, 1, MotionSystem.Fast, Easing.EaseOutCubic, t => Opacity = Math.Clamp(t, 0, 1));
             };
-            VisibleChanged += (_, _) => { if (!Visible) _hero.SettleEntrance(); };
+            VisibleChanged += (_, _) => { if (!Visible) { _backdrop.SettleEntrance(); _hero.SettleEntrance(); } };
         }
-        private void FocusInitialInput() { if (_hasRememberedUsername) txtPassword.Focus(); else txtUsername.Focus(); }
         protected override void OnLayout(LayoutEventArgs e)
         {
             base.OnLayout(e);
@@ -93,7 +85,7 @@ namespace DentalClinicSystem
         {
             base.OnDpiChanged(e);
             if (_hero is null) return;
-            _hero.SettleEntrance(); FitWindowToPhoto(); _hero.Relayout();
+            _backdrop.SettleEntrance(); _hero.SettleEntrance(); FitWindowToPhoto(); _hero.Relayout();
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
@@ -110,7 +102,6 @@ namespace DentalClinicSystem
                 return;
             }
 
-            _rememberedUsername.SaveAfterSuccessfulLogin(username, _hero.Remember.Checked);
             if (IsDisposed || !Visible || !await FadeOutAsync()) return;
             var dashboard = new frmDashboard(
                 result.Data, this, _services);
@@ -140,11 +131,11 @@ namespace DentalClinicSystem
         public void ShowAfterLogout()
         {
             txtPassword.Clear();
-            _hero.SettleEntrance();
+            _backdrop.SettleEntrance(); _hero.SettleEntrance();
             Opacity = 1; _alert.Dismiss();
             Show();
             Activate();
-            FocusInitialInput();
+            txtUsername.Focus();
         }
 
     }
