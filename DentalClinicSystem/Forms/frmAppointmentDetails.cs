@@ -15,8 +15,9 @@ public sealed class frmAppointmentDetails : DialogShell
     private readonly Func<int, Task> _refresh;
     private readonly AppButton _cancel = UiFactory.Button("Cancel appointment", ButtonVariant.Danger);
     private readonly AppButton _checkIn = UiFactory.Button("Check in", ButtonVariant.Secondary);
+    private readonly AppButton _reschedule = UiFactory.Button("Reschedule", ButtonVariant.Ghost);
     private readonly InlineAlert _alert = new() { Visible = false };
-    public frmAppointmentDetails(AppointmentDetails details, IAppointmentService appointments, User actor, Func<int, Task> refresh) : base("Appointment details", "Mark completed")
+    public frmAppointmentDetails(AppointmentDetails details, IAppointmentService appointments, User actor, Func<int, Task> refresh, IDentistService? dentists = null) : base("Appointment details", "Mark completed")
     {
         _details = details; _appointments = appointments; _actor = actor; _refresh = refresh;
         Size = new(Metrics.FormWidth * 2, Metrics.LoginHeight); Body.AutoScroll = true;
@@ -34,7 +35,15 @@ public sealed class frmAppointmentDetails : DialogShell
         _checkIn.Visible = a.Status == AppointmentStatus.Scheduled && a.AppointmentDateTime.Date == DateTime.Today && RoleAccess.CanChangeStatus(actor, a, AppointmentStatus.CheckedIn);
         _cancel.Visible = a.Status == AppointmentStatus.Scheduled && RoleAccess.CanChangeStatus(actor, a, AppointmentStatus.Cancelled);
         DismissButton.Text = "Close"; ButtonStyler.Attach(DismissButton, ButtonVariant.Ghost);
-        Footer.Height = Metrics.FieldHeight; Footer.WrapContents = true; Footer.Controls.Add(_cancel); Footer.Controls.Add(_checkIn);
+        Footer.Height = Metrics.FieldHeight; Footer.WrapContents = true; Footer.Controls.Add(_cancel); Footer.Controls.Add(_checkIn); Footer.Controls.Add(_reschedule);
+        _reschedule.Visible = dentists is not null && a.Status == AppointmentStatus.Scheduled && RoleAccess.Can(actor, Permission.ManageAppointments);
+        _reschedule.Click += async (_, _) => await UiAction.RunAsync(this, async () =>
+        {
+            if (dentists is null) return;
+            using var dialog = new frmRescheduleAppointment(a, _appointments, dentists, _actor);
+            if (dialog.ShowDialog(this) != DialogResult.OK) return;
+            await _refresh(a.AppointmentId); using (UiMessages.UseOwner(Owner ?? this)) UiMessages.ShowSuccess("Appointment rescheduled."); CloseAnimated(DialogResult.OK);
+        }, _reschedule);
         _checkIn.Click += async (_, _) => await UiAction.RunAsync(this, CheckInAsync, _checkIn);
         ConfirmButton.Click += async (_, _) => await UiAction.RunAsync(this, CompleteAsync, ConfirmButton);
         _cancel.Click += async (_, _) => await UiAction.RunAsync(this, CancelAsync, _cancel);

@@ -152,7 +152,7 @@ public partial class ucAppointmentScheduler : UserControl
         var result = await _appointmentService.GetDetailsAsync(_currentUser, row.AppointmentId);
         if (!result.Success || result.Data is null) { UiMessages.ShowError(result); return; }
         if (IsDisposed) return;
-        using var dialog = new frmAppointmentDetails(result.Data, _appointmentService, _currentUser, async id => { await RefreshGridAsync(); GridHelper.FlashRow(dgvAppointments, id); });
+        using var dialog = new frmAppointmentDetails(result.Data, _appointmentService, _currentUser, async id => { await RefreshGridAsync(); GridHelper.FlashRow(dgvAppointments, id); }, _dentistService);
         dialog.ShowDialog(FindForm());
     }
     private void ClearForm() { tglWalkIn.Checked = false; cmbReason.SelectedIndex = -1; cmbReason.Text = ""; _notes.Clear(); dgvAppointments.ClearSelection(); _layout?.SetEditing(false); if (_layout is not null) _layout.NewButton.Text = "Schedule"; btnSchedule.Text = "Schedule appointment"; }

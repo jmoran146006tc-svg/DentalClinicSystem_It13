@@ -42,6 +42,10 @@ namespace DentalClinicSystem
             var split = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, BackColor = Palette.Surface, Padding = new Padding(Space.Lg) };
             split.ColumnStyles.Add(new(SizeType.Absolute, photoWidth)); split.ColumnStyles.Add(new(SizeType.Percent, 100));
             split.RowStyles.Add(new(SizeType.Percent, 100));
+            // Windows can resize the client area when the form gets its monitor DPI.
+            // Keep the photo column proportional to the final available height.
+            split.SizeChanged += (_, _) => split.ColumnStyles[0].Width =
+                (float)Math.Round(Math.Max(1, split.ClientSize.Height - split.Padding.Vertical) * aspect);
             var right = new Panel { Dock = DockStyle.Fill, BackColor = Palette.Surface, Margin = Padding.Empty };
             _formColumn.MaximumSize = new(Metrics.LoginFormWidth, 0);
             _formColumn.Controls.Add(new Label { Text = "Welcome back", Font = Typography.Title, ForeColor = Palette.Ink900, AutoSize = true });

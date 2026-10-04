@@ -41,12 +41,31 @@ namespace DentalClinicSystem.Service
             appointment.CancellationReason = null;
             return await ServiceOperation.SaveAsync(() => appointments.AddAsync(appointment));
         }
-        public async Task<bool> IsDentistAvailableAsync(int dentistId, DateTime when)
+        public async Task<ServiceResult> RescheduleAppointmentAsync(User actor, int appointmentId, DateTime newDateTime, int newDentistId)
+        {
+            if (!RoleAccess.Can(actor, Permission.ManageAppointments)) return RoleAccess.Denied();
+            var current = await appointments.GetByIdAsync(appointmentId);
+            if (current is null) return ServiceResult.Fail("Appointment not found.");
+            if (current.Status != AppointmentStatus.Scheduled) return ServiceResult.Fail("Only scheduled appointments can be rescheduled.");
+            var changed = new Appointment
+            {
+                AppointmentId = current.AppointmentId, PatientId = current.PatientId, DentistId = newDentistId,
+                AppointmentDateTime = newDateTime, Status = current.Status, Reason = current.Reason,
+                Notes = current.Notes, CancellationReason = current.CancellationReason, CreatedAt = current.CreatedAt
+            };
+            var validation = Validator.Appointment(changed, time.GetLocalNow().DateTime);
+            if (!validation.Success) return validation;
+            if (await dentists.GetByIdAsync(newDentistId) is not { IsActive: true }) return ServiceResult.Fail("Select an active dentist.");
+            if (!await IsDentistAvailableAsync(newDentistId, newDateTime, appointmentId))
+                return ServiceResult.Fail("This dentist already has an appointment within 30 minutes of the selected time.");
+            return await ServiceOperation.SaveAsync(() => appointments.UpdateAsync(changed));
+        }
+        public async Task<bool> IsDentistAvailableAsync(int dentistId, DateTime when, int? excludeAppointmentId = null)
         {
             if (await dentists.GetByIdAsync(dentistId) is not { IsActive: true }) return false;
             var nearby = await appointments.GetByDentistAndRangeAsync(dentistId,
                 when.AddMinutes(-ConflictMinutes), when.AddMinutes(ConflictMinutes));
-            return !nearby.Any(a => a.Status != AppointmentStatus.Cancelled &&
+            return !nearby.Any(a => a.AppointmentId != excludeAppointmentId && a.Status != AppointmentStatus.Cancelled &&
                 Math.Abs((a.AppointmentDateTime - when).TotalMinutes) < ConflictMinutes);
         }
         public async Task<ServiceResult> UpdateAppointmentStatusAsync(User actor, int appointmentId, string status, string? cancellationReason = null)
