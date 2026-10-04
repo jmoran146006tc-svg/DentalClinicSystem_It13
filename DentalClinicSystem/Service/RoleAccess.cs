@@ -5,7 +5,7 @@ namespace DentalClinicSystem.Service
     public enum Permission
     {
         ViewDashboard, ViewPatients, ManagePatients, ViewDentists, ManageDentists,
-        ViewAppointments, ManageAppointments, MarkAppointmentCompleted, CancelAppointment,
+        ViewAppointments, ManageAppointments, MarkAppointmentCompleted, CancelAppointment, CheckInAppointment,
         ViewTreatments, ManageTreatments, ViewUsers, ManageUsers, ViewReports
     }
 
@@ -18,7 +18,7 @@ namespace DentalClinicSystem.Service
                 [Roles.Admin] = Enum.GetValues<Permission>().ToHashSet(),
                 [Roles.Receptionist] = [Permission.ViewDashboard, Permission.ViewPatients,
                     Permission.ManagePatients, Permission.ViewAppointments, Permission.ManageAppointments,
-                    Permission.CancelAppointment],
+                    Permission.CancelAppointment, Permission.CheckInAppointment],
                 [Roles.Dentist] = [Permission.ViewDashboard, Permission.ViewAppointments,
                     Permission.MarkAppointmentCompleted, Permission.ViewTreatments, Permission.ManageTreatments]
             };
@@ -36,6 +36,7 @@ namespace DentalClinicSystem.Service
             if (IsAdmin(actor)) return true;
             return status switch
             {
+                AppointmentStatus.CheckedIn => Can(actor, Permission.CheckInAppointment),
                 AppointmentStatus.Completed => Can(actor, Permission.MarkAppointmentCompleted),
                 AppointmentStatus.Cancelled or AppointmentStatus.NoShow => Can(actor, Permission.CancelAppointment),
                 _ => false

@@ -34,12 +34,25 @@ public partial class ucAppointmentScheduler : UserControl
         cboStatus.Dispose(); btnUpdateStatus.Dispose(); lblStatus.Visible = false;
         _layout = new(this, "Appointments", "appointment", "Scheduling and appointment status", dgvAppointments, btnSchedule, _clear, ClearForm);
         _layout.AddRow(UiFactory.Field(cboPatient, "Patient", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(cboDentist, "Dentist", FieldKind.Choice));
+        _layout.AddRow(UiFactory.Field(tglWalkIn, "Walk-in"));
+        tglWalkIn.CheckedChanged += (_, _) =>
+        {
+            dtpAppointmentDateTime.Enabled = !tglWalkIn.Checked;
+            if (tglWalkIn.Checked)
+            {
+                var now = DateTime.Now;
+                dtpAppointmentDateTime.Value = new DateTime((now.Ticks + TimeSpan.TicksPerMinute / 2) / TimeSpan.TicksPerMinute * TimeSpan.TicksPerMinute, now.Kind);
+                if (string.IsNullOrWhiteSpace(cmbReason.Text)) cmbReason.Text = "Consultation / Check-up";
+            }
+        };
         _layout.AddRow(UiFactory.Field(dtpAppointmentDateTime, "Date and time", FieldKind.Date));
         _layout.AddRow(UiFactory.Field(cmbReason, "Reason", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(_notes, "Notes (optional)"));
         cmbReason.DropDownStyle = ComboBoxStyle.DropDown; cmbReason.MaxLength = FieldLimits.Reason;
         cmbReason.Items.Clear(); cmbReason.Items.AddRange(["Oral Prophylaxis Package", "Consultation & Check up", "Promo Bundles", "Tooth Extraction", "Filling / Restoration", "Root Canal", "Braces Adjustment", "Dentures", "Teeth Whitening", "Other"]);
         dtpAppointmentDateTime.Format = DateTimePickerFormat.Custom; dtpAppointmentDateTime.CustomFormat = DisplayFormat.DateTimePattern;
-        _statusFilter.Items.AddRange(["All statuses", .. AppointmentStatus.All]); _statusFilter.SelectedIndex = 0;
+        _statusFilter.DisplayMember = nameof(DisplayOption.Display); _statusFilter.ValueMember = nameof(DisplayOption.Id);
+        _statusFilter.Items.Add(new DisplayOption(0, "All statuses"));
+        for (var i = 0; i < AppointmentStatus.All.Length; i++) _statusFilter.Items.Add(new DisplayOption(i + 1, AppointmentStatus.Display(AppointmentStatus.All[i]))); _statusFilter.SelectedIndex = 0;
         _dateFilter.Items.AddRange(["All dates", "Today", "This week"]); _dateFilter.SelectedIndex = 0;
         var status = UiFactory.Field(_statusFilter, "Status", FieldKind.Choice); status.Width = Metrics.FormWidth / 2;
         var dates = UiFactory.Field(_dateFilter, "Date range", FieldKind.Choice); dates.Width = Metrics.FormWidth / 2;
@@ -88,7 +101,7 @@ public partial class ucAppointmentScheduler : UserControl
     private void BindRows()
     {
         if (IsDisposed) return;
-        var filtered = AppointmentFilter.Apply(_appointments, _currentUser, _layout.Search.Text, _statusFilter.SelectedIndex > 0 ? _statusFilter.Text : null,
+        var filtered = AppointmentFilter.Apply(_appointments, _currentUser, _layout.Search.Text, _statusFilter.SelectedIndex > 0 ? AppointmentStatus.All[_statusFilter.SelectedIndex - 1] : null,
             (AppointmentDateFilter)Math.Max(0, _dateFilter.SelectedIndex), DateTime.Today, id => _patientNamesById.GetValueOrDefault(id, $"Patient #{id}"));
         var rows = filtered.Select(a => new AppointmentRow(a.AppointmentId, _patientNamesById.GetValueOrDefault(a.PatientId, $"Patient #{a.PatientId}"),
             _dentistNamesById.GetValueOrDefault(a.DentistId, $"Dentist #{a.DentistId}"), a.AppointmentDateTime, a.Reason, a.Status, a));
@@ -142,6 +155,6 @@ public partial class ucAppointmentScheduler : UserControl
         using var dialog = new frmAppointmentDetails(result.Data, _appointmentService, _currentUser, async id => { await RefreshGridAsync(); GridHelper.FlashRow(dgvAppointments, id); });
         dialog.ShowDialog(FindForm());
     }
-    private void ClearForm() { cmbReason.SelectedIndex = -1; cmbReason.Text = ""; _notes.Clear(); dgvAppointments.ClearSelection(); _layout?.SetEditing(false); if (_layout is not null) _layout.NewButton.Text = "Schedule"; btnSchedule.Text = "Schedule appointment"; }
+    private void ClearForm() { tglWalkIn.Checked = false; cmbReason.SelectedIndex = -1; cmbReason.Text = ""; _notes.Clear(); dgvAppointments.ClearSelection(); _layout?.SetEditing(false); if (_layout is not null) _layout.NewButton.Text = "Schedule"; btnSchedule.Text = "Schedule appointment"; }
     private void btnUpdateStatus_Click(object? sender, EventArgs e) { } // Disposed legacy Designer control.
 }

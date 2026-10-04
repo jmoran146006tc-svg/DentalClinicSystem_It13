@@ -19,6 +19,7 @@ public static class Theme
     public static SemanticStyle StatusStyle(string? status) => status switch
     {
         AppointmentStatus.Scheduled => Palette.Info, AppointmentStatus.Completed => Palette.Success,
+        AppointmentStatus.CheckedIn => Palette.Warning,
         AppointmentStatus.NoShow => Palette.Danger, _ => Palette.Neutral
     };
     public static Color Lerp(Color a, Color b, float t)

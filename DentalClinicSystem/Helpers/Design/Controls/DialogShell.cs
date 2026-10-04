@@ -1,3 +1,4 @@
+using DentalClinicSystem.Models;
 using DentalClinicSystem.Helpers.Design.Motion;
 using DentalClinicSystem.Helpers.Native;
 using MotionSystem = DentalClinicSystem.Helpers.Design.Motion.Motion;
@@ -70,15 +71,16 @@ public sealed class ReasonDialog : DialogShell
     private readonly ComboBox _reasons = new();
     private readonly TextBox _details = new() { MaxLength = Service.FieldLimits.Reason };
     private readonly FormField _other;
-    public string Reason => _reasons.Text == "Other" ? _details.Text.Trim() : _reasons.Text;
+    public string Reason => _reasons.Text == CancellationReasons.Other ? _details.Text.Trim() : _reasons.Text;
+    public bool IsNoShow => _reasons.Text == CancellationReasons.NoShow;
     public ReasonDialog() : base("Cancel appointment", "Confirm cancellation")
     {
         Height = Metrics.DialogHeight + Metrics.FieldHeight;
-        _reasons.Items.AddRange(["No Show", "Patient Rescheduled", "Clinic Rescheduled", "Other"]); _reasons.SelectedIndex = 0;
+        _reasons.Items.AddRange(CancellationReasons.All); _reasons.SelectedIndex = 0;
         var fields = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2 };
         var choices = FieldBox.Wrap(_reasons, "Reason", FieldKind.Choice); choices.Dock = DockStyle.Top;
         _other = FieldBox.Wrap(_details, "Details for Other"); _other.Dock = DockStyle.Top; _other.Visible = false;
-        _reasons.SelectedIndexChanged += (_, _) => _other.Visible = _reasons.Text == "Other";
+        _reasons.SelectedIndexChanged += (_, _) => _other.Visible = _reasons.Text == CancellationReasons.Other;
         fields.Controls.Add(choices, 0, 0); fields.Controls.Add(_other, 0, 1); Body.Controls.Add(fields);
     }
     protected override bool CanConfirm()

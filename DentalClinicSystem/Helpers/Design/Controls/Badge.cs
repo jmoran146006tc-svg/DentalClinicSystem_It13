@@ -26,6 +26,6 @@ public class Badge : DesignControl
 
 public sealed class StatusBadge : Badge
 {
-    public StatusBadge(string status) : base(status) { Style = Theme.StatusStyle(status); }
-    public void SetStatus(string status) { Text = status; Style = Theme.StatusStyle(status); Invalidate(); }
+    public StatusBadge(string status) : base(Models.AppointmentStatus.Display(status)) { Style = Theme.StatusStyle(status); }
+    public void SetStatus(string status) { Text = Models.AppointmentStatus.Display(status); Style = Theme.StatusStyle(status); Invalidate(); }
 }

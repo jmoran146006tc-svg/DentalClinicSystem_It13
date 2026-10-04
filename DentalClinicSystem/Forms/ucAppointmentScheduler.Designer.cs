@@ -2,6 +2,7 @@ namespace DentalClinicSystem.Forms
 {
     partial class ucAppointmentScheduler
     {
+        private Helpers.Design.Controls.Toggle tglWalkIn;
         private System.ComponentModel.IContainer components = null;
 
         protected override void Dispose(bool disposing)
@@ -17,6 +18,7 @@ namespace DentalClinicSystem.Forms
 
         private void InitializeComponent()
         {
+            tglWalkIn = new Helpers.Design.Controls.Toggle("Walk-in (now)") { Name = "tglWalkIn" };
             dgvAppointments = new DataGridView();
             lblPatient = new Label();
             cboPatient = new ComboBox();

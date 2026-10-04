@@ -4,8 +4,9 @@ using DentalClinicSystem.Models;
 namespace DentalClinicSystem.Service
 {
     public class TreatmentService(ITreatmentRepository treatments, IAppointmentRepository appointments,
-        ITreatmentTypeRepository types) : ITreatmentService
+        ITreatmentTypeRepository types, TimeProvider? timeProvider = null) : ITreatmentService
     {
+        private readonly TimeProvider time = timeProvider ?? TimeProvider.System;
         public async Task<ServiceResult<IReadOnlyList<Treatment>>> GetAllTreatmentsAsync(User actor)
         {
             if (!RoleAccess.Can(actor, Permission.ViewTreatments)) return RoleAccess.Denied<IReadOnlyList<Treatment>>();
@@ -35,7 +36,7 @@ namespace DentalClinicSystem.Service
         private async Task<ServiceResult> SaveAsync(User actor, Treatment treatment, bool update)
         {
             if (!RoleAccess.Can(actor, Permission.ManageTreatments)) return RoleAccess.Denied();
-            var validation = Validator.Treatment(treatment);
+            var validation = Validator.Treatment(treatment, time.GetLocalNow().DateTime);
             if (!validation.Success) return validation;
             var appointment = await appointments.GetByIdAsync(treatment.AppointmentId);
             if (appointment is null) return ServiceResult.Fail("Appointment not found.");

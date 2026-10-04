@@ -3,8 +3,9 @@ using DentalClinicSystem.Models;
 
 namespace DentalClinicSystem.Service
 {
-    public class DentistService(IDentistRepository repository) : IDentistService
+    public class DentistService(IDentistRepository repository, TimeProvider? timeProvider = null) : IDentistService
     {
+        private readonly TimeProvider time = timeProvider ?? TimeProvider.System;
         private static bool CanRead(User actor) => RoleAccess.Can(actor, Permission.ViewAppointments) || RoleAccess.Can(actor, Permission.ViewDentists);
         public async Task<ServiceResult<IReadOnlyList<Dentist>>> GetAllDentistsAsync(User actor)
         {

@@ -139,7 +139,7 @@ public class VisualPreviewTests
         {
             using var guide = new frmStyleGuide { ClientSize = new(1600, 1000) }; PageLayoutTests.ShowOffscreen(guide);
             Capture(guide, "guide-top");
-            var grids = PageLayoutTests.Descendants(guide).OfType<DataGridView>().ToArray(); Assert.Contains(grids, grid => grid.Rows.Count == 4);
+            var grids = PageLayoutTests.Descendants(guide).OfType<DataGridView>().ToArray(); Assert.Contains(grids, grid => grid.Rows.Count == AppointmentStatus.All.Length);
             foreach (var field in PageLayoutTests.Descendants(guide).OfType<FormField>()) Assert.True(field.Box.Input.Parent!.Height >= field.Box.Input.Height - Metrics.Scale(field.Box, 8), $"{field.Box.Input.AccessibleName}: viewport {field.Box.Input.Parent!.Height}, input {field.Box.Input.Height}, DPI {field.Box.DeviceDpi}");
             var kpi = PageLayoutTests.Descendants(guide).OfType<KpiCard>().Single();
             var tile = kpi.Content.Controls.OfType<IconTile>().Single(); Assert.True(kpi.Content.ClientRectangle.Contains(tile.Bounds)); Assert.Equal(tile.Width, tile.Height);

@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS Appointments (
     INDEX IX_Appointments_PatientId (PatientId),
     CONSTRAINT FK_Appointments_Patient FOREIGN KEY (PatientId) REFERENCES Patients(PatientId),
     CONSTRAINT FK_Appointments_Dentist FOREIGN KEY (DentistId) REFERENCES Dentists(DentistId),
-    CONSTRAINT CK_Appointments_Status CHECK (Status IN ('Scheduled','Completed','Cancelled','NoShow'))
+    CONSTRAINT CK_Appointments_Status CHECK (Status IN ('Scheduled','CheckedIn','Completed','Cancelled','NoShow'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS Treatments (

@@ -32,7 +32,7 @@ namespace DentalClinicSystem.Service
                 MailAddress.TryCreate(value, out var address) && address.Address == value
                     ? ServiceResult.Ok() : ServiceResult.Fail("Email must be a valid email address."));
         }
-        public static ServiceResult Patient(Patient patient)
+        public static ServiceResult Patient(Patient patient, DateTime now)
         {
             patient.FirstName = Sanitize(patient.FirstName);
             patient.LastName = Sanitize(patient.LastName);
@@ -41,7 +41,7 @@ namespace DentalClinicSystem.Service
             patient.Address = Optional(patient.Address);
             return First(Name(patient.FirstName, "First name"), Name(patient.LastName, "Last name"),
                 Phone(patient.ContactNumber), Email(patient.Email), MaxLength(patient.Address, FieldLimits.Address, "Address"),
-                patient.DateOfBirth.Date > DateTime.Today ? ServiceResult.Fail("Date of birth cannot be in the future.") : ServiceResult.Ok(),
+                patient.DateOfBirth.Date > now.Date ? ServiceResult.Fail("Date of birth cannot be in the future.") : ServiceResult.Ok(),
                 DatabaseDate(patient.DateOfBirth, "Date of birth"));
         }
         public static ServiceResult Dentist(Dentist dentist)
@@ -55,32 +55,35 @@ namespace DentalClinicSystem.Service
                 Phone(dentist.ContactNumber, false), MaxLength(dentist.Specialization, FieldLimits.Specialization, "Specialization"),
                 MaxLength(dentist.LicenseNumber, FieldLimits.LicenseNumber, "License number"));
         }
-        public static ServiceResult Appointment(Appointment appointment)
+        public static ServiceResult Appointment(Appointment appointment, DateTime now)
         {
             appointment.Reason = Optional(appointment.Reason);
             appointment.Notes = Optional(appointment.Notes);
             return First(MaxLength(appointment.Reason, FieldLimits.Reason, "Reason"),
                 MaxLength(appointment.Notes, FieldLimits.Notes, "Notes"),
-                appointment.AppointmentDateTime < DateTime.Now ? ServiceResult.Fail("Appointment time cannot be in the past.") : ServiceResult.Ok());
+                appointment.AppointmentDateTime < now.AddMinutes(-ClinicRules.PastGraceMinutes) ? ServiceResult.Fail($"Appointment time cannot be more than {ClinicRules.PastGraceMinutes} minutes in the past.") : ServiceResult.Ok());
         }
-        public static ServiceResult StatusChange(string current, string status, string? reason)
+        public static ServiceResult StatusChange(string current, string status, string? reason, DateTime appointmentDateTime, DateTime now)
         {
             if (!AppointmentStatus.IsValid(status)) return ServiceResult.Fail("Select a valid appointment status.");
-            if (current == AppointmentStatus.Cancelled && status != current) return ServiceResult.Fail("Cancelled appointments cannot be reopened.");
-            if (status is AppointmentStatus.Cancelled or AppointmentStatus.NoShow)
-            {
-                if (current == AppointmentStatus.Completed) return ServiceResult.Fail("Completed appointments cannot be cancelled.");
+            if (!AppointmentStatus.CanTransition(current, status)) return ServiceResult.Fail("That appointment status can't be changed.");
+            if (status == AppointmentStatus.CheckedIn && appointmentDateTime.Date != now.Date)
+                return ServiceResult.Fail("Check-in is only available on the appointment date.");
+            if (status == AppointmentStatus.Completed && appointmentDateTime.Date > now.Date)
+                return ServiceResult.Fail("A future appointment can't be completed yet.");
+            if (status == AppointmentStatus.NoShow && appointmentDateTime > now)
+                return ServiceResult.Fail("Wait until the appointment time to mark a no-show.");
+            if (status == AppointmentStatus.Cancelled)
                 return First(Required(reason, "Cancellation reason"), MaxLength(Optional(reason), FieldLimits.Reason, "Cancellation reason"));
-            }
-            return ServiceResult.Ok();
+            return MaxLength(Optional(reason), FieldLimits.Reason, "Cancellation reason");
         }
-        public static ServiceResult Treatment(Treatment treatment)
+        public static ServiceResult Treatment(Treatment treatment, DateTime now)
         {
             treatment.ToothNumber = Optional(treatment.ToothNumber);
             treatment.Notes = Optional(treatment.Notes);
             return First(Cost(treatment.Cost), MaxLength(treatment.ToothNumber, FieldLimits.ToothNumber, "Tooth number"),
                 MaxLength(treatment.Notes, FieldLimits.Notes, "Notes"), DatabaseDate(treatment.DatePerformed, "Date performed"),
-                treatment.DatePerformed.Date > DateTime.Today ? ServiceResult.Fail("Date performed cannot be in the future.") : ServiceResult.Ok());
+                treatment.DatePerformed.Date > now.Date ? ServiceResult.Fail("Date performed cannot be in the future.") : ServiceResult.Ok());
         }
         public static ServiceResult TreatmentType(TreatmentType type)
         {

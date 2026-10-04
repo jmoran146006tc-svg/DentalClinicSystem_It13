@@ -109,6 +109,7 @@ public static class GridTheme
         if (name is "Status" or "Role")
         {
             var status = e.FormattedValue?.ToString() ?? string.Empty; var style = name == "Role" ? Palette.Neutral : Theme.StatusStyle(status);
+            if (name == "Status") status = Models.AppointmentStatus.Display(status);
             var width = Math.Min(e.CellBounds.Width - Space.Xl, TextRenderer.MeasureText(status, Typography.Label).Width + Space.Xxl);
             var pill = new Rectangle(e.CellBounds.Left + Space.Md, e.CellBounds.Top + Space.Sm, Math.Max(0, width), Math.Max(0, e.CellBounds.Height - Space.Lg));
             DesignPaint.Surface(graphics, pill, pill.Height / 2f, style.Background);

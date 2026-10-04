@@ -4,8 +4,9 @@ using DentalClinicSystem.Models;
 namespace DentalClinicSystem.Service
 {
     public class AppointmentService(IAppointmentRepository appointments, IPatientRepository patients,
-        IDentistRepository dentists) : IAppointmentService
+        IDentistRepository dentists, TimeProvider? timeProvider = null) : IAppointmentService
     {
+        private readonly TimeProvider time = timeProvider ?? TimeProvider.System;
         public const int ConflictMinutes = 30;
         public async Task<ServiceResult<IReadOnlyList<Appointment>>> GetAllAppointmentsAsync(User actor)
         {
@@ -28,7 +29,7 @@ namespace DentalClinicSystem.Service
         public async Task<ServiceResult> ScheduleAppointmentAsync(User actor, Appointment appointment)
         {
             if (!RoleAccess.Can(actor, Permission.ManageAppointments)) return RoleAccess.Denied();
-            var validation = Validator.Appointment(appointment);
+            var validation = Validator.Appointment(appointment, time.GetLocalNow().DateTime);
             if (!validation.Success) return validation;
             if (await patients.GetByIdAsync(appointment.PatientId) is not { IsActive: true })
                 return ServiceResult.Fail("Select an active patient.");
@@ -53,15 +54,15 @@ namespace DentalClinicSystem.Service
             var appointment = await appointments.GetByIdAsync(appointmentId);
             if (appointment is null) return ServiceResult.Fail("Appointment not found.");
             if (!RoleAccess.CanChangeStatus(actor, appointment, status)) return RoleAccess.Denied();
-            var validation = Validator.StatusChange(appointment.Status, status, cancellationReason);
+            var validation = Validator.StatusChange(appointment.Status, status, cancellationReason, appointment.AppointmentDateTime, time.GetLocalNow().DateTime);
             if (!validation.Success) return validation;
             appointment.Status = status;
             appointment.CancellationReason = Validator.Optional(cancellationReason);
             return await ServiceOperation.SaveAsync(() => appointments.UpdateAsync(appointment));
         }
-        public Task<ServiceResult> CancelAppointmentAsync(User actor, int appointmentId, string reason) =>
+        public Task<ServiceResult> CancelAppointmentAsync(User actor, int appointmentId, bool isNoShow, string reason) =>
             UpdateAppointmentStatusAsync(actor, appointmentId,
-                reason.Trim() == "No Show" ? AppointmentStatus.NoShow : AppointmentStatus.Cancelled, reason);
+                isNoShow ? AppointmentStatus.NoShow : AppointmentStatus.Cancelled, reason);
 
         public async Task<ServiceResult<IReadOnlyList<Appointment>>> GetAppointmentsForDentistOnDateAsync(User actor, int dentistId, DateTime date)
         {

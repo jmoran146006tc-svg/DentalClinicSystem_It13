@@ -14,6 +14,7 @@ public sealed class frmAppointmentDetails : DialogShell
     private readonly User _actor;
     private readonly Func<int, Task> _refresh;
     private readonly AppButton _cancel = UiFactory.Button("Cancel appointment", ButtonVariant.Danger);
+    private readonly AppButton _checkIn = UiFactory.Button("Check in", ButtonVariant.Secondary);
     private readonly InlineAlert _alert = new() { Visible = false };
     public frmAppointmentDetails(AppointmentDetails details, IAppointmentService appointments, User actor, Func<int, Task> refresh) : base("Appointment details", "Mark completed")
     {
@@ -29,10 +30,12 @@ public sealed class frmAppointmentDetails : DialogShell
         var patient = Column(("Patient details", p.FullName), ("Contact", DisplayFormat.Phone(p.ContactNumber)), ("Date of birth", DisplayFormat.Date(p.DateOfBirth)), ("Email", DisplayFormat.Optional(p.Email)));
         content.Controls.Add(appointment, 0, 1); content.Controls.Add(patient, 1, 1);
         Body.Controls.Add(content); Body.Controls.Add(_alert); _alert.BringToFront(); UiMessages.RegisterAlertHost(this, _alert);
-        ConfirmButton.Visible = a.Status == AppointmentStatus.Scheduled && RoleAccess.CanChangeStatus(actor, a, AppointmentStatus.Completed);
+        ConfirmButton.Visible = a.Status is AppointmentStatus.Scheduled or AppointmentStatus.CheckedIn && RoleAccess.CanChangeStatus(actor, a, AppointmentStatus.Completed);
+        _checkIn.Visible = a.Status == AppointmentStatus.Scheduled && a.AppointmentDateTime.Date == DateTime.Today && RoleAccess.CanChangeStatus(actor, a, AppointmentStatus.CheckedIn);
         _cancel.Visible = a.Status == AppointmentStatus.Scheduled && RoleAccess.CanChangeStatus(actor, a, AppointmentStatus.Cancelled);
         DismissButton.Text = "Close"; ButtonStyler.Attach(DismissButton, ButtonVariant.Ghost);
-        Footer.Height = Metrics.FieldHeight; Footer.WrapContents = true; Footer.Controls.Add(_cancel);
+        Footer.Height = Metrics.FieldHeight; Footer.WrapContents = true; Footer.Controls.Add(_cancel); Footer.Controls.Add(_checkIn);
+        _checkIn.Click += async (_, _) => await UiAction.RunAsync(this, CheckInAsync, _checkIn);
         ConfirmButton.Click += async (_, _) => await UiAction.RunAsync(this, CompleteAsync, ConfirmButton);
         _cancel.Click += async (_, _) => await UiAction.RunAsync(this, CancelAsync, _cancel);
     }
@@ -52,10 +55,17 @@ public sealed class frmAppointmentDetails : DialogShell
     private async Task CompleteAsync()
     {
         var a = _details.Appointment;
-        if (a.Status != AppointmentStatus.Scheduled || !RoleAccess.CanChangeStatus(_actor, a, AppointmentStatus.Completed)) return;
+        if (a.Status is not (AppointmentStatus.Scheduled or AppointmentStatus.CheckedIn) || !RoleAccess.CanChangeStatus(_actor, a, AppointmentStatus.Completed)) return;
         var result = await _appointments.UpdateAppointmentStatusAsync(_actor, a.AppointmentId, AppointmentStatus.Completed);
         if (!result.Success) { UiMessages.ShowError(result); return; }
         await _refresh(a.AppointmentId); using (UiMessages.UseOwner(Owner ?? this)) UiMessages.ShowSuccess("Appointment completed."); CloseAnimated(DialogResult.OK);
+    }
+    private async Task CheckInAsync()
+    {
+        var a = _details.Appointment;
+        var result = await _appointments.UpdateAppointmentStatusAsync(_actor, a.AppointmentId, AppointmentStatus.CheckedIn);
+        if (!result.Success) { UiMessages.ShowError(result); return; }
+        await _refresh(a.AppointmentId); using (UiMessages.UseOwner(Owner ?? this)) UiMessages.ShowSuccess("Patient checked in."); CloseAnimated(DialogResult.OK);
     }
     private async Task CancelAsync()
     {
@@ -63,7 +73,7 @@ public sealed class frmAppointmentDetails : DialogShell
         if (a.Status != AppointmentStatus.Scheduled || !RoleAccess.CanChangeStatus(_actor, a, AppointmentStatus.Cancelled)) return;
         if (!UiMessages.Confirm("Are you sure you want to cancel this appointment?", "Cancel appointment")) return;
         using var reason = UiFactory.Reason(); if (reason.ShowDialog(this) != DialogResult.OK) return;
-        var result = await _appointments.CancelAppointmentAsync(_actor, a.AppointmentId, reason.Reason);
+        var result = await _appointments.CancelAppointmentAsync(_actor, a.AppointmentId, reason.IsNoShow, reason.Reason);
         if (!result.Success) { UiMessages.ShowError(result); return; }
         await _refresh(a.AppointmentId); using (UiMessages.UseOwner(Owner ?? this)) UiMessages.ShowSuccess("Appointment cancelled."); CloseAnimated(DialogResult.OK);
     }
