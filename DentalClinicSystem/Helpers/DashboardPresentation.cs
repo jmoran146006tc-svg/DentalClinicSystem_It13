@@ -9,10 +9,11 @@ public static class DashboardPresentation
 {
     public const int DaysInWeek = 7;
     public static DateTime WeekStart(DateTime date) => date.Date.AddDays(-((int)date.DayOfWeek + 6) % DaysInWeek);
+    public static string GreetingPeriod(DateTime now) => now.Hour < 12 ? "morning" : now.Hour < 18 ? "afternoon" : "evening";
     public static string Greeting(string name, DateTime now)
     {
         var first = name.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "there";
-        var period = now.Hour < 12 ? "morning" : now.Hour < 18 ? "afternoon" : "evening";
+        var period = GreetingPeriod(now);
         return $"Good {period}, {first}";
     }
     public static string TodayLabel(DateTime today) => today.ToString("dddd, MMMM d, yyyy", CultureInfo.InvariantCulture);

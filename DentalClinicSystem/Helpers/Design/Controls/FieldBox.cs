@@ -15,7 +15,24 @@ public sealed class FieldBox : Panel
     private bool _error;
     private bool _layingOut;
     private ToolStripDropDown? _calendar;
+    private IconKind? _leadingIcon;
+    private Color? _borderOverride;
     public Control Input { get; }
+    [System.ComponentModel.DefaultValue(null)]
+    public IconKind? LeadingIcon
+    {
+        get => _leadingIcon;
+        set { _leadingIcon = value; LayoutInput(); }
+    }
+    [System.ComponentModel.DefaultValue(null)]
+    public Color? BorderOverride
+    {
+        get => _borderOverride;
+        set { _borderOverride = value; AnimateFocus(Input.Focused || _action.Focused); }
+    }
+    public Rectangle LeadingIconBounds => _leadingIcon.HasValue
+        ? new(Metrics.Scale(this, Space.Md), (Height - Metrics.Scale(this, Metrics.IconSize)) / 2, Metrics.Scale(this, Metrics.IconSize), Metrics.Scale(this, Metrics.IconSize))
+        : _kind == FieldKind.Search ? new(Space.Md, (Height - Metrics.IconSize) / 2, Metrics.IconSize, Metrics.IconSize) : Rectangle.Empty;
     public FieldBox(Control input, FieldKind kind = FieldKind.Text)
     {
         Theme.MarkPrimitive(this);
@@ -73,10 +90,10 @@ public sealed class FieldBox : Panel
         var nativeHeight = Input is ComboBox or DateTimePicker ? Input.Height : Input.PreferredSize.Height;
         MinimumSize = new(0, Math.Max(Metrics.Scale(this, Metrics.ControlHeight), nativeHeight + inset * 2));
         if (Input is TextBox { Multiline: true }) MinimumSize = new(0, Metrics.Scale(this, Metrics.FieldHeight));
-        var leading = _kind == FieldKind.Search ? Metrics.Scale(this, Metrics.IconSize + Space.Sm) : 0;
+        var leading = _leadingIcon.HasValue || _kind == FieldKind.Search ? Metrics.Scale(this, Metrics.IconSize + Space.Sm) : 0;
         var action = _kind is FieldKind.Password or FieldKind.Choice or FieldKind.Date || (_kind == FieldKind.Search && Input.Text.Length > 0);
         _action.Visible = action;
-        var actionSize = Metrics.Scale(this, Metrics.CompactHeight);
+        var actionSize = Math.Max(Metrics.Scale(this, Metrics.CompactHeight), _action.MinimumSize.Height);
         var rightInset = Metrics.Scale(this, Space.Md);
         _action.SetBounds(Math.Max(0, Width - actionSize - rightInset), (Height - actionSize) / 2, actionSize, actionSize);
         var chrome = Input is ComboBox or DateTimePicker ? Metrics.Scale(this, Space.Xs) : 0;
@@ -116,7 +133,7 @@ public sealed class FieldBox : Panel
     }
     private void AnimateFocus(bool focused)
     {
-        var border = _error ? Palette.Danger.Text : focused ? Palette.Brand : Palette.LineStrong;
+        var border = _error ? Palette.Danger.Text : focused ? Palette.Brand : _borderOverride ?? Palette.LineStrong;
         MotionSystem.Animator.RunColor(this, "field-border", _border, border, MotionSystem.Fast, value => { _border = value; Invalidate(); });
         MotionSystem.Animator.Run(this, "field-focus", _focus, focused ? 1 : 0, MotionSystem.Instant, Easing.EaseOutCubic, value => { _focus = value; Invalidate(); });
     }
@@ -146,7 +163,7 @@ public sealed class FieldBox : Panel
             using var pen = new Pen(Palette.WithAlpha(_error ? Palette.Danger.Text : Palette.BrandAccent, .4f * _focus), Metrics.FocusRing);
             e.Graphics.DrawPath(pen, path);
         }
-        if (_kind == FieldKind.Search) Icons.Draw(e.Graphics, IconKind.Search, new(Space.Md, (Height - Metrics.IconSize) / 2, Metrics.IconSize, Metrics.IconSize), Palette.Ink500);
+        if (_leadingIcon.HasValue || _kind == FieldKind.Search) Icons.Draw(e.Graphics, _leadingIcon ?? IconKind.Search, LeadingIconBounds, Palette.Ink500);
         base.OnPaint(e);
     }
     protected override void Dispose(bool disposing) { if (disposing) { _calendar?.Dispose(); MotionSystem.Animator.Cancel(this); } base.Dispose(disposing); }

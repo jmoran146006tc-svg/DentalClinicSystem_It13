@@ -6,7 +6,7 @@ public enum IconKind
 {
     Dashboard, Patients, Dentist, Appointments, Treatments, Users, Reports, Logout,
     Search, Plus, Close, Check, Warning, Info, ChevronLeft, ChevronRight, ChevronDown,
-    Eye, EyeOff, Clock, Edit, Phone, Mail
+    Eye, EyeOff, Clock, Edit, Phone, Mail, User, Lock, Shield
 }
 
 public static class Icons
@@ -21,6 +21,7 @@ public static class Icons
                 break;
             case IconKind.Patients:
             case IconKind.Users:
+            case IconKind.User:
                 path.AddEllipse(8, 3, 8, 8); path.StartFigure(); path.AddArc(4, 13, 16, 14, 180, 180); break;
             case IconKind.Dentist:
                 path.AddBezier(12, 5, 1, -2, 3, 16, 6, 21); path.AddBezier(6, 21, 10, 23, 8, 12, 12, 13);
@@ -61,6 +62,14 @@ public static class Icons
                 path.AddBezier(21, 20, 12, 25, -1, 12, 4, 3); break;
             case IconKind.Mail:
                 path.AddRectangle(new(2, 5, 20, 14)); Lines(path, new(2, 5), new(12, 13), new(22, 5)); break;
+            case IconKind.Lock:
+                path.AddRectangle(new(5, 10, 14, 11)); path.StartFigure(); path.AddArc(8, 3, 8, 14, 180, 180); Line(path, 12, 14, 12, 17); break;
+            case IconKind.Shield:
+                Lines(path, new(12, 2), new(21, 6), new(20, 15));
+                path.AddBezier(20, 15, 18, 19, 15, 21, 12, 22);
+                path.AddBezier(12, 22, 9, 21, 6, 19, 4, 15);
+                Lines(path, new(4, 15), new(3, 6), new(12, 2));
+                Lines(path, new(8, 12), new(11, 15), new(16, 9)); break;
         }
         return path;
     }

@@ -22,7 +22,7 @@ For an existing database, run `Database/04_Migration_RealWorldFixes.sql`, then `
 
 DEMO ONLY: `admin / admin123`, `reception / reception123`, `drsantos / dentist123`.
 
-Login uses a full-bleed photo with a floating card, a teal scrim for readable brand copy, and the shared design system. The embedded `Resources/dentist.jpg` determines the window aspect ratio and is decoded once; the backdrop composition is cached by size and DPI. The form has no demo credential hints, keeps Enter to submit, and supports the password eye toggle (also Alt+P). The brand enters over 220 ms; the card fades and settles over 320 ms. Reduced motion shows the final state immediately.
+Login centers a frosted glass card and one overlapping brand badge over a bright full-bleed clinic photo. The embedded `Resources/dentist.jpg` determines the window aspect ratio; photo composition and a three-pass downsampled blur are cached by size and DPI. A time-of-day greeting, username/password icons, visible password eye (also Alt+P), Enter to submit, and one generic inline error preserve the sign-in flow. Remember username stores only the username after successful sign-in under LocalApplicationData/DentalClinicSystem; unchecking it and signing in deletes that value. The form fades over 150 ms, the card rises/fades over 320 ms, and the badge/field rows follow at 30 ms intervals. Reduced motion shows the final state instantly.
 
 Login photo by Benyamin Bohlouli on Unsplash.
 

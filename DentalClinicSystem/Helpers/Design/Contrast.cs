@@ -38,12 +38,11 @@ public static class Contrast
         }
         yield return ("BrandSoftText/BrandSoft", Palette.BrandSoftText, Palette.BrandSoft);
         yield return ("Danger/Surface", Palette.Danger.Text, Palette.Surface);
-        var loginBackground = Composite(Palette.LoginScrimBrandEdge, Composite(Palette.LoginPhotoWash, Palette.Surface));
-        yield return ("Login headline/scrim", Palette.Surface, loginBackground);
-        yield return ("Login caption/scrim", Composite(Palette.LoginCaption, Palette.BrandPressed), loginBackground);
-        yield return ("Login footer/scrim", Composite(Palette.LoginFooter, Palette.BrandPressed), loginBackground);
-        yield return ("Login chip/scrim", Palette.Surface, Composite(Palette.LoginChipFill, loginBackground));
-        yield return ("Login mark/badge", Palette.Surface, Composite(Palette.LoginBadgeFill, loginBackground));
+        var darkestGlass = Composite(Palette.GlassWash, Color.Black);
+        yield return ("Login body/darkest glass", Palette.LoginBodyInk, darkestGlass);
+        yield return ("Login greeting/darkest glass", Palette.BrandSoftText, darkestGlass);
+        yield return ("Login Caps Lock/darkest glass", Palette.Warning.Text, darkestGlass);
+        yield return ("Login pill/darkest photo", Palette.LoginBodyInk, Composite(Palette.LoginPillWash, Color.Black));
         yield return ("Caps Lock/Surface", Palette.Warning.Text, Palette.Surface);
     }
 }
