@@ -37,4 +37,12 @@ public class DentistSafeguardTests
         Assert.Equal(expected, result.Success);
         if (!expected) Assert.Equal("Invalid username or password.", result.ErrorMessage);
     }
+    [Fact]
+    public async Task AdminLoginDoesNotNeedDentistRecord()
+    {
+        var users = RepositoryStub.Create<IUserRepository>((nameof(IUserRepository.GetByUsernameAsync), _ => Task.FromResult<User?>(new() { Role = Roles.Admin, PasswordHash = BCrypt.Net.BCrypt.HashPassword("test123", 4) })));
+        var dentists = RepositoryStub.Create<IDentistRepository>();
+        Assert.True((await new AuthService(users, dentists).LoginAsync("admin", "test123")).Success);
+        Assert.Empty(RepositoryStub.Of(dentists).Calls);
+    }
 }
