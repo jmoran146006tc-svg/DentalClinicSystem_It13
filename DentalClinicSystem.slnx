@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/DentalClinicSystem.Tests/DentalClinicSystem.Tests.csproj" />
+  </Folder>
   <Project Path="DentalClinicSystem/DentalClinicSystem.csproj" />
   <Project Path="tests/DentalClinicSystem.UiTests/DentalClinicSystem.UiTests.csproj" />
 </Solution>
