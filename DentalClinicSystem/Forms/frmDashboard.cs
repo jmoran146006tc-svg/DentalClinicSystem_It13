@@ -55,11 +55,10 @@ namespace DentalClinicSystem.Forms
             tableLayoutPanel2.Dispose();
             lblDateTime.Visible = false;
             lblWelcome.Visible = false;
-            var header = new TableLayoutPanel { Dock = DockStyle.Top, Height = Metrics.TopBarHeight, ColumnCount = 2, Padding = new Padding(Space.Xl, 0, Space.Xl, 0), BackColor = Palette.Surface };
+            var header = new TableLayoutPanel { Name = "shellTopBar", Dock = DockStyle.Top, Height = Metrics.TopBarHeight, ColumnCount = 2, Padding = new Padding(Space.Xl, 0, Space.Xl, 0), BackColor = Palette.Surface };
             header.ColumnStyles.Add(new(SizeType.Percent, 100)); header.ColumnStyles.Add(new(SizeType.AutoSize));
-            lblWc.Font = Typography.Heading; lblWc.ForeColor = Palette.Ink900; lblWc.Anchor = AnchorStyles.Left;
             _lblClock.Font = Typography.Caption; _lblClock.ForeColor = Palette.Ink500; _lblClock.Anchor = AnchorStyles.Right;
-            header.Controls.Add(lblWc, 0, 0); header.Controls.Add(_lblClock, 1, 0);
+            header.Controls.Add(_lblClock, 1, 0);
             header.Paint += (_, e) => { using var pen = new Pen(Palette.Line); e.Graphics.DrawLine(pen, 0, header.Height - Metrics.Border, header.Width, header.Height - Metrics.Border); };
             tableLayoutPanel1.Dispose();
             pnlContent.Controls.Add(_contentHost);
@@ -139,7 +138,6 @@ namespace DentalClinicSystem.Forms
             if (!RoleAccess.Can(_currentUser, item.RequiredPermission)) return;
             if (item.CreatePage is not { } createPage) { Logout(); return; }
             ShowPage(createPage());
-            lblWc.Text = item.Text;
             Text = $"{item.Text} - Dental Care";
             _activeNavigation = item.Button; MoveIndicator();
             foreach (var navigationItem in _navigationItems)
