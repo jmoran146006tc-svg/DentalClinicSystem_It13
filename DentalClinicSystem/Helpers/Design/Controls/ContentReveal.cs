@@ -14,9 +14,8 @@ public sealed class ContentReveal : DesignControl
     public static Bitmap? Snapshot(Control target)
     {
         if (!MotionSystem.Enabled || !target.Visible || target.Width <= 0 || target.Height <= 0) return null;
-        var bitmap = new Bitmap(target.Width, target.Height);
-        try { target.DrawToBitmap(bitmap, new(Point.Empty, target.Size)); return bitmap; }
-        catch (ArgumentException) { bitmap.Dispose(); return null; }
+        try { return DesignPaint.Snapshot(target); }
+        catch (ArgumentException) { return null; }
     }
     public static void Play(Control target, Bitmap? before)
     {

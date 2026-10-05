@@ -13,7 +13,7 @@ public sealed class DentistWorklist : UserControl
     public event Action<int>? CompletionRequested;
     public DentistWorklist(IReadOnlyList<AppointmentDetails> appointments, User actor, DateTime now)
     {
-        Theme.MarkPrimitive(this); DesignPaint.Enable(this);
+        Theme.MarkPrimitive(this); DesignPaint.EnableContainer(this);
         Name = "dentistWorklist"; Dock = DockStyle.Top; AutoSize = true; BackColor = Palette.Canvas;
         _rows.ColumnStyles.Add(new(SizeType.Percent, 100)); Controls.Add(_rows);
         var list = DashboardPresentation.Worklist(appointments, actor.DentistId ?? 0, now);

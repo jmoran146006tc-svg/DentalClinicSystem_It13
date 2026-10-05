@@ -142,8 +142,8 @@ public sealed class CrudPageLayout
         try
         {
             if (_gridContent.IsDisposed || !_gridContent.Visible || _gridContent.FindForm()?.WindowState == FormWindowState.Minimized || !Motion.Motion.Enabled || _gridContent.Width <= 0 || _gridContent.Height <= 0) return;
-            previous = new(_gridContent.Width, _gridContent.Height); _gridContent.DrawToBitmap(previous, _gridContent.ClientRectangle);
-            skeleton.Dispose(); next = new(_gridContent.Width, _gridContent.Height); _gridContent.DrawToBitmap(next, _gridContent.ClientRectangle);
+            previous = DesignPaint.Snapshot(_gridContent);
+            skeleton.Dispose(); next = DesignPaint.Snapshot(_gridContent);
             var reveal = new RecordReveal(previous, next) { Dock = DockStyle.Fill }; previous = next = null;
             _gridContent.Controls.Add(reveal); reveal.BringToFront();
             if (reveal.FindForm() is { } form)
@@ -162,6 +162,8 @@ public sealed class CrudPageLayout
         protected override void OnVisibleChanged(EventArgs e) { base.OnVisibleChanged(e); if (!Visible && !Disposing && !IsDisposed) Dispose(); }
         protected override void OnPaint(PaintEventArgs e)
         {
+            if (Width <= 0 || Height <= 0) return;
+            DesignPaint.Begin(e.Graphics, this);
             e.Graphics.DrawImage(next, ClientRectangle);
             using var attributes = new System.Drawing.Imaging.ImageAttributes();
             attributes.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix { Matrix33 = Math.Clamp(1 - Progress, 0, 1) });

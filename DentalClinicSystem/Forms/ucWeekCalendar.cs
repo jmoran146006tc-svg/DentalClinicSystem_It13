@@ -22,7 +22,7 @@ public sealed class ucWeekCalendar : UserControl
     public DateTime WeekStart => _week;
     public ucWeekCalendar()
     {
-        Theme.MarkPrimitive(this); DesignPaint.Enable(this);
+        Theme.MarkPrimitive(this); DesignPaint.EnableContainer(this);
         Name = "weekCalendar"; BackColor = Palette.Surface; Height = Metrics.CalendarViewportHeight;
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, BackColor = Palette.Surface };
         layout.ColumnStyles.Add(new(SizeType.Percent, 100));

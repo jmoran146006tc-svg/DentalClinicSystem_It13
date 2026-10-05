@@ -11,7 +11,7 @@ public sealed class LoadingOverlay : DesignControl
         Dock = DockStyle.Fill; AccessibleName = "Loading, please wait"; AccessibleRole = AccessibleRole.Alert;
         if (target.Width > 0 && target.Height > 0)
         {
-            try { _snapshot = new Bitmap(target.Width, target.Height); target.DrawToBitmap(_snapshot, new(Point.Empty, target.Size)); }
+            try { _snapshot = DesignPaint.Snapshot(target); }
             catch (Exception) { _snapshot?.Dispose(); _snapshot = null; }
         }
         VisibleChanged += (_, _) => { if (Visible) Start(); };

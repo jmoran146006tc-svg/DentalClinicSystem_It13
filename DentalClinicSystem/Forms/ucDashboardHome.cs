@@ -34,7 +34,7 @@ public sealed class ucDashboardHome : UserControl
     {
         _appointments = appointments; _patients = patients; _dentists = dentists; _reports = reports; _history = history;
         _actor = actor; _time = time ?? TimeProvider.System; var now = _time.GetLocalNow().DateTime; _today = now.Date;
-        Theme.MarkPrimitive(this); DesignPaint.Enable(this);
+        Theme.MarkPrimitive(this); DesignPaint.EnableContainer(this);
         Name = "dashboardHome"; Dock = DockStyle.Fill; AutoScroll = true; BackColor = Palette.Canvas; Padding = Space.Page;
         var refresh = UiFactory.Button("Refresh", ButtonVariant.Secondary);
         refresh.Click += async (_, _) => await LoadDashboardAsync();

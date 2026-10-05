@@ -19,8 +19,8 @@ public sealed class ucPatientHistory : UserControl
     public ucPatientHistory(IPatientHistoryService history, User actor, int appointmentId, DateTime? now = null)
     {
         _history = history; _actor = actor; _appointmentId = appointmentId; _now = now ?? DateTime.Now;
-        Theme.MarkPrimitive(this); DesignPaint.Enable(this);
-        Name = "patientHistory"; Dock = DockStyle.Fill; AutoScroll = true; BackColor = Palette.Canvas;
+        Theme.MarkPrimitive(this); DesignPaint.EnableContainer(this);
+        Name = "patientHistory"; Dock = DockStyle.Fill; AutoScroll = true; BackColor = Palette.Canvas; Padding = Space.Page;
         _content.ColumnStyles.Add(new(SizeType.Percent, 100)); Controls.Add(_content);
         _content.Controls.Add(_alert); _content.Controls.Add(_retry);
         _content.Controls.Add(_skeleton);

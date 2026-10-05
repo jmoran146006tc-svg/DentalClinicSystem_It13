@@ -36,7 +36,7 @@ public sealed class ucReports : UserControl
     internal ucReports(IReportService reports, User currentUser, TimeProvider time)
     {
         _reports = reports; _actor = currentUser; _time = time;
-        Theme.MarkPrimitive(this); DesignPaint.Enable(this);
+        Theme.MarkPrimitive(this); DesignPaint.EnableContainer(this);
         Dock = DockStyle.Fill; AutoScroll = true; Padding = Space.Page; BackColor = Palette.Canvas;
         SetRange(ReportRange.ThisMonth); BuildLayout(); _export.Enabled = false; _retry.Visible = false;
         _retry.Name = "reportRetry"; _export.Name = "reportExport";

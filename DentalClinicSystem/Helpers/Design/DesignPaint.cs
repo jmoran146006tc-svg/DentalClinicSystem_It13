@@ -10,6 +10,24 @@ public static class DesignPaint
     public const TextFormatFlags TextFlags = TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
 
     public static void Enable(Control control) => SetStyle?.Invoke(control, [ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.Opaque, true]);
+    // Containers rely on the normal background pass to fill space between children.
+    public static void EnableContainer(Control control)
+    {
+        SetStyle?.Invoke(control, [ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true]);
+        SetStyle?.Invoke(control, [ControlStyles.Opaque, false]);
+    }
+    public static Bitmap Snapshot(Control control)
+    {
+        var bitmap = new Bitmap(control.Width, control.Height);
+        try
+        {
+            using (var graphics = Graphics.FromImage(bitmap))
+                graphics.Clear(control.BackColor.A == 255 ? control.BackColor : ParentBackground(control));
+            control.DrawToBitmap(bitmap, new(Point.Empty, control.Size));
+            return bitmap;
+        }
+        catch { bitmap.Dispose(); throw; }
+    }
     public static Color ParentBackground(Control control)
     {
         for (var parent = control.Parent; parent is not null; parent = parent.Parent)

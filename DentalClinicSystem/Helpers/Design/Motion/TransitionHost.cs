@@ -13,6 +13,7 @@ public sealed class TransitionHost : IDisposable
         protected override void OnPaint(PaintEventArgs e)
         {
             if (Width <= 0 || Height <= 0) return;
+            DesignPaint.Begin(e.Graphics, this);
             e.Graphics.DrawImage(next, ClientRectangle);
             using var attributes = new ImageAttributes();
             attributes.SetColorMatrix(new ColorMatrix { Matrix33 = Math.Clamp(1 - Progress, 0, 1) });
@@ -54,9 +55,8 @@ public sealed class TransitionHost : IDisposable
     private Bitmap? Capture()
     {
         if (!Motion.Enabled || !_host.Visible || _form?.WindowState == FormWindowState.Minimized || _host.Width <= 0 || _host.Height <= 0 || _host.Controls.Count == 0) return null;
-        Bitmap? snapshot = null;
-        try { snapshot = new Bitmap(_host.Width, _host.Height); _host.DrawToBitmap(snapshot, _host.ClientRectangle); return snapshot; }
-        catch (Exception) { snapshot?.Dispose(); return null; }
+        try { return DesignPaint.Snapshot(_host); }
+        catch (Exception) { return null; }
     }
     private void Clear() { _overlay?.Dispose(); _overlay = null; }
     private void HostDisposed(object? sender, EventArgs e) => Dispose();
