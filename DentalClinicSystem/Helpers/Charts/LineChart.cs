@@ -44,11 +44,9 @@ public sealed class LineChart : DesignControl
             TextRenderer.DrawText(graphics, _state.Format(tick), Typography.Caption,
                 new Rectangle(0, y - Typography.Caption.Height / 2, _plot.Left - Space.Sm, Typography.Caption.Height), Palette.Ink500, DesignPaint.TextFlags | TextFormatFlags.Right);
         }
-        if (_points.Length == 0) return;
-        var labelWidth = Math.Min(Metrics.ChartLabelWidth, _plot.Width);
-        foreach (var index in new[] { 0, _points.Length - 1 }.Distinct())
+        foreach (var (index, bounds) in ChartGeometry.AxisLabels(_plot, _points.Length, Metrics.Scale(this, Metrics.ChartLabelWidth), Typography.Caption.Height))
             TextRenderer.DrawText(graphics, _state.Data[index].Label, Typography.Caption,
-                new Rectangle(index == 0 ? _plot.Left : _plot.Right - labelWidth, _plot.Bottom + Space.Xs, labelWidth, Typography.Caption.Height), Palette.Ink500, DesignPaint.TextFlags);
+                bounds, Palette.Ink500, DesignPaint.TextFlags);
     }
     private void DrawSeries(Graphics graphics)
     {

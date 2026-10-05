@@ -16,7 +16,12 @@ public sealed class ReportsTests
         using var page = new ucReports(ServiceStub.For<IReportService>(), ClinicFixture.Actor());
         using var host = new Form { ClientSize = new(900, 800) }; host.Controls.Add(page); UiThread.Show(host);
         Assert.NotNull(page.Snapshot); Assert.Equal(5, page.Snapshot.Status.Count); Assert.All(page.Snapshot.Status, row => Assert.Equal(0, row.Total));
-        Assert.All(UiThread.Controls(page).OfType<ClinicTable>(), grid => { Assert.Empty(grid.Records); Assert.Contains("range", grid.EmptyText); });
+        Assert.All(UiThread.Controls(page).OfType<ClinicTable>(), grid => { Assert.Empty(grid.Records); Assert.False(grid.Visible); Assert.Contains("range", grid.EmptyText); });
+        Assert.All(UiThread.Controls(page).OfType<ReportSection>(), section =>
+        {
+            Assert.Single(UiThread.Controls(section).OfType<EmptyState>(), empty => empty.Visible);
+            Assert.Single(UiThread.Controls(section).OfType<Label>(), label => label.Visible && label.Text.Contains("in this range"));
+        });
         Assert.Equal(1, UiThread.Named<TableLayoutPanel>(page, "reportCards").ColumnCount);
         Assert.All(UiThread.Controls(page).OfType<Skeleton>(), skeleton => Assert.False(skeleton.Visible));
     });

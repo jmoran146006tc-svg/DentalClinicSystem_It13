@@ -60,29 +60,33 @@ public sealed class IconTile : DesignControl
 public sealed class KpiCard : RoundedPanel
 {
     private readonly Label _value = new() { Dock = DockStyle.Fill, Font = Typography.KpiNumber, ForeColor = Palette.Ink900, Text = "0", AutoEllipsis = true };
+    private readonly Label _note = new() { AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500 };
     private double _current;
     public KpiCard(string title, string subtitle = "", IconKind icon = IconKind.Reports) : base(null, ElevationLevel.E1)
     {
         Height = Metrics.KpiHeight; Width = Metrics.FormWidth;
-        var copy = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, BackColor = Palette.Surface };
+        var copy = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 3, BackColor = Palette.Surface, Margin = Padding.Empty };
+        copy.ColumnStyles.Add(new(SizeType.Percent, 100)); copy.ColumnStyles.Add(new(SizeType.Absolute, Metrics.ControlHeight));
         copy.RowStyles.Add(new(SizeType.AutoSize)); copy.RowStyles.Add(new(SizeType.Percent, 100)); copy.RowStyles.Add(new(SizeType.AutoSize));
         _value.MinimumSize = new(0, Typography.KpiNumber.Height + Space.Sm);
-        var caption = new Label { Text = title, AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500 };
-        var note = new Label { Text = subtitle, AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500 };
+        var caption = new Label { Text = title, AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500, Margin = Padding.Empty };
+        _note.Text = subtitle;
+        _value.Margin = _note.Margin = Padding.Empty;
         copy.Controls.Add(caption, 0, 0);
-        copy.Controls.Add(_value, 0, 1); copy.Controls.Add(note, 0, 2);
-        var tile = new IconTile(icon) { Anchor = AnchorStyles.Top | AnchorStyles.Left };
+        copy.Controls.Add(_value, 0, 1); copy.Controls.Add(_note, 0, 2);
+        copy.SetColumnSpan(_value, 2); copy.SetColumnSpan(_note, 2);
+        var tile = new IconTile(icon) { Anchor = AnchorStyles.Top | AnchorStyles.Right,
+            Size = new(Metrics.ControlHeight, Metrics.ControlHeight), Margin = Padding.Empty };
         Content.SizeChanged += (_, _) =>
         {
-            tile.Location = new(Math.Max(0, Content.ClientSize.Width - tile.Width), 0);
             caption.MaximumSize = new(Math.Max(1, Content.ClientSize.Width - tile.Width - Space.Sm), 0);
-            note.MaximumSize = new(Math.Max(1, Content.ClientSize.Width - Space.Sm), 0);
+            _note.MaximumSize = new(Math.Max(1, Content.ClientSize.Width - Space.Sm), 0);
         };
-        Content.Controls.Add(copy); Content.Controls.Add(tile);
-        tile.Location = new(Math.Max(0, Content.ClientSize.Width - tile.Width), 0); tile.BringToFront();
+        copy.Controls.Add(tile, 1, 0); Content.Controls.Add(copy);
         MouseEnter += (_, _) => Elevation = ElevationLevel.E2;
         MouseLeave += (_, _) => Elevation = ElevationLevel.E1;
     }
+    public void SetSubtitle(string text) => _note.Text = text;
     public void SetValue(double value, Func<double, string>? format = null, bool animate = true)
     {
         format ??= number => number.ToString("N0");

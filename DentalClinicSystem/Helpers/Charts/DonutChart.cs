@@ -29,10 +29,23 @@ public sealed class DonutChart : DesignControl
             if (sweep <= 0) continue;
             using var brush = new SolidBrush(_state.Color(i)); e.Graphics.FillPie(brush, _ring, (float)segment.Start - 90, sweep);
         }
+        DrawSeparators(e.Graphics, displayed);
         var hole = Rectangle.Inflate(_ring, -(int)(_ring.Width * (1 - Metrics.DonutHoleRatio) / 2), -(int)(_ring.Height * (1 - Metrics.DonutHoleRatio) / 2));
         using var surface = new SolidBrush(Palette.Surface); e.Graphics.FillEllipse(surface, hole);
         var total = _state.Values.Sum();
         TextRenderer.DrawText(e.Graphics, double.IsFinite(total) ? _state.Format(total) : "Total exceeds chart scale", Typography.Heading, hole, Palette.Ink900, DesignPaint.TextFlags | TextFormatFlags.HorizontalCenter);
+    }
+    private void DrawSeparators(Graphics graphics, float displayed)
+    {
+        if (_sweeps.Count(segment => segment.Sweep > 0) < 2) return;
+        using var gap = new Pen(Palette.Surface, Metrics.Scale(this, Metrics.ChartSegmentGap));
+        var center = new PointF(_ring.Left + _ring.Width / 2f, _ring.Top + _ring.Height / 2f);
+        foreach (var segment in _sweeps.Where(segment => segment.Sweep > 0 && segment.Start < displayed))
+        {
+            var angle = (segment.Start - 90) * Math.PI / 180;
+            graphics.DrawLine(gap, center, new PointF(center.X + (float)Math.Cos(angle) * _ring.Width / 2,
+                center.Y + (float)Math.Sin(angle) * _ring.Height / 2));
+        }
     }
     protected override void OnMouseMove(MouseEventArgs e) { base.OnMouseMove(e); _state.Hover(ChartGeometry.Segment(e.Location, _ring, _sweeps)); }
     protected override bool IsInputKey(Keys keyData) => keyData is Keys.Left or Keys.Right or Keys.Up or Keys.Down || base.IsInputKey(keyData);

@@ -6,14 +6,14 @@ namespace DentalClinicSystem.Helpers.Design;
 // The measured caption is reserved on each wrapped row as well.
 public static class ToolbarLayout
 {
-    public static void Attach(FlowLayoutPanel toolbar)
+    public static void Attach(FlowLayoutPanel toolbar, bool trimEnd = false)
     {
         var aligning = false;
         void Align()
         {
             if (aligning || toolbar.IsDisposed) return;
             aligning = true;
-            try { Apply(toolbar); }
+            try { Apply(toolbar, trimEnd); }
             finally { aligning = false; }
         }
         toolbar.Layout += (_, _) => Align();
@@ -21,7 +21,7 @@ public static class ToolbarLayout
         toolbar.VisibleChanged += (_, _) => Align();
         Align();
     }
-    private static void Apply(FlowLayoutPanel toolbar)
+    private static void Apply(FlowLayoutPanel toolbar, bool trimEnd)
     {
         var controls = toolbar.Controls.Cast<Control>().Where(c => c.Visible).ToArray();
         foreach (var field in controls.OfType<FormField>()) field.PerformLayout();
@@ -34,7 +34,7 @@ public static class ToolbarLayout
         foreach (var control in controls)
         {
             var top = Math.Max(0, (int)Math.Round(center - InputCenter(control)));
-            control.Margin = new Padding(0, top, Space.Sm, Space.Sm);
+            control.Margin = new Padding(0, top, trimEnd && control == controls.LastOrDefault() ? 0 : Space.Sm, Space.Sm);
         }
     }
     private static double InputCenter(Control control) => control switch

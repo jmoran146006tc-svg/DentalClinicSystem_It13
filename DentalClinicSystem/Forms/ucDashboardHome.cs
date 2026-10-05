@@ -19,12 +19,11 @@ public sealed class ucDashboardHome : UserControl
     private readonly TimeProvider _time;
     private readonly DateTime _today;
     private readonly PageHeader _header;
-    private readonly TableLayoutPanel _body = new() { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, BackColor = Palette.Canvas };
+    private readonly TableLayoutPanel _body = new() { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, BackColor = Palette.Canvas, Margin = Padding.Empty };
     private readonly InlineAlert _alert = new() { Visible = false };
     private readonly AppButton _retry = UiFactory.Button("Retry", ButtonVariant.Secondary);
     private readonly List<KpiCard> _cards = [];
     private readonly Dictionary<int, string> _patientNames = [], _dentistNames = [];
-    private TableLayoutPanel? _kpis;
     private ucWeekCalendar? _calendar;
     private IReadOnlyList<Patient> _patientRows = [];
     private bool _loaded;
@@ -40,17 +39,22 @@ public sealed class ucDashboardHome : UserControl
         refresh.Click += async (_, _) => await LoadDashboardAsync();
         _header = new PageHeader(RoleAccess.IsDentist(actor) ? $"Your patients today, Dr. {actor.Username}" : DashboardPresentation.Greeting(actor.Username, now),
             DashboardPresentation.TodayLabel(_today), refresh);
-        var layout = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, BackColor = Palette.Canvas };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, BackColor = Palette.Canvas, Margin = Padding.Empty };
         layout.ColumnStyles.Add(new(SizeType.Percent, 100)); _body.ColumnStyles.Add(new(SizeType.Percent, 100));
         layout.Controls.Add(_header); layout.Controls.Add(_alert); layout.Controls.Add(_retry); layout.Controls.Add(_body); Controls.Add(layout);
         _retry.Visible = false; _retry.Click += async (_, _) => await LoadDashboardAsync(); UiMessages.RegisterAlertHost(this, _alert);
-        AddSkeletons(); _body.SizeChanged += (_, _) => ResizeKpis();
+        AddSkeletons();
         Load += async (_, _) => { FadeGreeting(); await LoadDashboardAsync(); };
     }
     private void AddSkeletons()
     {
-        if (!RoleAccess.IsDentist(_actor)) _body.Controls.Add(new Skeleton { Dock = DockStyle.Top, Height = Metrics.DashboardKpiHeight });
-        _body.Controls.Add(new Skeleton { Dock = DockStyle.Top, Height = Metrics.CalendarViewportHeight });
+        if (!RoleAccess.IsDentist(_actor))
+        {
+            var placeholders = Enumerable.Range(0, RoleAccess.Can(_actor, Permission.ViewReports) ? 4 : 3).Select(_ => new KpiCard("")).ToArray();
+            foreach (var card in placeholders) { var skeleton = new Skeleton { Dock = DockStyle.Fill }; card.Content.Controls.Add(skeleton); skeleton.BringToFront(); }
+            _body.Controls.Add(new KpiStrip(placeholders));
+        }
+        _body.Controls.Add(new Skeleton { Dock = DockStyle.Top, Height = Metrics.CalendarViewportHeight + Space.Lg * 2, Margin = Padding.Empty });
     }
     private void FadeGreeting()
     {
@@ -115,24 +119,17 @@ public sealed class ucDashboardHome : UserControl
     private void BuildStaff()
     {
         ClearBody(); _cards.Clear();
-        _kpis = new TableLayoutPanel { Name = "dashboardKpis", Dock = DockStyle.Top, AutoSize = true, BackColor = Palette.Canvas };
         _cards.Add(new KpiCard("Today's appointments", "All statuses", IconKind.Appointments));
         _cards.Add(new KpiCard("Active patients", "Current patient records", IconKind.Patients));
         _cards.Add(new KpiCard("Cancellations this week", "Appointments dated Monday–Sunday", IconKind.Close));
         if (RoleAccess.Can(_actor, Permission.ViewReports)) _cards.Add(new KpiCard("Billed this week", "Net billed · not collected", IconKind.Reports));
-        foreach (var card in _cards) { card.Height = Metrics.DashboardKpiHeight; card.Dock = DockStyle.Fill; _kpis.Controls.Add(card); }
-        _body.Controls.Add(_kpis);
-        var calendarCard = UiFactory.Card(); calendarCard.Dock = DockStyle.Top; calendarCard.Height = Metrics.CalendarViewportHeight + Space.Lg * 2;
+        _body.Controls.Add(new KpiStrip(_cards.ToArray()) { Name = "dashboardKpis" });
+        var calendarCard = UiFactory.Card(); calendarCard.Name = "dashboardCalendar"; calendarCard.Dock = DockStyle.Top;
+        calendarCard.Margin = Padding.Empty; calendarCard.Height = Metrics.CalendarViewportHeight + Space.Lg * 2;
         _calendar = new ucWeekCalendar { Dock = DockStyle.Fill };
         _calendar.WeekRequested += async (week, direction) => await UiAction.RunAsync(this, async () => { await LoadWeekAsync(week, direction); });
         _calendar.AppointmentActivated += async id => await UiAction.RunAsync(this, () => OpenDetailsAsync(id));
-        calendarCard.Content.Controls.Add(_calendar); _body.Controls.Add(calendarCard); ResizeKpis();
-    }
-    private void ResizeKpis()
-    {
-        if (_kpis is null || _kpis.IsDisposed) return;
-        var columns = _body.ClientSize.Width >= Metrics.FormWidth * 3 ? _cards.Count : 2;
-        ResponsiveCards.Arrange(_kpis, _cards.Cast<Control>().ToArray(), columns, Metrics.DashboardKpiHeight + Space.Lg);
+        calendarCard.Content.Controls.Add(_calendar); _body.Controls.Add(calendarCard);
     }
     private async Task<bool> AddHistoricalDentistsAsync(IReadOnlyList<Appointment> rows)
     {

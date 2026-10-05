@@ -39,9 +39,9 @@ public sealed class BarChart : DesignControl
         var bar = _bars[index]; var datum = _state.Data[index];
         DesignPaint.Surface(graphics, bar, Metrics.ControlRadius, _state.Color(index));
         TextRenderer.DrawText(graphics, datum.Label, Typography.Caption,
-            new Rectangle(Space.Xs, bar.Top, Math.Max(0, _plot.Left - Space.Sm), bar.Height), Palette.Ink700, DesignPaint.TextFlags);
+            new Rectangle(Space.Xs, bar.Top, Math.Max(0, _plot.Left - Space.Sm), bar.Height), Palette.Ink500, DesignPaint.TextFlags);
         TextRenderer.DrawText(graphics, _state.Format(_state.Values[index]), Typography.Caption,
-            new Rectangle(bar.Right + Space.Xs, bar.Top, Math.Max(0, Width - bar.Right - Space.Sm), bar.Height), Palette.Ink700, DesignPaint.TextFlags);
+            new Rectangle(bar.Right + Space.Xs, bar.Top, Math.Max(0, Width - bar.Right - Space.Sm), bar.Height), Palette.Ink500, DesignPaint.TextFlags);
     }
     protected override void OnMouseMove(MouseEventArgs e) { base.OnMouseMove(e); _state.Hover(Array.FindIndex(_bars, bar => bar.Contains(e.Location))); }
     protected override bool IsInputKey(Keys keyData) => keyData is Keys.Left or Keys.Right or Keys.Up or Keys.Down || base.IsInputKey(keyData);

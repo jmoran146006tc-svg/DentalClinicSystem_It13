@@ -17,18 +17,23 @@ public sealed class ucReports : UserControl
     private readonly DateTimePicker _to = new() { Name = "reportTo", Format = DateTimePickerFormat.Short };
     private readonly InlineAlert _alert = new() { Name = "reportAlert", Visible = false };
     private readonly AppButton _retry = UiFactory.Button("Retry", ButtonVariant.Secondary);
-    private readonly AppButton _export = UiFactory.Button("Export CSV", ButtonVariant.Secondary);
-    private readonly TableLayoutPanel _cards = new() { Name = "reportCards", Dock = DockStyle.Top, AutoSize = true, BackColor = Palette.Canvas };
-    private readonly DonutChart _status = new() { Name = "reportStatus", Dock = DockStyle.Top, Height = Metrics.ChartHeight };
+    private readonly AppButton _export = UiFactory.Button("Export CSV", ButtonVariant.Secondary, IconKind.Download);
+    private readonly TableLayoutPanel _cards = new() { Name = "reportCards", Dock = DockStyle.Top, AutoSize = true, BackColor = Palette.Canvas, Margin = Padding.Empty };
+    private readonly DonutChart _status = new() { Name = "reportStatus", Dock = DockStyle.Fill, Margin = Padding.Empty };
     private readonly LineChart _daily = new() { Name = "reportDaily", Dock = DockStyle.Fill };
-    private readonly BarChart _typesChart = new() { Name = "reportTypesChart", Dock = DockStyle.Top, Height = Metrics.ChartHeight };
-    private readonly ClinicTable _days = new() { Name = "reportDays", Dock = DockStyle.Fill };
+    private readonly BarChart _typesChart = new() { Name = "reportTypesChart", Dock = DockStyle.Fill };
     private readonly ClinicTable _types = new() { Name = "reportTypes", Dock = DockStyle.Fill };
     private readonly ClinicTable _workload = new() { Name = "reportWorkload", Dock = DockStyle.Fill };
-    private readonly KpiCard _billed = new("Billed for this range", "Net after discounts · not money collected");
-    private readonly List<RoundedPanel> _sections = [];
-    private readonly List<Label> _counts = [];
+    private readonly KpiCard _billed = new("Billed in range", "Net billed, not collected");
+    private readonly KpiCard _appointments = new("Appointments in range", "All statuses", IconKind.Appointments);
+    private readonly KpiCard _completion = new("Completion rate", "Completed appointments", IconKind.Check);
+    private readonly KpiCard _treatments = new("Treatments performed", "Treatments in range", IconKind.Treatments);
+    private readonly List<ReportSection> _sections = [];
     private readonly List<Skeleton> _skeletons = [];
+    private readonly KpiStrip _kpis;
+    private readonly ReportToolbar _toolbar;
+    private readonly ReportTypesContent _typesContent;
+    private bool _settingRange, _arranging;
     private ReportSnapshot? _snapshot;
     internal ReportSnapshot? Snapshot => _snapshot;
 
@@ -38,7 +43,18 @@ public sealed class ucReports : UserControl
         _reports = reports; _actor = currentUser; _time = time;
         Theme.MarkPrimitive(this); DesignPaint.EnableContainer(this);
         Dock = DockStyle.Fill; AutoScroll = true; Padding = Space.Page; BackColor = Palette.Canvas;
+        var refresh = UiFactory.Button("Refresh", ButtonVariant.Secondary); refresh.Name = "reportRefresh";
+        _toolbar = new(_from, _to, refresh, _export);
+        _typesContent = new(_typesChart, _types);
+        _kpis = new(_billed, _appointments, _completion, _treatments) { Name = "reportKpis" };
         SetRange(ReportRange.ThisMonth); BuildLayout(); _export.Enabled = false; _retry.Visible = false;
+        refresh.Click += async (_, _) => await RefreshPageAsync();
+        _toolbar.Ranges.SelectIndexChanged += async (_, _) =>
+        {
+            if (_settingRange || _toolbar.Ranges.SelectIndex == 3) return;
+            SetRange((ReportRange)_toolbar.Ranges.SelectIndex); await RefreshPageAsync();
+        };
+        _from.ValueChanged += (_, _) => SelectCustom(); _to.ValueChanged += (_, _) => SelectCustom();
         _retry.Name = "reportRetry"; _export.Name = "reportExport";
         UiMessages.RegisterAlertHost(this, _alert);
         Load += async (_, _) => await RefreshPageAsync();
@@ -48,61 +64,57 @@ public sealed class ucReports : UserControl
     }
     private void BuildLayout()
     {
-        var layout = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, BackColor = Palette.Canvas };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, BackColor = Palette.Canvas, Margin = Padding.Empty };
         layout.ColumnStyles.Add(new(SizeType.Percent, 100));
         layout.Controls.Add(new PageHeader("Reports", "Billed amounts are not money collected"));
-        layout.Controls.Add(Toolbar()); layout.Controls.Add(_alert); layout.Controls.Add(_retry); layout.Controls.Add(_cards); Controls.Add(layout);
-        AddSection("Appointments by status", StatusContent()); AddSection("Billed by day", DailyContent());
-        var types = new Panel { Dock = DockStyle.Fill, BackColor = Palette.Surface }; types.Controls.Add(_types); types.Controls.Add(_typesChart);
-        AddSection("Top treatment types", types); AddSection("Dentist workload", _workload);
-    }
-    private Control Toolbar()
-    {
-        var toolbar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, BackColor = Palette.Canvas, WrapContents = true };
-        toolbar.Controls.Add(UiFactory.Field(_from, "From", FieldKind.Date)); toolbar.Controls.Add(UiFactory.Field(_to, "To", FieldKind.Date));
-        foreach (var (range, text) in new[] { (ReportRange.ThisWeek, "This week"), (ReportRange.ThisMonth, "This month"), (ReportRange.LastThirtyDays, "Last 30 days") })
+        layout.Controls.Add(_toolbar); layout.Controls.Add(_alert); layout.Controls.Add(_retry); layout.Controls.Add(_kpis); layout.Controls.Add(_cards); Controls.Add(layout);
+        AddSection("Appointments by status", StatusContent(), "No appointments in this range", IconKind.Appointments);
+        AddSection("Billed by day", _daily, "No billed treatments in this range", IconKind.Reports);
+        AddSection("Top treatment types", _typesContent, "No treatments in this range", IconKind.Treatments);
+        AddSection("Dentist workload", _workload, "No dentist activity in this range", IconKind.Dentist);
+        foreach (var card in new[] { _billed, _appointments, _completion, _treatments })
         {
-            var button = UiFactory.Button(text, ButtonVariant.Ghost);
-            button.Click += async (_, _) => { SetRange(range); await RefreshPageAsync(); }; toolbar.Controls.Add(button);
+            var skeleton = new Skeleton { Dock = DockStyle.Fill }; card.Content.Controls.Add(skeleton);
+            skeleton.BringToFront(); _skeletons.Add(skeleton);
         }
-        var refresh = UiFactory.Button("Refresh", ButtonVariant.Secondary); refresh.Name = "reportRefresh";
-        refresh.Click += async (_, _) => await RefreshPageAsync(); toolbar.Controls.Add(refresh); toolbar.Controls.Add(_export); ToolbarLayout.Attach(toolbar); return toolbar;
     }
     private Control StatusContent()
     {
-        var content = new Panel { Dock = DockStyle.Fill, BackColor = Palette.Surface };
-        var legend = new TableLayoutPanel { Name = "reportLegend", Dock = DockStyle.Fill, ColumnCount = 2, RowCount = AppointmentStatus.All.Length, BackColor = Palette.Surface };
-        legend.ColumnStyles.Add(new(SizeType.Percent, 65)); legend.ColumnStyles.Add(new(SizeType.Percent, 35));
-        foreach (var status in AppointmentStatus.All)
+        var content = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Palette.Surface };
+        content.ColumnStyles.Add(new(SizeType.Percent, 40)); content.ColumnStyles.Add(new(SizeType.Percent, 60));
+        content.RowStyles.Add(new(SizeType.Percent, 100));
+        var legend = new ReportLegend(); _status.ValuesChanged += legend.SetValues;
+        content.Controls.Add(_status, 0, 0); content.Controls.Add(legend, 1, 0); return content;
+    }
+    private void AddSection(string title, Control content, string emptyText, IconKind icon)
+    {
+        var card = new ReportSection(title, content, emptyText, icon) { Name = "reportSection" + _sections.Count };
+        _sections.Add(card); _cards.Controls.Add(card);
+    }
+    private void ResizeCards()
+    {
+        if (_arranging || _sections.Count != 4) return;
+        _arranging = true;
+        try
         {
-            var index = _counts.Count;
-            var count = new Label { Name = "reportCount" + status, Text = "0", Dock = DockStyle.Fill, Font = Typography.Body, TextAlign = ContentAlignment.MiddleRight, AccessibleName = AppointmentStatus.Display(status) + " count" };
-            _counts.Add(count); legend.RowStyles.Add(new(SizeType.Absolute, Metrics.ControlHeight)); legend.Controls.Add(UiFactory.Status(status), 0, index); legend.Controls.Add(count, 1, index);
+            var columns = ClientSize.Width >= Metrics.Scale(this, Metrics.FormWidth * 3) ? 2 : 1;
+            var rows = Math.Clamp(_snapshot?.Workload.Count ?? 3, 3, 8);
+            var workloadHeight = Space.Lg * 2 + Metrics.ControlHeight + Metrics.GridHeaderHeight + rows * Metrics.NavHeight;
+            ResponsiveCards.Arrange(_cards, _sections.Cast<Control>().ToArray(), columns, Metrics.ReportCardHeight, spanFrom: 2, workloadHeight);
         }
-        _status.ValuesChanged += values => { for (var i = 0; i < values.Count; i++) _counts[i].Text = values[i].ToString("N0"); };
-        content.Controls.Add(legend); content.Controls.Add(_status); return content;
+        finally { _arranging = false; }
     }
-    private Control DailyContent()
-    {
-        var content = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, BackColor = Palette.Surface };
-        content.ColumnStyles.Add(new(SizeType.Percent, 100));
-        content.RowStyles.Add(new(SizeType.Absolute, Metrics.KpiHeight)); content.RowStyles.Add(new(SizeType.Absolute, Metrics.ChartHeight)); content.RowStyles.Add(new(SizeType.Percent, 100));
-        _billed.Dock = DockStyle.Fill; content.Controls.Add(_billed, 0, 0); content.Controls.Add(_daily, 0, 1); content.Controls.Add(_days, 0, 2); return content;
-    }
-    private void AddSection(string title, Control content)
-    {
-        var card = UiFactory.Card(); card.Name = "reportSection" + _sections.Count; card.Dock = DockStyle.Fill;
-        var heading = new Label { Text = title, Dock = DockStyle.Top, Height = Metrics.ControlHeight, Font = Typography.Heading, ForeColor = Palette.Ink900 };
-        var body = new Panel { Dock = DockStyle.Fill, BackColor = Palette.Surface }; body.Controls.Add(content);
-        var skeleton = new Skeleton { Dock = DockStyle.Fill }; body.Controls.Add(skeleton); skeleton.BringToFront(); _skeletons.Add(skeleton);
-        card.Content.Controls.Add(body); card.Content.Controls.Add(heading); _sections.Add(card); _cards.Controls.Add(card);
-    }
-    private void ResizeCards() => ResponsiveCards.Arrange(_cards, _sections.Cast<Control>().ToArray(),
-        ClientSize.Width >= Metrics.Scale(this, Metrics.FormWidth * 3) ? 2 : 1, Metrics.ReportCardHeight);
     private void SetRange(ReportRange range)
     {
-        var dates = ReportsPresentation.Range(range, _time.GetLocalNow().DateTime); _from.Value = dates.From; _to.Value = dates.To;
+        _settingRange = true;
+        try
+        {
+            var dates = ReportsPresentation.Range(range, _time.GetLocalNow().DateTime); _from.Value = dates.From; _to.Value = dates.To;
+            _toolbar.Ranges.SelectIndex = (int)range;
+        }
+        finally { _settingRange = false; }
     }
+    private void SelectCustom() { if (!_settingRange) _toolbar.Ranges.SelectIndex = 3; }
     internal Task RefreshPageAsync() => UiAction.RunAsync(this, RefreshAsync);
     private async Task RefreshAsync()
     {
@@ -132,7 +144,7 @@ public sealed class ucReports : UserControl
             if (!IsDisposed && !success)
             {
                 HideSkeletons(); _retry.Visible = true;
-                if (_snapshot is null || !RoleAccess.Can(_actor, Permission.ViewReports)) { _cards.Visible = false; _export.Enabled = false; }
+                if (_snapshot is null || !RoleAccess.Can(_actor, Permission.ViewReports)) { _cards.Visible = _kpis.Visible = false; _export.Enabled = false; }
                 if (!_alert.Visible) _alert.ShowMessage("Reports could not be loaded. Try again.");
             }
         }
@@ -140,23 +152,47 @@ public sealed class ucReports : UserControl
     private void Bind(ReportSnapshot snapshot)
     {
         using var before = _snapshot is null ? ContentReveal.Snapshot(_cards) : null;
-        _snapshot = snapshot; _cards.Visible = true; SuspendLayout();
+        _snapshot = snapshot; _cards.Visible = _kpis.Visible = true; SuspendLayout();
         try
         {
             HideSkeletons();
             _status.SetData(ReportsPresentation.StatusChart(snapshot.Status), value => value.ToString("N0"), "No appointments in this range");
             _daily.SetData(ReportsPresentation.DailyChart(snapshot.Days), ChartCurrency, "No billed treatments in this range");
-            _typesChart.SetData(ReportsPresentation.TypeChart(snapshot.Types), value => value.ToString("N0"), "No treatments in this range");
-            _billed.SetValue((double)snapshot.Days.Sum(row => row.Billed), ChartCurrency);
-            GridHelper.Bind(_days, snapshot.Days, key: null, emptyMessage: "No billed treatments in this range");
-            GridHelper.Bind(_types, snapshot.Types, key: null, emptyMessage: "No treatments in this range"); GridHelper.Bind(_workload, snapshot.Workload, key: null, emptyMessage: "No dentist activity in this range");
+            _typesContent.SetData(snapshot.Types);
+            BindKpis(snapshot); BindTables(snapshot);
+            _sections[0].SetEmpty(snapshot.Status.Sum(row => row.Total) == 0); _sections[1].SetEmpty(snapshot.Days.Count == 0);
+            _sections[2].SetEmpty(snapshot.Types.Count == 0); _sections[3].SetEmpty(snapshot.Workload.Count == 0); ResizeCards();
             _export.Enabled = true;
         }
         finally { ResumeLayout(true); }
         ContentReveal.Play(_cards, before is null ? null : (Bitmap)before.Clone());
     }
+    private void BindKpis(ReportSnapshot snapshot)
+    {
+        var total = snapshot.Status.Sum(row => row.Total);
+        var completed = snapshot.Status.Where(row => row.Status == AppointmentStatus.Completed).Sum(row => row.Total);
+        _billed.SetValue((double)snapshot.Days.Sum(row => row.Billed), ChartCurrency); _appointments.SetValue(total);
+        _completion.SetValue(total == 0 ? 0 : (double)completed / total, value => total == 0 ? "n/a" : value.ToString("P0"));
+        // The existing query returns at most ten types, so completeness is unknown at its limit.
+        var complete = snapshot.Types.Count < 10;
+        _treatments.SetValue(snapshot.Types.Sum(row => row.Total), value => complete ? value.ToString("N0") : "n/a");
+        _treatments.SetSubtitle(complete ? "Treatments in range" : "Total unavailable from top list");
+    }
+    private void BindTables(ReportSnapshot snapshot)
+    {
+        GridHelper.Bind(_types, snapshot.Types.Select(row => new TreatmentRow(row.Name, row.Total, row.Billed)), key: null, emptyMessage: "No treatments in this range");
+        GridHelper.Bind(_workload, snapshot.Workload.Select(row => new WorkloadRow(row.Dentist, row.Total, row.Completed,
+            row.Total == 0 ? "n/a" : ((double)row.Completed / row.Total).ToString("P0"), row.Billed)), key: null, emptyMessage: "No dentist activity in this range");
+        _workload.Columns.First(column => column.Key == nameof(WorkloadRow.Completion)).Title = "Completion %";
+    }
+    private sealed record TreatmentRow(string Treatment, int Count, decimal Billed);
+    private sealed record WorkloadRow(string Dentist, int Appointments, int Completed, string Completion, decimal Billed);
     private static string ChartCurrency(double value) => value >= (double)decimal.MaxValue ? value.ToString("N2") : DisplayFormat.Currency((decimal)value);
-    private void HideSkeletons() { foreach (var skeleton in _skeletons) skeleton.Visible = false; }
+    private void HideSkeletons()
+    {
+        foreach (var skeleton in _skeletons) skeleton.Visible = false;
+        foreach (var section in _sections) section.StopLoading();
+    }
     private async Task ExportAsync()
     {
         if (_snapshot is not { } snapshot) return;

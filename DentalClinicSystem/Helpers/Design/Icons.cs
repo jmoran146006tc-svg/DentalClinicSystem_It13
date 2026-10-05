@@ -6,7 +6,7 @@ public enum IconKind
 {
     Dashboard, Patients, Dentist, Appointments, Treatments, Users, Reports, Logout,
     Search, Plus, Close, Check, Warning, Info, ChevronLeft, ChevronRight, ChevronDown,
-    Eye, EyeOff, Clock, Edit, Phone, Mail, User, Lock
+    Eye, EyeOff, Clock, Edit, Phone, Mail, User, Lock, Download
 }
 
 public static class Icons
@@ -16,6 +16,9 @@ public static class Icons
         var path = new GraphicsPath();
         switch (kind)
         {
+            case IconKind.Download:
+                Lines(path, new(12, 3), new(12, 15)); Lines(path, new(7, 10), new(12, 15), new(17, 10));
+                Lines(path, new(4, 15), new(4, 21), new(20, 21), new(20, 15)); break;
             case IconKind.Dashboard:
                 foreach (var x in new[] { 3, 14 }) foreach (var y in new[] { 3, 14 }) path.AddRectangle(new(x, y, 7, 7));
                 break;
