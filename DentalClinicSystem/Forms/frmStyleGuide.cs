@@ -1,5 +1,6 @@
 #if DEBUG
 using DentalClinicSystem.Helpers;
+using DentalClinicSystem.Helpers.Charts;
 using DentalClinicSystem.Helpers.Design;
 using DentalClinicSystem.Helpers.Design.Controls;
 using DentalClinicSystem.Helpers.Design.Motion;
@@ -13,13 +14,16 @@ public sealed class frmStyleGuide : Form
 {
     private readonly FlowLayoutPanel _sections = new() { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Padding = Space.Page, BackColor = Palette.Canvas };
     private readonly Label _activity = new() { Width = Metrics.FormWidth / 2, Height = Metrics.ControlHeight, ForeColor = Palette.Ink500, Font = Typography.Caption };
+    private readonly BarChart _bar = new();
+    private readonly LineChart _line = new();
+    private readonly DonutChart _donut = new();
     public frmStyleGuide()
     {
         Text = "Dental Care — style guide"; Size = Metrics.MinimumWindow; MinimumSize = Metrics.MinimumWindow; BackColor = Palette.Canvas;
         Controls.Add(_sections);
         _sections.Controls.Add(new Label { Text = "Design system", Font = Typography.Display, ForeColor = Palette.Ink900, AutoSize = true });
         _sections.Controls.Add(new Label { Text = "Review at 100%, 125% and 150%. Use Tab and Shift+Tab to inspect keyboard focus.", Font = Typography.Body, ForeColor = Palette.Ink500, AutoSize = true });
-        Colors(); TypeScale(); Buttons(); Fields(); Components(); IconsSection(); Grids(); Dashboards(); MotionSection();
+        Colors(); TypeScale(); Buttons(); Fields(); Components(); IconsSection(); Grids(); Dashboards(); Charts(); MotionSection();
         _sections.SizeChanged += (_, _) => ResizeSections(); ResizeSections();
         WindowChrome.Apply(this); MotionSystem.Animator.ActivityChanged += OnActivity;
         OnActivity(this, EventArgs.Empty);
@@ -143,9 +147,27 @@ public sealed class frmStyleGuide : Form
         calendar.AppointmentActivated += id => { using var owner = UiMessages.UseOwner(this); UiMessages.ShowInfo($"Sample appointment #{id} selected."); };
         Shown += (_, _) => ShowWeek(DashboardPresentation.WeekStart(DateTime.Today), 0);
     }
+    private void Charts()
+    {
+        var charts = Section("Charts · text summaries, keyboard focus and hover tooltips");
+        charts.Controls.AddRange([_donut, _line, _bar]);
+        charts.Controls.Add(new Label { AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink700,
+            Text = "Sample: Scheduled 4, Completed 9. Billed: day 1 PHP 800, day 2 PHP 1200. Cleaning 2, Consultation 3." });
+        Shown += (_, _) => ReplayCharts();
+    }
+    private void ReplayCharts()
+    {
+        _donut.SetData([], value => value.ToString("N0"), "No appointments");
+        _line.SetData([], value => value.ToString("N2"), "No billed treatments");
+        _bar.SetData([], value => value.ToString("N0"), "No treatments");
+        _donut.SetData([new(AppointmentStatus.Scheduled, 4, Theme.StatusStyle(AppointmentStatus.Scheduled).Text), new(AppointmentStatus.Completed, 9, Theme.StatusStyle(AppointmentStatus.Completed).Text)], value => value.ToString("N0"), "No appointments");
+        _line.SetData([new("Day 1", 800, Palette.Brand), new("Day 2", 1200, Palette.Brand)], value => DisplayFormat.Currency((decimal)value), "No billed treatments");
+        _bar.SetData([new("Cleaning", 2, Palette.Brand), new("Consultation", 3, Palette.Brand)], value => value.ToString("N0"), "No treatments");
+    }
     private void MotionSection()
     {
         var motions = Section("Motion · replay and inspect"); motions.Controls.Add(_activity);
+        var charts = UiFactory.Button("Chart motion"); charts.Click += (_, _) => ReplayCharts(); motions.Controls.Add(charts);
         var slow = UiFactory.Toggle("Slow motion ×4"); slow.CheckedChanged += (_, _) => MotionSystem.TimeScale = slow.Checked ? 4 : 1; motions.Controls.Add(slow);
         var reduce = UiFactory.Toggle("Reduce motion"); reduce.CheckedChanged += (_, _) => { if (reduce.Checked) MotionSystem.Enabled = false; else MotionSystem.UseSystemPreference(); }; motions.Controls.Add(reduce);
         var kpi = new KpiCard("Appointments today", "Demo value", IconKind.Appointments); motions.Controls.Add(kpi);

@@ -119,7 +119,7 @@ public sealed class ucDashboardHome : UserControl
         _cards.Add(new KpiCard("Today's appointments", "All statuses", IconKind.Appointments));
         _cards.Add(new KpiCard("Active patients", "Current patient records", IconKind.Patients));
         _cards.Add(new KpiCard("Cancellations this week", "Appointments dated Monday–Sunday", IconKind.Close));
-        if (RoleAccess.Can(_actor, Permission.ViewReports)) _cards.Add(new KpiCard("Revenue this week", "Net billed · not collected", IconKind.Reports));
+        if (RoleAccess.Can(_actor, Permission.ViewReports)) _cards.Add(new KpiCard("Billed this week", "Net billed · not collected", IconKind.Reports));
         foreach (var card in _cards) { card.Height = Metrics.DashboardKpiHeight; card.Dock = DockStyle.Fill; _kpis.Controls.Add(card); }
         _body.Controls.Add(_kpis);
         var calendarCard = UiFactory.Card(); calendarCard.Dock = DockStyle.Top; calendarCard.Height = Metrics.CalendarViewportHeight + Space.Lg * 2;
@@ -132,17 +132,7 @@ public sealed class ucDashboardHome : UserControl
     {
         if (_kpis is null || _kpis.IsDisposed) return;
         var columns = _body.ClientSize.Width >= Metrics.FormWidth * 3 ? _cards.Count : 2;
-        if (_kpis.ColumnCount == columns && _kpis.RowCount > 0) return;
-        _kpis.SuspendLayout();
-        try
-        {
-            _kpis.ColumnCount = columns; _kpis.RowCount = (_cards.Count + columns - 1) / columns;
-            _kpis.ColumnStyles.Clear(); _kpis.RowStyles.Clear();
-            for (var c = 0; c < columns; c++) _kpis.ColumnStyles.Add(new(SizeType.Percent, 100f / columns));
-            for (var r = 0; r < _kpis.RowCount; r++) _kpis.RowStyles.Add(new(SizeType.Absolute, Metrics.Scale(this, Metrics.DashboardKpiHeight + Space.Lg)));
-            for (var i = 0; i < _cards.Count; i++) _kpis.SetCellPosition(_cards[i], new(i % columns, i / columns));
-        }
-        finally { _kpis.ResumeLayout(true); }
+        ResponsiveCards.Arrange(_kpis, _cards.Cast<Control>().ToArray(), columns, Metrics.DashboardKpiHeight + Space.Lg);
     }
     private async Task<bool> AddHistoricalDentistsAsync(IReadOnlyList<Appointment> rows)
     {

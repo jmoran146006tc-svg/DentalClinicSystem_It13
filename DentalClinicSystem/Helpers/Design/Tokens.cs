@@ -107,6 +107,8 @@ public static class Metrics
     public const int CalendarHeaderHeight = 48, CalendarHourHeight = 72, CalendarGutter = 64;
     public const int CalendarDayWidth = 100, CalendarViewportHeight = 560, CalendarStatusBar = 3;
     public const int DashboardKpiHeight = KpiHeight, WorklistHeight = 216, HistoryRowHeight = 156;
+    public const int ChartHeight = 240, ReportCardHeight = 640, ChartAxisWidth = 80, ChartLabelWidth = 132;
+    public const float ChartDimOpacity = .55f, ChartAreaOpacity = .14f, DonutHoleRatio = .64f, ChartAreaStart = .65f;
     public const float IconStroke = 1.75f, IconGrid = 24, HighlightAlpha = .14f;
     public static Size MinimumWindow => new(MinimumWidth, MinimumHeight);
     public static int Scale(Control owner, int value) => (int)Math.Round(value * owner.DeviceDpi / 96d);

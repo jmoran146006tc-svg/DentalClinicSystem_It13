@@ -200,7 +200,7 @@ public class AntdIntegrationTests
     });
 
     [Fact]
-    public void ReportsPopulateEveryAntdTabBeforeItIsSelected() => UiThread.Run(() =>
+    public void ReportsPopulateEverySectionWithoutSelectingTabs() => UiThread.Run(() =>
     {
         var reports = ServiceStub.For<IReportService>(
             (nameof(IReportService.GetAppointmentStatusCountsAsync), Task.FromResult(ServiceResult<IReadOnlyList<AppointmentStatusCount>>.Ok([new("Scheduled", 2)]))),
@@ -209,9 +209,12 @@ public class AntdIntegrationTests
             (nameof(IReportService.GetDentistWorkloadAsync), Task.FromResult(ServiceResult<IReadOnlyList<DentistWorkload>>.Ok([new("Miguel Reyes", 2, 1, 1250m)]))));
         using var page = new ucReports(reports, ClinicFixture.Actor()) { Dock = DockStyle.Fill };
         using var host = new Form { ClientSize = new(1200, 800) }; host.Controls.Add(page); UiThread.Show(host);
-        var tabs = UiThread.Controls(page).OfType<AntdUI.Tabs>().Single(); Assert.Equal(4, tabs.Pages.Count);
-        Assert.Equal("Billed by day", tabs.Pages[1].Text);
-        foreach (var tab in tabs.Pages) { tabs.SelectedTab = tab; Application.DoEvents(); Assert.Single(tab.Controls.OfType<ClinicTable>().Single().Records); }
+        Assert.Empty(UiThread.Controls(page).OfType<AntdUI.Tabs>());
+        Assert.NotNull(page.Snapshot); Assert.Equal(5, page.Snapshot.Status.Count);
+        foreach (var grid in UiThread.Controls(page).OfType<ClinicTable>()) Assert.Single(grid.Records);
+        Assert.Equal("2", UiThread.Named<Label>(page, "reportCountScheduled").Text);
+        Assert.Equal("0", UiThread.Named<Label>(page, "reportCountNoShow").Text);
+        Assert.Equal(1250m, page.Snapshot.Days.Sum(row => row.Billed));
         UiThread.Capture(host, "reports");
     });
 
