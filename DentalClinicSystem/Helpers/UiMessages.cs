@@ -17,6 +17,11 @@ namespace DentalClinicSystem.Helpers
             if (!result.Success) ShowError(result);
             return result.Data ?? Array.Empty<T>();
         }
+        public static bool TryItems<T>(ServiceResult<IReadOnlyList<T>> result, out IReadOnlyList<T> items)
+        {
+            items = Items(result);
+            return result.Success;
+        }
 
         public static void ShowError(ServiceResult result)
         {
@@ -31,7 +36,17 @@ namespace DentalClinicSystem.Helpers
         public static void ShowSuccess(string text) => Feedback(text, Semantic.Success);
         public static void ShowInfo(string text) => Feedback(text, Semantic.Info);
         public static void ShowUnexpectedError() => ShowError(ServiceResult.Fail("The action could not be completed. Check the database connection and try again."));
-        public static void ShowFatal(string text) => MessageBox.Show(text, "Dental clinic", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        public static void ShowFatal(string text)
+        {
+            var form = Application.OpenForms.Cast<Form>().FirstOrDefault(form => !form.IsDisposed && form.IsHandleCreated);
+            if (form is not null && form.InvokeRequired)
+            {
+                try { form.BeginInvoke(() => ShowFatal(text)); }
+                catch (InvalidOperationException) { }
+                return;
+            }
+            MessageBox.Show(form, text, "Dental clinic", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
         private static Form? Owner() => Current.Value?.FindForm() ?? Form.ActiveForm ?? Application.OpenForms.Cast<Form>().FirstOrDefault(form => form.Visible);
         private static void Feedback(string text, Semantic semantic)
         {

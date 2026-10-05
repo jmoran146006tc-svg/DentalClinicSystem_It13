@@ -12,6 +12,10 @@ namespace DentalClinicSystem
         [STAThread]
         static void Main(string[] args)
         {
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += (_, e) => ReportFatal(e.Exception);
+            AppDomain.CurrentDomain.UnhandledException += (_, e) => ReportFatal(e.ExceptionObject as Exception ?? new InvalidOperationException());
+            TaskScheduler.UnobservedTaskException += (_, e) => { ReportFatal(e.Exception); e.SetObserved(); };
             ApplicationConfiguration.Initialize();
             AntdTheme.Initialize();
             Application.ApplicationExit += (_, _) => { MotionSystem.Animator.Dispose(); ShadowCache.Clear(); DesignPaint.ClearPaths(); };
@@ -48,6 +52,12 @@ namespace DentalClinicSystem
                     if (context.MainForm is null) context.ExitThread();
                 }
             }
+        }
+
+        private static void ReportFatal(Exception error)
+        {
+            AppLog.Write(error);
+            UiMessages.ShowFatal("An unexpected error occurred. Close and reopen the application. If it happens again, ask your administrator to check the diagnostic log.");
         }
 
         private static AppServices BuildServices()

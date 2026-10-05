@@ -47,13 +47,15 @@ public partial class ucPatientRecords : UserControl
         btnClear.Click += (_, _) => ClearForm();
         _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManagePatients);
         _layout.UseModal(SaveAsync, AfterSaveAsync);
+        _layout.UseRefresh(RefreshGridAsync);
         if (!RoleAccess.Can(currentUser, Permission.ViewPatients)) Enabled = false;
     }
     private async void ucPatientRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await RefreshGridAsync(); });
     private async Task RefreshGridAsync()
     {
         var result = _layout.ShowInactive.Checked ? await _patientService.GetAllIncludingInactiveAsync(_currentUser) : await _patientService.GetAllPatientsAsync(_currentUser);
-        _patients = UiMessages.Items(result); if (!IsDisposed) BindRows();
+        if (IsDisposed || !UiMessages.TryItems(result, out _patients)) return;
+        BindRows();
     }
     private void BindRows()
     {

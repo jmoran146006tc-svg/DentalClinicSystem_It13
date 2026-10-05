@@ -30,6 +30,9 @@ public sealed class frmDentistTimeOff : DialogShell
         root.Controls.Add(alert, 0, 0); root.Controls.Add(_grid, 0, 1); root.Controls.Add(fields, 0, 2); Body.Controls.Add(root);
         foreach (var picker in new[] { _from, _to }) { picker.Format = DateTimePickerFormat.Custom; picker.CustomFormat = DisplayFormat.DatePattern; }
         GridTheme.Apply(_grid); DismissButton.Text = "Close"; Footer.Controls.Add(_remove); _remove.Enabled = false;
+        var refresh = UiFactory.Button("Refresh", ButtonVariant.Secondary);
+        refresh.Click += async (_, _) => await UiAction.RunAsync(this, async () => { alert.Dismiss(); await LoadRowsAsync(); }, refresh);
+        Footer.Controls.Add(refresh);
         _grid.SelectionChanged += (_, _) => _remove.Enabled = _grid.SelectedRecord is not null;
         _remove.Click += async (_, _) => await UiAction.RunAsync(this, async () =>
         {

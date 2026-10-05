@@ -34,17 +34,24 @@ public partial class ucUserManagement : UserControl
         GridTheme.MuteInactive<UserRow>(dgvUsers, row => !row.IsActive);
         Enabled = RoleAccess.Can(currentUser, Permission.ManageUsers); ClearForm();
         _layout.UseModal(SaveAsync, AfterSaveAsync);
+        _layout.UseRefresh(LoadAsync);
     }
     private async void ucUserManagement_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await LoadAsync(); });
     private async Task LoadAsync()
     {
-        var dentists = UiMessages.Items(await _dentistService.GetAllDentistsAsync(_currentUser));
+        var result = await _dentistService.GetAllDentistsAsync(_currentUser);
+        if (IsDisposed || !UiMessages.TryItems(result, out var dentists)) return;
         _dentistNames = dentists.ToDictionary(d => d.DentistId, d => d.FullName);
         cboDentist.DataSource = dentists.Where(d => d.IsActive).Select(d => new DisplayOption(d.DentistId, d.FullName)).ToList();
         cboDentist.DisplayMember = nameof(DisplayOption.Display); cboDentist.ValueMember = nameof(DisplayOption.Id);
         await RefreshGridAsync();
     }
-    private async Task RefreshGridAsync() { _users = UiMessages.Items(await _userService.GetAllUsersAsync(_currentUser)); if (!IsDisposed) BindRows(); }
+    private async Task RefreshGridAsync()
+    {
+        var result = await _userService.GetAllUsersAsync(_currentUser);
+        if (IsDisposed || !UiMessages.TryItems(result, out _users)) return;
+        BindRows();
+    }
     private void BindRows()
     {
         var rows = _users.Where(u => new[] { u.Username, u.Role }.Any(v => v.Contains(_layout.Search.Text.Trim(), StringComparison.OrdinalIgnoreCase)))

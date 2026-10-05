@@ -49,6 +49,7 @@ namespace DentalClinicSystem
             txtPassword.KeyUp += (_, _) => UpdateCaps(); txtPassword.GotFocus += (_, _) => UpdateCaps(); UpdateCaps();
             UiMessages.RegisterAlertHost(this, _alert);
             FitWindowToPhoto();
+            MinimumSize = Size;
             ResumeLayout(true); _hero.Bounds = _backdrop.ClientRectangle; _hero.Relayout();
             Shown += (_, _) =>
             {

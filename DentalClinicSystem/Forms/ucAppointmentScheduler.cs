@@ -70,6 +70,7 @@ public partial class ucAppointmentScheduler : UserControl
         dtpAppointmentDateTime.ValueChanged += AvailabilityChanged; cboDentist.SelectedIndexChanged += AvailabilityChanged;
         _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManageAppointments);
         _layout.UseModal(ScheduleAsync, AfterScheduleAsync, allowEdit: false);
+        _layout.UseRefresh(LoadAsync);
         Enabled = RoleAccess.Can(currentUser, Permission.ViewAppointments);
         ClearForm();
     }
@@ -78,18 +79,18 @@ public partial class ucAppointmentScheduler : UserControl
     {
         if (RoleAccess.Can(_currentUser, Permission.ManageAppointments))
         {
-            var patients = UiMessages.Items(await _patientService.GetAllIncludingInactiveAsync(_currentUser));
-            if (IsDisposed) return;
+            var patientResult = await _patientService.GetAllIncludingInactiveAsync(_currentUser);
+            if (IsDisposed || !UiMessages.TryItems(patientResult, out var patients)) return;
             _patientNamesById = patients.ToDictionary(p => p.PatientId, p => p.FullName);
             cboPatient.DataSource = patients.Select(p => new DisplayOption(p.PatientId, p.FullName + (p.IsActive ? "" : " (inactive, will reactivate)"))).ToList();
             cboPatient.DisplayMember = nameof(DisplayOption.Display); cboPatient.ValueMember = nameof(DisplayOption.Id);
-            _dentists = UiMessages.Items(await _dentistService.GetAllDentistsAsync(_currentUser));
-            if (IsDisposed) return;
+            var dentistResult = await _dentistService.GetAllDentistsAsync(_currentUser);
+            if (IsDisposed || !UiMessages.TryItems(dentistResult, out _dentists)) return;
             _dentistNamesById = _dentists.ToDictionary(d => d.DentistId, d => d.FullName);
             cboDentist.DisplayMember = nameof(DisplayOption.Display); cboDentist.ValueMember = nameof(DisplayOption.Id);
             cboDentist.DataSource = _dentists.Where(d => d.IsActive).Select(d => new DisplayOption(d.DentistId, d.FullName)).ToList();
-            var reasons = UiMessages.Items(await _treatmentTypes.GetVisitReasonsAsync(_currentUser));
-            if (IsDisposed) return;
+            var reasonResult = await _treatmentTypes.GetVisitReasonsAsync(_currentUser);
+            if (IsDisposed || !UiMessages.TryItems(reasonResult, out var reasons)) return;
             cmbReason.DataSource = reasons.ToList(); cmbReason.SelectedIndex = -1;
             _lookupsLoaded = true; await RefreshAvailabilityAsync();
         }
@@ -97,7 +98,8 @@ public partial class ucAppointmentScheduler : UserControl
     }
     private async Task RefreshGridAsync()
     {
-        _appointments = UiMessages.Items(await _appointmentService.GetAllAppointmentsAsync(_currentUser));
+        var resultRows = await _appointmentService.GetAllAppointmentsAsync(_currentUser);
+        if (IsDisposed || !UiMessages.TryItems(resultRows, out _appointments)) return;
         foreach (var a in _appointments.Where(a => RoleAccess.CanAccessAppointment(_currentUser, a) && (!_patientNamesById.ContainsKey(a.PatientId) || !_dentistNamesById.ContainsKey(a.DentistId))))
         {
             var result = await _appointmentService.GetDetailsAsync(_currentUser, a.AppointmentId);

@@ -37,9 +37,15 @@ public partial class ucDentistRecords : UserControl
         btnDelete.Click += async (_, _) => await UiAction.RunAsync(this, DeactivateAsync, btnDelete);
         Enabled = RoleAccess.Can(currentUser, Permission.ManageDentists); ClearForm();
         _layout.UseModal(SaveAsync, AfterSaveAsync);
+        _layout.UseRefresh(RefreshGridAsync);
     }
     private async void ucDentistRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await RefreshGridAsync(); });
-    private async Task RefreshGridAsync() { _dentists = UiMessages.Items(await _dentistService.GetAllDentistsAsync(_currentUser)); if (!IsDisposed) BindRows(); }
+    private async Task RefreshGridAsync()
+    {
+        var result = await _dentistService.GetAllDentistsAsync(_currentUser);
+        if (IsDisposed || !UiMessages.TryItems(result, out _dentists)) return;
+        BindRows();
+    }
     private void BindRows()
     {
         var rows = _dentists.Where(d => new[] { d.FullName, d.Specialization ?? "", d.ContactNumber ?? "", d.LicenseNumber ?? "" }.Any(v => v.Contains(_layout.Search.Text.Trim(), StringComparison.OrdinalIgnoreCase)))

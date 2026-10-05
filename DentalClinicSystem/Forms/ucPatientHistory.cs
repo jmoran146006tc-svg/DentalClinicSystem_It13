@@ -15,6 +15,7 @@ public sealed class ucPatientHistory : UserControl
     private readonly DateTime _now;
     private readonly InlineAlert _alert = new() { Visible = false };
     private readonly AppButton _retry = UiFactory.Button("Retry", ButtonVariant.Secondary);
+    private readonly Skeleton _skeleton = new() { Dock = DockStyle.Top, Height = Metrics.HistoryRowHeight };
     public ucPatientHistory(IPatientHistoryService history, User actor, int appointmentId, DateTime? now = null)
     {
         _history = history; _actor = actor; _appointmentId = appointmentId; _now = now ?? DateTime.Now;
@@ -22,6 +23,7 @@ public sealed class ucPatientHistory : UserControl
         Name = "patientHistory"; Dock = DockStyle.Fill; AutoScroll = true; BackColor = Palette.Canvas;
         _content.ColumnStyles.Add(new(SizeType.Percent, 100)); Controls.Add(_content);
         _content.Controls.Add(_alert); _content.Controls.Add(_retry);
+        _content.Controls.Add(_skeleton);
         _retry.Visible = false; _retry.Click += async (_, _) => await LoadHistoryAsync();
         UiMessages.RegisterAlertHost(this, _alert);
         Load += async (_, _) => await LoadHistoryAsync();
@@ -38,7 +40,11 @@ public sealed class ucPatientHistory : UserControl
         }
         finally
         {
-            if (!IsDisposed && !loaded) { _alert.ShowMessage("Patient history could not be loaded. Try again."); _retry.Visible = true; }
+            if (!IsDisposed)
+            {
+                if (!_skeleton.IsDisposed) _skeleton.Visible = false;
+                if (!loaded) { _alert.ShowMessage("Patient history could not be loaded. Try again."); _retry.Visible = true; }
+            }
         }
     });
     private void ClearHistory()

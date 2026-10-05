@@ -91,6 +91,17 @@ public sealed class CrudPageLayout
         _grid.SelectionChanged += (_, _) => _edit.Enabled = _grid.SelectedRecord is not null;
         if (allowEdit) _grid.CellDoubleClick += async (_, e) => { if (_grid.Records.Contains(e.Record) && _editing && NewButton.Visible) await OpenEditorAsync(); };
     }
+    public void UseRefresh(Func<Task> reload)
+    {
+        var refresh = UiFactory.Button("Refresh", ButtonVariant.Secondary); refresh.Name = "pageRefresh";
+        refresh.Click += async (_, _) =>
+        {
+            await UiAction.RunAsync(_page, async () => { Alert.Dismiss(); await reload(); }, refresh);
+            if (!refresh.IsDisposed) refresh.Text = Alert.Visible ? "Retry" : "Refresh";
+        };
+        Alert.VisibleChanged += (_, _) => { if (!refresh.IsBusy) refresh.Text = Alert.Visible ? "Retry" : "Refresh"; };
+        Toolbar.Controls.Add(refresh);
+    }
     public async Task OpenEditorAsync()
     {
         if (_dialogOpen || _saveModal is null || !_page.Enabled || !NewButton.Visible) return;

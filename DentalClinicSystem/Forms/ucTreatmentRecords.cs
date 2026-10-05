@@ -48,11 +48,14 @@ public partial class ucTreatmentRecords : UserControl
         Enabled = RoleAccess.Can(currentUser, Permission.ViewTreatments);
         _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManageTreatments);
         _layout.UseModal(SaveAsync, AfterSaveAsync);
+        _layout.UseRefresh(LoadAsync);
     }
     private async void ucTreatmentRecords_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await LoadAsync(); });
     private async Task LoadAsync()
     {
-        var appointments = UiMessages.Items(await _appointmentService.GetAllAppointmentsAsync(_currentUser)).Where(a => RoleAccess.CanAccessAppointment(_currentUser, a)).ToList();
+        var resultRows = await _appointmentService.GetAllAppointmentsAsync(_currentUser);
+        if (IsDisposed || !UiMessages.TryItems(resultRows, out var appointmentRows)) return;
+        var appointments = appointmentRows.Where(a => RoleAccess.CanAccessAppointment(_currentUser, a)).ToList();
         _appointmentsById = appointments.ToDictionary(a => a.AppointmentId);
         foreach (var appointment in appointments)
         {
@@ -61,16 +64,17 @@ public partial class ucTreatmentRecords : UserControl
             _patientNamesByAppointmentId[appointment.AppointmentId] = result.Data?.Patient.FullName ?? $"Patient #{appointment.PatientId}";
         }
         cboAppointment.DisplayMember = nameof(DisplayOption.Display); cboAppointment.ValueMember = nameof(DisplayOption.Id); BindAppointmentOptions();
-        var types = UiMessages.Items(await _treatmentTypeService.GetAllTreatmentTypesAsync(_currentUser));
-        if (IsDisposed) return;
+        var typeResult = await _treatmentTypeService.GetAllTreatmentTypesAsync(_currentUser);
+        if (IsDisposed || !UiMessages.TryItems(typeResult, out var types)) return;
         _treatmentTypesById = types.ToDictionary(t => t.TreatmentTypeId);
         cboTreatmentType.DisplayMember = nameof(TreatmentType.Name); cboTreatmentType.ValueMember = nameof(TreatmentType.TreatmentTypeId); cboTreatmentType.DataSource = types.ToList();
-        await RefreshGridAsync(); ClearForm();
+        await RefreshGridAsync();
     }
     private async Task RefreshGridAsync()
     {
-        _treatments = UiMessages.Items(await _treatmentService.GetAllTreatmentsAsync(_currentUser));
-        if (!IsDisposed) BindRows();
+        var result = await _treatmentService.GetAllTreatmentsAsync(_currentUser);
+        if (IsDisposed || !UiMessages.TryItems(result, out _treatments)) return;
+        BindRows();
     }
     private void BindRows()
     {

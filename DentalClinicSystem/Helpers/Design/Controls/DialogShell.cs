@@ -23,9 +23,14 @@ public class DialogShell : Form
         ConfirmButton.Click += async (_, _) =>
         {
             if (ConfirmButton.IsBusy || _accepted) return;
-            ConfirmButton.IsBusy = true; DismissButton.Enabled = false;
-            try { if (await ConfirmAsync()) { _accepted = true; CloseAnimated(DialogResult.OK); } }
-            catch (Exception error) { AppLog.Write(error); using var owner = UiMessages.UseOwner(this); UiMessages.ShowUnexpectedError(); }
+            DismissButton.Enabled = false;
+            try
+            {
+                await UiAction.RunAsync(this, async () =>
+                {
+                    if (await ConfirmAsync() && !IsDisposed) { _accepted = true; CloseAnimated(DialogResult.OK); }
+                }, ConfirmButton);
+            }
             finally { if (!IsDisposed) { ConfirmButton.IsBusy = false; ConfirmButton.Enabled = !_accepted; DismissButton.Enabled = !_accepted; } }
         };
         Footer.Controls.Add(ConfirmButton); Footer.Controls.Add(DismissButton);
