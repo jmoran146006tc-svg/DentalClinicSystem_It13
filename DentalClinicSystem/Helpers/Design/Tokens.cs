@@ -71,7 +71,7 @@ public static class Space
 
 public static class Metrics
 {
-    public const int ControlHeight = 44, CompactHeight = 32, NavHeight = 48, SidebarWidth = 248;
+    public const int ControlHeight = 44, CompactHeight = 32, NavHeight = 48, SidebarWidth = 280;
     public const int FormWidth = 380, ControlRadius = 8, CardRadius = 12, IconSize = 20;
     public const int Border = 1, FocusRing = 2, StatusDot = 6, PressOffset = 1;
     public const int MinimumWidth = 1100, MinimumHeight = 700, DialogWidth = 480, DialogHeight = 320;

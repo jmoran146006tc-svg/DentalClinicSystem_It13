@@ -48,7 +48,8 @@ namespace DentalClinicSystem.Forms
 #endif
             FormClosed += (_, _) => { if (!_loggingOut) Application.Exit(); };
             Load += (_, _) => Navigate(_navigationItems[0]);
-            Shown += (_, _) => MoveIndicator();
+            Shown += (_, _) => { SizeSidebar(); MoveIndicator(); };
+            DpiChanged += (_, _) => SizeSidebar();
         }
 
         private void ConfigureContent()
@@ -94,7 +95,7 @@ namespace DentalClinicSystem.Forms
 
         private void ConfigureNavigation()
         {
-            pnlSidebar.Width = Metrics.SidebarWidth; pnlSidebar.BackColor = Palette.Surface;
+            SizeSidebar(); pnlSidebar.BackColor = Palette.Surface;
             var brand = new TableLayoutPanel { Name = "sidebarBrand", Dock = DockStyle.Top, Height = Metrics.EmptyHeight + Space.Xl, ColumnCount = 1, RowCount = 4, Padding = new Padding(Space.Xl), BackColor = Palette.Surface };
             brand.ColumnStyles.Add(new(SizeType.Percent, 100));
             for (var row = 0; row < 4; row++) brand.RowStyles.Add(new(SizeType.AutoSize));
@@ -138,6 +139,8 @@ namespace DentalClinicSystem.Forms
             SizeNavigation();
             pnlSidebar.Paint += (_, e) => { using var pen = new Pen(Palette.Line); e.Graphics.DrawLine(pen, pnlSidebar.Width - Metrics.Border, 0, pnlSidebar.Width - Metrics.Border, pnlSidebar.Height); };
         }
+
+        private void SizeSidebar() => pnlSidebar.Width = Metrics.Scale(this, Metrics.SidebarWidth);
 
         private void SizeNavigation()
         {

@@ -64,6 +64,12 @@ public sealed class ScrollAndLoadingTests
         var brand = UiThread.Named<TableLayoutPanel>(shell, "sidebarBrand");
         Assert.InRange(Math.Abs(mark.Left + mark.Width / 2d - brand.ClientSize.Width / 2d), 0, 1);
         Assert.All(UiThread.Controls(navigation).OfType<NavItemButton>(), button => Assert.True(button.IconBounds.Left > 0));
+        using var menuFont = Typography.PixelFont(Typography.Nav, (int)(Metrics.BaselineDpi * scale));
+        Assert.All(UiThread.Controls(shell).OfType<NavItemButton>().Where(button => button.Visible), button =>
+        {
+            var label = TextRenderer.MeasureText(button.Text, menuFont, Size.Empty, TextFormatFlags.SingleLine | TextFormatFlags.NoPadding);
+            Assert.True(label.Width <= button.TextBounds.Width, $"{button.Text} needs {label.Width}px but has {button.TextBounds.Width}px at {scale:P0} scale.");
+        });
         UiThread.Capture(shell, "scroll-sidebar-" + scale.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture));
     });
 
