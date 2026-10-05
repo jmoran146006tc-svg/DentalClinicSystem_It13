@@ -162,7 +162,6 @@ namespace DentalClinicSystem.Forms
             btnUpdateStatus.Size = new Size(72, 27);
             btnUpdateStatus.TabIndex = 0;
             btnUpdateStatus.Text = "Update ";
-            btnUpdateStatus.Click += btnUpdateStatus_Click;
             // 
             // cmbReason
             // 

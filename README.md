@@ -9,6 +9,12 @@ Team Rabenda
 * Villacin
 
 ---
+## Requirements
+
+Windows, a Visual Studio installation that supports .NET 10 WinForms (desktop development workload), the .NET 10 SDK, MySQL Server and MySQL Workbench. The solution is `DentalClinicSystem.slnx`; the application targets `net10.0-windows`. Restore packages and build before running.
+
+## Database setup
+
 Database setup is manual. The application only connects to an existing database and calls stored procedures.
 
 1. Start MySQL Server and connect in MySQL Workbench.
@@ -42,7 +48,7 @@ Date-dependent services accept an optional `TimeProvider`; production uses the m
 
 ## Known limitations
 
-- No payment or collection tracking; Billed does not mean paid.
+- No collection tracking; Billed is the net amount after discounts.
 - No medical history beyond allergies and notes.
 - One clinic-hours configuration, not a separate schedule per dentist.
 - No SMS reminders.
@@ -63,13 +69,39 @@ Date-dependent services accept an optional `TimeProvider`; production uses the m
 
 In Debug, press **Ctrl+Shift+F12** on the dashboard to open the style guide. To review it without a database, run `dotnet run --project DentalClinicSystem/DentalClinicSystem.csproj -- --style-guide`. The guide is not included in Release.
 
-The UI uses **AntdUI 2.4.12** (Apache-2.0) with a shared light palette and teal accent. Buttons, navigation actions, text/password inputs, choices, date/time pickers, discount inputs, record/report tables, status tags, checkboxes, inline alerts, toast notifications and report tabs use AntdUI. Shared adapters retain the clinic's existing model IDs, date limits, required selections, validation, busy guards and read-only locks. The appointment week calendar, login artwork, dashboard cards and page layouts remain clinic-specific.
+The UI uses **AntdUI 2.4.12** (Apache-2.0) with a shared light palette and teal accent. Buttons, navigation actions, text/password inputs, choices, date/time pickers, discount inputs, record/report tables, status tags, checkboxes, inline alerts and toast notifications use AntdUI. Shared adapters retain the clinic's existing model IDs, date limits, required selections, validation, busy guards and read-only locks. The appointment week calendar, report charts, login artwork, dashboard cards and page layouts remain clinic-specific.
 
 The appointment date/time editor uses a 24-hour clock so AntdUI exposes both hour and minute selection. Read-only tables retain the clinic's existing 12-hour display. The build and publish output include the third-party notice and AntdUI license.
 
 Existing Designer layouts are retained. Runtime layout methods move the original controls into new containers, so the Designer view shows the legacy layout. The dashboard, calendar and history are built in code. `GlobalUsings.cs` maps common control names to AntdUI and the clinic adapters, allowing event handlers to stay focused on clinic behavior.
 
-Run the included UI regression suite with `dotnet test tests/DentalClinicSystem.UiTests/DentalClinicSystem.UiTests.csproj -c Release`, or run `dotnet test DentalClinicSystem.slnx -c Release`. It uses sample data and service fakes, never MySQL, and covers record selection/search, dialogs, role navigation, choices/IDs, required dates, input filtering, table sorting and report tabs. Older optional tests in the ignored `DentalClinicSystem.Tests/` folder may require updates for the former standard WinForms control types. Build and unit checks do not verify live MySQL operations or display scaling.
+Run all tracked tests with `dotnet test DentalClinicSystem.slnx -c Release`. `tests/DentalClinicSystem.Tests` covers clinic services, permissions, validation and pure presentation helpers; `tests/DentalClinicSystem.UiTests` covers adapter controls, selection/search, dialogs, role navigation, required dates, input filtering, sorting, reports, CSV, chart painting and motion lifecycle. Tests use synthetic data, in-memory repositories or boundary spies and service stubs; they never connect to MySQL. The ignored root `DentalClinicSystem.Tests/` folder contains older local checks and is not part of the solution. Build/unit checks do not prove live MySQL operations, interactive GUI behavior or real display scaling.
+
+## Roles
+
+| Role | Pages and actions |
+|---|---|
+| Admin | All seven pages and their actions: Dashboard, Patients, Dentists, Appointments, Treatments, Users, Reports |
+| Receptionist | Dashboard; view/manage Patients; view/manage/check-in/cancel Appointments. No Treatments, Dentists, Users, Reports or completion action |
+| Dentist | Dashboard; own Appointments and completion; own Treatments. No patient management, Dentists, Users or Reports |
+
+Services enforce permissions and dentist ownership independently of sidebar visibility. Admins/Dentists can open read-only patient history through permitted appointments. Patients, dentists and users are retained through inactivity/reactivation or soft deactivation; these records are not hard deleted.
+
+## Architecture
+
+Forms/UserControls orchestrate service interfaces. Services in `Service/` own business rules, validation and authorization; repository interfaces and MySQL implementations in `DBContent/` own stored-procedure access. `Program.BuildServices()` is the composition root; repositories share `StoredProcedureRunner`. Models carry clinic data. The app probes the database connection and never runs schema, migration or seed scripts.
+
+`Helpers/Design/` owns tokens, theme, control adapters and the single `Animator`/`Motion` engine. `UiFactory`, `UiMessages`, `UiAction`, `GridHelper`, `InputRules` and `DisplayFormat` centralize UI construction, feedback, async state and formatting. `NavItem`/`PageFactory` centralize navigation and page construction. AntdUI controls sit behind `GlobalUsings.cs`, `ClinicTable`, `ClinicSelect`, `ClinicDatePicker`, `FieldBox` and notification/alert adapters. Custom GDI+ charts live in `Helpers/Charts/` and consume the same tokens and motion system.
+
+## Reports
+
+Reports are Admin-only. The report page has Appointments by status, Billed by day, Top treatment types and Dentist workload sections. The status legend always shows Scheduled, Checked in, Completed, Cancelled and No show, including zero counts. Tables give text/numbers alongside charts; hover and keyboard focus provide accessible summaries. Default dates are this month through today; This week, This month and Last 30 days shortcuts refresh the range.
+
+**Billed amounts are not money collected.** Billed is the treatment net after discounts. A gross PHP 1,000 treatment with a 20% discount contributes PHP 800. Compare the daily total and reports with Treatments Net for the same date range.
+
+Export CSV saves one UTF-8 file with a BOM and four title/header/data sections, comma separators and CRLF rows. Export uses exactly the last successful displayed snapshot and its dates, even if toolbar dates have changed or refresh failed. Numeric values are invariant raw decimals, with PHP units in headers; dates use yyyy-MM-dd. Text beginning with =, +, - or @ receives a leading apostrophe to neutralize spreadsheet formulas; numeric cells retain their values. Quotes, commas and newlines are escaped. Saving failure shows friendly feedback; export makes no extra service calls.
+
+Local design/revision notes and the screenshot matrix are in ignored `docs/`. In Debug, open the style guide via Ctrl+Shift+F12 on the dashboard or the standalone --style-guide option above; use its Chart motion replay and reduced-motion toggle. If a running app locks the normal output, build with `dotnet build DentalClinicSystem/DentalClinicSystem.csproj -o DentalClinicSystem/bin/HandoffDebug`, then launch `DentalClinicSystem/bin/HandoffDebug/DentalClinicSystem.exe --style-guide`. Open `docs/UI_REVIEW.md` for the screen/state/motion checklist. The standalone guide does not require MySQL; real DPI, Designer loading, saving CSV and authenticated flows require human review.
 
 Record pages support Ctrl+F for search, Ctrl+N for a new record, Ctrl+S to save, and Enter to move through single-line form inputs. Multiline fields keep Enter for new lines. Login submits with Enter. The existing Animator handles transitions, feedback and loading reveals; reduced motion shows the final state immediately. The optional collapsible sidebar remains deferred.
 

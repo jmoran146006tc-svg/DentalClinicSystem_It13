@@ -167,5 +167,4 @@ public partial class ucAppointmentScheduler : UserControl
         dialog.ShowDialog(FindForm());
     }
     private void ClearForm() { tglWalkIn.Checked = false; cboDuration.SelectedItem = ClinicRules.DefaultDurationMinutes; cmbReason.SelectedIndex = -1; cmbReason.Text = ""; _notes.Clear(); dgvAppointments.ClearSelection(); _layout?.SetEditing(false); if (_layout is not null) _layout.NewButton.Text = "Schedule"; btnSchedule.Text = "Schedule appointment"; }
-    private void btnUpdateStatus_Click(object? sender, EventArgs e) { } // Disposed legacy Designer control.
 }
