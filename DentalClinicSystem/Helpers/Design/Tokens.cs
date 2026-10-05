@@ -15,6 +15,7 @@ public static class Palette
     public static Color Ink700 { get; } = Color.FromArgb(0x3C, 0x4D, 0x5D);
     public static Color Ink500 { get; } = Color.FromArgb(0x5B, 0x6B, 0x7B);
     public static Color Ink400 { get; } = Color.FromArgb(0x86, 0x96, 0xA6);
+    public static Color Placeholder => Ink500;
     public static Color BrandAccent { get; } = Color.FromArgb(0x42, 0xCA, 0xCF);
     public static Color Brand { get; } = Color.FromArgb(0x1A, 0x7F, 0x85);
     public static Color BrandHover { get; } = Color.FromArgb(0x15, 0x6A, 0x6F);
@@ -69,7 +70,7 @@ public static class Space
 
 public static class Metrics
 {
-    public const int ControlHeight = 40, CompactHeight = 32, NavHeight = 48, SidebarWidth = 248;
+    public const int ControlHeight = 44, CompactHeight = 32, NavHeight = 48, SidebarWidth = 248;
     public const int FormWidth = 380, ControlRadius = 8, CardRadius = 12, IconSize = 20;
     public const int Border = 1, FocusRing = 2, StatusDot = 6, PressOffset = 1;
     public const int MinimumWidth = 1100, MinimumHeight = 700, DialogWidth = 480, DialogHeight = 320;

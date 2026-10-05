@@ -37,7 +37,7 @@ public static class ButtonStyler
             button.FontChanged += (_, _) => Measure(button, state);
             button.DpiChangedAfterParent += (_, _) => Measure(button, state);
         }
-        button.Radius = Metrics.ControlRadius; button.WaveSize = Metrics.FocusRing;
+        button.Radius = Metrics.ControlRadius; button.WaveSize = 0; button.AutoSizeMode = AntdUI.TAutoSize.None;
         button.Type = variant == ButtonVariant.Primary ? AntdUI.TTypeMini.Primary : variant == ButtonVariant.Danger ? AntdUI.TTypeMini.Error : AntdUI.TTypeMini.Default;
         button.Ghost = variant == ButtonVariant.Ghost;
         button.BorderWidth = variant == ButtonVariant.Secondary ? Metrics.Border : 0;

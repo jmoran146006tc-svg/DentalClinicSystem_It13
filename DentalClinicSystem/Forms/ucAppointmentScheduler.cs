@@ -18,7 +18,7 @@ public partial class ucAppointmentScheduler : UserControl
     private readonly TextBox _notes = new() { Multiline = true, MaxLength = FieldLimits.Notes };
     private readonly ComboBox _statusFilter = new();
     private readonly ComboBox _dateFilter = new();
-    private readonly AppButton _details = UiFactory.Button("View details", ButtonVariant.Ghost, IconKind.Info);
+    private readonly AppButton _details = UiFactory.Button("View details", ButtonVariant.Secondary, IconKind.Info);
     private readonly AppButton _clear = UiFactory.Button("Clear", ButtonVariant.Ghost);
     private IReadOnlyList<Appointment> _appointments = [];
     private IReadOnlyList<Dentist> _dentists = [];

@@ -31,6 +31,8 @@ public sealed class FieldBox : Panel
         // Checkbox fields and read-only calculated labels keep their own renderer.
         if (_editor is null) { MinimumSize = new(0, Metrics.ControlHeight); return; }
         _editor.Radius = Metrics.ControlRadius; _editor.BorderColor = Palette.LineStrong;
+        _editor.AutoSizeMode = AntdUI.TAutoSize.None; _editor.WaveSize = 0;
+        _editor.Padding = Padding.Empty; _editor.PlaceholderColor = Palette.Placeholder;
         _editor.BorderHover = _editor.BorderActive = Palette.Brand;
         _editor.BackColor = Palette.Surface; _editor.ForeColor = Palette.Ink700;
         _editor.AllowClear = kind == FieldKind.Search;

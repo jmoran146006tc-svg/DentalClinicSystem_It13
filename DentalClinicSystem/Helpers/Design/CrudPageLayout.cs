@@ -21,7 +21,7 @@ public sealed class CrudPageLayout
     private bool _dialogOpen;
     private RecordDialog? _dialog;
     public InlineAlert ActiveAlert => _dialog?.Alert ?? Alert;
-    private readonly AppButton _edit = UiFactory.Button("Edit", ButtonVariant.Ghost, IconKind.Edit);
+    private readonly AppButton _edit = UiFactory.Button("Edit", ButtonVariant.Secondary, IconKind.Edit);
     private bool _loaded;
     public FlowLayoutPanel Toolbar { get; }
     public InlineAlert Alert { get; } = new() { Visible = false, Dock = DockStyle.Top };
@@ -67,20 +67,7 @@ public sealed class CrudPageLayout
         Tooltips.Attach(NewButton, "New record · Ctrl+N"); Tooltips.Attach(save, "Save · Ctrl+S"); Tooltips.Attach(Search, "Search · Ctrl+F; Esc to clear");
         page.ResumeLayout(true);
         page.Disposed += (_, _) => { FormCard.Dispose(); _title.Dispose(); };
-        Toolbar.ControlAdded += (_, _) => AlignToolbar();
-        Toolbar.Layout += (_, _) => AlignToolbar();
-    }
-    private bool _aligning;
-    private void AlignToolbar()
-    {
-        if (_aligning) return; _aligning = true;
-        try
-        {
-            var top = Typography.Label.Height + Space.Xs + Space.Sm;
-            foreach (Control control in Toolbar.Controls)
-                if (control is not FormField) control.Margin = new Padding(Space.Xs, top, Space.Xs, Space.Sm);
-        }
-        finally { _aligning = false; }
+        Toolbar.Name = "recordsToolbar"; ToolbarLayout.Attach(Toolbar);
     }
     public void UseModal(Func<Task<bool>> save, Func<Task> afterSave, bool allowEdit = true)
     {

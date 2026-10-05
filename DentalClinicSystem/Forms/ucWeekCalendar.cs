@@ -28,13 +28,14 @@ public sealed class ucWeekCalendar : UserControl
         layout.ColumnStyles.Add(new(SizeType.Percent, 100));
         layout.RowStyles.Add(new(SizeType.AutoSize)); layout.RowStyles.Add(new(SizeType.AutoSize)); layout.RowStyles.Add(new(SizeType.Percent, 100));
         var toolbar = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, WrapContents = true, BackColor = Palette.Surface };
-        var previous = UiFactory.Button("Previous week", ButtonVariant.Ghost, IconKind.ChevronLeft, ButtonSize.Compact);
-        var next = UiFactory.Button("Next week", ButtonVariant.Ghost, IconKind.ChevronRight, ButtonSize.Compact);
+        var previous = UiFactory.Button("Previous week", ButtonVariant.Secondary, IconKind.ChevronLeft, ButtonSize.Compact);
+        var next = UiFactory.Button("Next week", ButtonVariant.Secondary, IconKind.ChevronRight, ButtonSize.Compact);
         var today = UiFactory.Button("Today", ButtonVariant.Secondary, size: ButtonSize.Compact);
         previous.Click += (_, _) => Request(_week.AddDays(-DashboardPresentation.DaysInWeek));
         next.Click += (_, _) => Request(_week.AddDays(DashboardPresentation.DaysInWeek));
         today.Click += (_, _) => Request(DashboardPresentation.WeekStart(_today));
         toolbar.Controls.AddRange([previous, today, next, _range]);
+        ToolbarLayout.Attach(toolbar);
         var filter = FieldBox.Wrap(_dentist, Roles.Dentist, FieldKind.Choice); filter.Dock = DockStyle.Top; filter.Width = Metrics.FormWidth;
         _dentist.SelectedIndexChanged += (_, _) => { if (!_binding) ApplyFilter(); };
         _viewport.Controls.Add(_canvas); _viewport.Controls.Add(_empty);

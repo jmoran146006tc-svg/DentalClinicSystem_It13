@@ -12,7 +12,7 @@ public partial class ucDentistRecords : UserControl
     private readonly User _currentUser;
     private readonly IDentistService _dentistService;
     private readonly CrudPageLayout _layout;
-    private readonly AppButton _timeOff = UiFactory.Button("Time off", ButtonVariant.Ghost);
+    private readonly AppButton _timeOff = UiFactory.Button("Time off", ButtonVariant.Secondary);
     private IReadOnlyList<Dentist> _dentists = [];
     private Dentist? _selected;
     private Dentist? _savedDentist;

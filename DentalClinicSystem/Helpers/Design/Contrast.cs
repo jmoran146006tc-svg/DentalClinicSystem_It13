@@ -33,6 +33,7 @@ public static class Contrast
         }
         yield return ("BrandSoftText/BrandSoft", Palette.BrandSoftText, Palette.BrandSoft);
         yield return ("Danger/Surface", Palette.Danger.Text, Palette.Surface);
+        yield return ("Placeholder/Surface", Palette.Placeholder, Palette.Surface);
         var darkestGlass = Composite(Palette.GlassWash, Palette.Black);
         yield return ("Login body/darkest glass", Palette.LoginBodyInk, darkestGlass);
         yield return ("Login greeting/darkest glass", Palette.BrandSoftText, darkestGlass);

@@ -66,7 +66,7 @@ public sealed class ucReports : UserControl
             button.Click += async (_, _) => { SetRange(range); await RefreshPageAsync(); }; toolbar.Controls.Add(button);
         }
         var refresh = UiFactory.Button("Refresh", ButtonVariant.Secondary); refresh.Name = "reportRefresh";
-        refresh.Click += async (_, _) => await RefreshPageAsync(); toolbar.Controls.Add(refresh); toolbar.Controls.Add(_export); return toolbar;
+        refresh.Click += async (_, _) => await RefreshPageAsync(); toolbar.Controls.Add(refresh); toolbar.Controls.Add(_export); ToolbarLayout.Attach(toolbar); return toolbar;
     }
     private Control StatusContent()
     {
