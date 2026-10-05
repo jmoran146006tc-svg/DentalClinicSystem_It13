@@ -4,6 +4,8 @@ namespace DentalClinicSystem.Helpers.Design;
 
 public static class Palette
 {
+    public static Color Transparent { get; } = Color.Transparent;
+    public static Color Black { get; } = Color.Black;
     public static Color Canvas { get; } = Color.FromArgb(0xF3, 0xF8, 0xF9);
     public static Color Surface { get; } = Color.White;
     public static Color SurfaceAlt { get; } = Color.FromArgb(0xF8, 0xFB, 0xFC);
@@ -23,6 +25,7 @@ public static class Palette
     public static Color LoginVignette => WithAlpha(Ink900, .16f);
     public static Color GlassWash => WithAlpha(Surface, .94f);
     public static Color GlassEdge => WithAlpha(Surface, .90f);
+    public static Color LoadingVeil => WithAlpha(Surface, .86f);
     public static Color LoginBodyInk => Ink500;
     public static Color LoginFieldBorder => Ink500;
     // Decorative-only colors and opacity: never used for interactive chrome.
@@ -70,10 +73,13 @@ public static class Metrics
     public const int FormWidth = 380, ControlRadius = 8, CardRadius = 12, IconSize = 20;
     public const int Border = 1, FocusRing = 2, StatusDot = 6, PressOffset = 1;
     public const int MinimumWidth = 1100, MinimumHeight = 700, DialogWidth = 480, DialogHeight = 320;
+    public const int RecordDialogWidth = 640, RecordDialogHeight = 600, TimeOffDialogSize = 720;
     public const int ToastWidth = 380, ToastHeight = 112, TooltipWidth = 320, KpiHeight = 208;
     public const int FieldHeight = 92, AlertHeight = 64, EmptyHeight = 176, SkeletonRowHeight = 36;
     public const int Slide = 24, ExitSlide = 12, Settle = 8, Shake = 6;
     public const int CacheLimit = 128, IdentityHeight = 56, GridHeaderHeight = 40;
+    public const int GridWideColumn = 180, GridIdentityColumn = 160, GridCompactColumn = 110;
+    public const int BaselineDpi = 96;
     public const int TopBarHeight = 56, LoginWidth = 1120, LoginHeight = 600, LoginFormWidth = 360;
     public const int LoginTargetHeight = 749, LoginCardWidth = 440, HeroRadius = 20;
     public const int LoginMinimumWidth = 960, LoginBadgeSize = 80, LoginMarkSize = 56;
@@ -111,7 +117,7 @@ public static class Metrics
     public const float ChartDimOpacity = .55f, ChartAreaOpacity = .14f, DonutHoleRatio = .64f, ChartAreaStart = .65f;
     public const float IconStroke = 1.75f, IconGrid = 24, HighlightAlpha = .14f;
     public static Size MinimumWindow => new(MinimumWidth, MinimumHeight);
-    public static int Scale(Control owner, int value) => (int)Math.Round(value * owner.DeviceDpi / 96d);
+    public static int Scale(Control owner, int value) => (int)Math.Round(value * owner.DeviceDpi / (double)BaselineDpi);
 }
 
 public static class Typography
@@ -125,6 +131,7 @@ public static class Typography
     public static Font Caption { get; } = new(Family, 8.5f);
     public static Font KpiNumber { get; } = new(Family, 26, FontStyle.Bold);
     public static string FamilyName => Family;
+    public static Font PixelFont(Font font, int dpi) => new(font.FontFamily, font.SizeInPoints * dpi / 72f, font.Style, GraphicsUnit.Pixel);
 
     private static string ResolveFamily()
     {

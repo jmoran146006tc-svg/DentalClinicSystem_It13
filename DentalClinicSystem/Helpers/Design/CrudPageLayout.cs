@@ -45,7 +45,7 @@ public sealed class CrudPageLayout
         Search.PlaceholderText = $"Search {title.ToLowerInvariant()}"; var search = UiFactory.Search(Search); search.Width = Metrics.FormWidth - Space.Xxxl; Toolbar.Controls.Add(search);
         root.Controls.Add(Toolbar, 0, 1);
         var gridCard = UiFactory.Card(); gridCard.Dock = DockStyle.Fill; gridCard.Margin = Padding.Empty; grid.Visible = true; grid.Dock = DockStyle.Fill;
-        grid.EditMode = AntdUI.TEditMode.None; grid.MultipleRows = false;
+        grid.MultipleRows = false;
         GridTheme.Apply(grid); gridCard.Content.Controls.Add(grid); _gridContent = gridCard.Content;
         FormCard = UiFactory.Card(); FormCard.Content.AutoScroll = true; FormCard.Visible = false;
         _title = new Label { Text = $"New {singular}", Font = Typography.Heading, ForeColor = Palette.Ink900, AutoSize = true, Margin = new Padding(0, 0, 0, Space.Lg) };

@@ -26,7 +26,7 @@ public static class ShadowCache
         var bitmap = new Bitmap(Math.Max(1, size.Width), Math.Max(1, size.Height));
         using var graphics = Graphics.FromImage(bitmap);
         DesignPaint.Prepare(graphics);
-        var scale = dpi / 96f;
+        var scale = dpi / (float)Metrics.BaselineDpi;
         var inset = Elevation.Padding(level) * scale;
         var bounds = new RectangleF(inset, inset, size.Width - 2 * inset, size.Height - 2 * inset);
         foreach (var layer in Elevation.Layers(level))

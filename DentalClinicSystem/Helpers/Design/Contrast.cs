@@ -2,12 +2,7 @@ namespace DentalClinicSystem.Helpers.Design;
 
 public static class Contrast
 {
-    public static Color Composite(Color foreground, Color background)
-    {
-        var alpha = foreground.A / 255d;
-        return Color.FromArgb(Channel(foreground.R, background.R), Channel(foreground.G, background.G), Channel(foreground.B, background.B));
-        int Channel(byte front, byte back) => (int)Math.Round(front * alpha + back * (1 - alpha));
-    }
+    public static Color Composite(Color foreground, Color background) => Theme.Composite(foreground, background);
     public static double Luminance(Color color) => .2126 * Channel(color.R) + .7152 * Channel(color.G) + .0722 * Channel(color.B);
     public static double Ratio(Color foreground, Color background)
     {
@@ -38,7 +33,7 @@ public static class Contrast
         }
         yield return ("BrandSoftText/BrandSoft", Palette.BrandSoftText, Palette.BrandSoft);
         yield return ("Danger/Surface", Palette.Danger.Text, Palette.Surface);
-        var darkestGlass = Composite(Palette.GlassWash, Color.Black);
+        var darkestGlass = Composite(Palette.GlassWash, Palette.Black);
         yield return ("Login body/darkest glass", Palette.LoginBodyInk, darkestGlass);
         yield return ("Login greeting/darkest glass", Palette.BrandSoftText, darkestGlass);
         yield return ("Login Caps Lock/darkest glass", Palette.Warning.Text, darkestGlass);

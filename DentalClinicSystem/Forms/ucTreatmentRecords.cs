@@ -73,7 +73,8 @@ public partial class ucTreatmentRecords : UserControl
     private async Task RefreshGridAsync()
     {
         var result = await _treatmentService.GetAllTreatmentsAsync(_currentUser);
-        if (IsDisposed || !UiMessages.TryItems(result, out _treatments)) return;
+        if (IsDisposed || !UiMessages.TryItems(result, out var treatments)) return;
+        _treatments = treatments;
         BindRows();
     }
     private void BindRows()
@@ -137,8 +138,10 @@ public partial class ucTreatmentRecords : UserControl
     }
     private async Task AfterSaveAsync()
     {
-        var treatment = _savedTreatment!;
-        await RefreshGridAsync(); UiMessages.ShowSuccess("Treatment saved.");
+        if (_savedTreatment is not { } treatment || IsDisposed) return;
+        await RefreshGridAsync();
+        if (IsDisposed) return;
+        UiMessages.ShowSuccess("Treatment saved.");
         var saved = _treatments.Where(t => t.AppointmentId == treatment.AppointmentId && t.TreatmentTypeId == treatment.TreatmentTypeId && t.Cost == treatment.Cost).MaxBy(t => t.TreatmentId);
         if (saved is not null) GridTheme.SelectAndFlash(dgvTreatments, treatment.TreatmentId > 0 ? treatment.TreatmentId : saved.TreatmentId);
     }

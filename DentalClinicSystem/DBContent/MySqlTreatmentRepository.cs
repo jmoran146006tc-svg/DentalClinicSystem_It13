@@ -42,10 +42,6 @@ namespace DentalClinicSystem.DBContent
                 Parameter("@p_DatePerformed", treatment.DatePerformed),
                 Parameter("@p_Notes", treatment.Notes));
 
-        public Task DeleteAsync(int treatmentId)
-            => ExecuteAsync("sp_Treatment_Delete",
-                Parameter("@p_TreatmentId", treatmentId));
-
         public Task<IReadOnlyList<Treatment>> GetByPatientIdAsync(int patientId)
             => QueryAsync("sp_Treatment_GetByPatientId", MapTreatment, Parameter("@p_PatientId", patientId));
 

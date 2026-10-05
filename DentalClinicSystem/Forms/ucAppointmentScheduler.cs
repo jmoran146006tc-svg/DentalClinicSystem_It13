@@ -34,7 +34,7 @@ public partial class ucAppointmentScheduler : UserControl
         InitializeComponent(); _currentUser = currentUser; _appointmentService = appointmentService; _patientService = patientService; _dentistService = dentistService; _treatmentTypes = treatmentTypes;
         cboStatus.Dispose(); btnUpdateStatus.Dispose(); lblStatus.Visible = false;
         _layout = new(this, "Appointments", "appointment", "Scheduling and appointment status", dgvAppointments, btnSchedule, _clear, ClearForm);
-        _layout.AddRow(UiFactory.Field(cboPatient, "Patient", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(cboDentist, "Dentist", FieldKind.Choice));
+        _layout.AddRow(UiFactory.Field(cboPatient, "Patient", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(cboDentist, Roles.Dentist, FieldKind.Choice));
         _layout.AddRow(UiFactory.Field(tglWalkIn, "Walk-in"));
         tglWalkIn.CheckedChanged += (_, _) =>
         {
@@ -85,7 +85,8 @@ public partial class ucAppointmentScheduler : UserControl
             cboPatient.DataSource = patients.Select(p => new DisplayOption(p.PatientId, p.FullName + (p.IsActive ? "" : " (inactive, will reactivate)"))).ToList();
             cboPatient.DisplayMember = nameof(DisplayOption.Display); cboPatient.ValueMember = nameof(DisplayOption.Id);
             var dentistResult = await _dentistService.GetAllDentistsAsync(_currentUser);
-            if (IsDisposed || !UiMessages.TryItems(dentistResult, out _dentists)) return;
+            if (IsDisposed || !UiMessages.TryItems(dentistResult, out var dentists)) return;
+            _dentists = dentists;
             _dentistNamesById = _dentists.ToDictionary(d => d.DentistId, d => d.FullName);
             cboDentist.DisplayMember = nameof(DisplayOption.Display); cboDentist.ValueMember = nameof(DisplayOption.Id);
             cboDentist.DataSource = _dentists.Where(d => d.IsActive).Select(d => new DisplayOption(d.DentistId, d.FullName)).ToList();
@@ -99,7 +100,8 @@ public partial class ucAppointmentScheduler : UserControl
     private async Task RefreshGridAsync()
     {
         var resultRows = await _appointmentService.GetAllAppointmentsAsync(_currentUser);
-        if (IsDisposed || !UiMessages.TryItems(resultRows, out _appointments)) return;
+        if (IsDisposed || !UiMessages.TryItems(resultRows, out var appointments)) return;
+        _appointments = appointments;
         foreach (var a in _appointments.Where(a => RoleAccess.CanAccessAppointment(_currentUser, a) && (!_patientNamesById.ContainsKey(a.PatientId) || !_dentistNamesById.ContainsKey(a.DentistId))))
         {
             var result = await _appointmentService.GetDetailsAsync(_currentUser, a.AppointmentId);
@@ -151,8 +153,10 @@ public partial class ucAppointmentScheduler : UserControl
     }
     private async Task AfterScheduleAsync()
     {
-        var appointment = _savedAppointment!;
-        await RefreshGridAsync(); ClearForm(); UiMessages.ShowSuccess("Appointment scheduled.");
+        if (_savedAppointment is not { } appointment || IsDisposed) return;
+        await RefreshGridAsync();
+        if (IsDisposed) return;
+        ClearForm(); UiMessages.ShowSuccess("Appointment scheduled.");
         var saved = _appointments.Where(a => a.PatientId == appointment.PatientId && a.DentistId == appointment.DentistId && a.AppointmentDateTime == appointment.AppointmentDateTime).MaxBy(a => a.AppointmentId);
         if (saved is not null) GridTheme.SelectAndFlash(dgvAppointments, saved.AppointmentId);
         await RefreshAvailabilityAsync();

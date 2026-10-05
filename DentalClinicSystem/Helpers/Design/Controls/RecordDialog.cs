@@ -1,12 +1,10 @@
-using DentalClinicSystem.Helpers;
-
 namespace DentalClinicSystem.Helpers.Design.Controls;
 
 public class RecordDialog : DialogShell
 {
     private readonly Func<Task<bool>> _save;
     public InlineAlert Alert { get; } = new() { Visible = false, Dock = DockStyle.Top };
-    public RecordDialog(string title, Control fields, Func<Task<bool>> save) : base(title, "Save", new Size(640, 600))
+    public RecordDialog(string title, Control fields, Func<Task<bool>> save) : base(title, "Save", new Size(Metrics.RecordDialogWidth, Metrics.RecordDialogHeight))
     {
         _save = save; Body.AutoScroll = true;
         var content = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, BackColor = Palette.Surface };

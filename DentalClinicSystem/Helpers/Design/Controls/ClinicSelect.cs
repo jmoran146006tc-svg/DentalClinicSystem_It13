@@ -45,7 +45,7 @@ public sealed class ClinicSelect : AntdUI.Select
     public object? SelectedItem
     {
         get => base.SelectedIndex >= 0 && base.SelectedIndex < Items.Count ? Items[base.SelectedIndex] : null;
-        set => base.SelectedIndex = Items.IndexOf(value!);
+        set => base.SelectedIndex = value is null ? -1 : Items.IndexOf(value);
     }
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public new object? SelectedValue
@@ -75,7 +75,7 @@ public sealed class ClinicSelect : AntdUI.Select
             base.SelectedIndex = -1;
             base.Items.Clear();
             base.Items.AddRange(Items.Select(item => (object)new AntdUI.SelectItem(Member(item, DisplayMember)?.ToString() ?? item.ToString() ?? "", item)).ToArray());
-            var index = Items.IndexOf(current!);
+            var index = current is null ? -1 : Items.IndexOf(current);
             if (index < 0 && current is not null && ValueMember.Length > 0)
                 index = Items.ToList().FindIndex(item => Equals(Member(item, ValueMember), Member(current, ValueMember)));
             base.SelectedIndex = index >= 0 ? index : selectFirst && Items.Count > 0 ? 0 : -1;

@@ -54,7 +54,8 @@ public partial class ucPatientRecords : UserControl
     private async Task RefreshGridAsync()
     {
         var result = _layout.ShowInactive.Checked ? await _patientService.GetAllIncludingInactiveAsync(_currentUser) : await _patientService.GetAllPatientsAsync(_currentUser);
-        if (IsDisposed || !UiMessages.TryItems(result, out _patients)) return;
+        if (IsDisposed || !UiMessages.TryItems(result, out var patients)) return;
+        _patients = patients;
         BindRows();
     }
     private void BindRows()
@@ -84,8 +85,10 @@ public partial class ucPatientRecords : UserControl
     }
     private async Task AfterSaveAsync()
     {
-        var patient = _savedPatient!;
-        await RefreshGridAsync(); UiMessages.ShowSuccess("Patient saved.");
+        if (_savedPatient is not { } patient || IsDisposed) return;
+        await RefreshGridAsync();
+        if (IsDisposed) return;
+        UiMessages.ShowSuccess("Patient saved.");
         var saved = _patients.Where(p => p.FullName == patient.FullName && p.ContactNumber == patient.ContactNumber).MaxBy(p => p.PatientId);
         if (saved is not null) GridTheme.SelectAndFlash(dgvPatients, patient.PatientId > 0 ? patient.PatientId : saved.PatientId);
     }

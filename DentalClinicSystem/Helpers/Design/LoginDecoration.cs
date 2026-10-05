@@ -61,7 +61,7 @@ public static class LoginDecoration
     public static void DrawCrisp(Graphics graphics, Control owner, IReadOnlyList<LoginDecorPlacement> placements)
     {
         DesignPaint.Prepare(graphics);
-        var scale = owner.DeviceDpi / 96f;
+        var scale = owner.DeviceDpi / (float)Metrics.BaselineDpi;
         foreach (var placement in placements)
         {
             var spec = placement.Spec; var rect = placement.ShapeBounds;

@@ -16,12 +16,6 @@ namespace DentalClinicSystem.DBContent
                 MapAppointment,
                 Parameter("@p_AppointmentId", appointmentId));
 
-        public Task<IReadOnlyList<Appointment>> GetByDentistAndDateAsync(int dentistId, DateTime date)
-            => QueryAsync("sp_Appointment_GetByDentistAndDate",
-                MapAppointment,
-                Parameter("@p_DentistId", dentistId),
-                Parameter("@p_Date", date.Date));
-
         public Task AddAsync(Appointment appointment)
             => ExecuteAsync("sp_Appointment_Add",
                 Parameter("@p_PatientId", appointment.PatientId),
@@ -44,11 +38,6 @@ namespace DentalClinicSystem.DBContent
                 Parameter("@p_Reason", appointment.Reason),
                 Parameter("@p_CancellationReason", appointment.CancellationReason),
                 Parameter("@p_Notes", appointment.Notes));
-
-        public Task DeleteAsync(int appointmentId)
-            => ExecuteAsync("sp_Appointment_Delete",
-                "This appointment has treatment records attached and can't be deleted. Cancel it instead.",
-                Parameter("@p_AppointmentId", appointmentId));
 
         public Task<IReadOnlyList<Appointment>> GetByPatientIdAsync(int patientId)
             => QueryAsync("sp_Appointment_GetByPatientId", MapAppointment, Parameter("@p_PatientId", patientId));

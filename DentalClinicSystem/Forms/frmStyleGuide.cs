@@ -3,7 +3,6 @@ using DentalClinicSystem.Helpers;
 using DentalClinicSystem.Helpers.Charts;
 using DentalClinicSystem.Helpers.Design;
 using DentalClinicSystem.Helpers.Design.Controls;
-using DentalClinicSystem.Helpers.Design.Motion;
 using DentalClinicSystem.Helpers.Native;
 using DentalClinicSystem.Models;
 using MotionSystem = DentalClinicSystem.Helpers.Design.Motion.Motion;
@@ -85,7 +84,7 @@ public sealed class frmStyleGuide : Form
         fields.Controls.Add(UiFactory.Search(new TextBox { PlaceholderText = "Search patients" }));
         fields.Controls.Add(UiFactory.Field(new TextBox { Text = "Demo only" }, "Password", FieldKind.Password));
         var choices = new ComboBox(); choices.Items.AddRange(["All dentists", "Demo dentist"]); choices.SelectedIndex = 0;
-        fields.Controls.Add(UiFactory.Field(choices, "Dentist", FieldKind.Choice));
+        fields.Controls.Add(UiFactory.Field(choices, Roles.Dentist, FieldKind.Choice));
         fields.Controls.Add(UiFactory.Field(new DateTimePicker { Format = DateTimePickerFormat.Short }, "Date", FieldKind.Date));
         var error = UiFactory.Field(new TextBox(), "Error state"); error.SetError("This field is required."); fields.Controls.Add(error);
         fields.Controls.Add(UiFactory.Field(new TextBox { Multiline = true, MaxLength = Service.FieldLimits.Notes }, "Notes"));

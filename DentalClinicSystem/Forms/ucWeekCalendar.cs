@@ -35,7 +35,7 @@ public sealed class ucWeekCalendar : UserControl
         next.Click += (_, _) => Request(_week.AddDays(DashboardPresentation.DaysInWeek));
         today.Click += (_, _) => Request(DashboardPresentation.WeekStart(_today));
         toolbar.Controls.AddRange([previous, today, next, _range]);
-        var filter = FieldBox.Wrap(_dentist, "Dentist", FieldKind.Choice); filter.Dock = DockStyle.Top; filter.Width = Metrics.FormWidth;
+        var filter = FieldBox.Wrap(_dentist, Roles.Dentist, FieldKind.Choice); filter.Dock = DockStyle.Top; filter.Width = Metrics.FormWidth;
         _dentist.SelectedIndexChanged += (_, _) => { if (!_binding) ApplyFilter(); };
         _viewport.Controls.Add(_canvas); _viewport.Controls.Add(_empty);
         _viewport.SizeChanged += (_, _) => ResizeCanvas();

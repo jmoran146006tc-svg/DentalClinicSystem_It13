@@ -33,8 +33,8 @@ public static class GridHelper
             {
                 SortOrder = true, Editable = false, Ellipsis = true,
                 Align = type == typeof(decimal) || type == typeof(int) || type == typeof(double) ? AntdUI.ColumnAlign.Right : AntdUI.ColumnAlign.Left,
-                MinWidth = name.Contains("Date", StringComparison.Ordinal) || name is "Email" or "Address" or "Notes" ? "180"
-                    : name.Contains("Name", StringComparison.Ordinal) || name is "Patient" or "Dentist" or "Status" ? "160" : "110"
+                MinWidth = (name.Contains("Date", StringComparison.Ordinal) || name is "Email" or "Address" or "Notes" ? Metrics.GridWideColumn
+                    : name.Contains("Name", StringComparison.Ordinal) || name is "Patient" or nameof(DentistWorkload.Dentist) or "Status" ? Metrics.GridIdentityColumn : Metrics.GridCompactColumn).ToString(System.Globalization.CultureInfo.InvariantCulture)
             };
             column.Render = (value, record, index) => Render(name, value);
             grid.Columns.Add(column);

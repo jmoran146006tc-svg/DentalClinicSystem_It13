@@ -16,26 +16,6 @@ namespace DentalClinicSystem.DBContent
                 MapTreatmentType,
                 Parameter("@p_TreatmentTypeId", treatmentTypeId));
 
-        public Task AddAsync(TreatmentType treatmentType)
-            => ExecuteAsync("sp_TreatmentType_Add",
-                Parameter("@p_Name", treatmentType.Name),
-                Parameter("@p_DefaultCost", treatmentType.DefaultCost),
-                Parameter("@p_DefaultDurationMinutes", treatmentType.DefaultDurationMinutes),
-                Parameter("@p_Description", treatmentType.Description));
-
-        public Task UpdateAsync(TreatmentType treatmentType)
-            => ExecuteAsync("sp_TreatmentType_Update",
-                Parameter("@p_TreatmentTypeId", treatmentType.TreatmentTypeId),
-                Parameter("@p_Name", treatmentType.Name),
-                Parameter("@p_DefaultCost", treatmentType.DefaultCost),
-                Parameter("@p_DefaultDurationMinutes", treatmentType.DefaultDurationMinutes),
-                Parameter("@p_Description", treatmentType.Description));
-
-        public Task DeleteAsync(int treatmentTypeId)
-            => ExecuteAsync("sp_TreatmentType_Delete",
-                "This treatment type is used by one or more treatment records and can't be deleted.",
-                Parameter("@p_TreatmentTypeId", treatmentTypeId));
-
         private static TreatmentType MapTreatmentType(MySqlDataReader reader) => new()
         {
             TreatmentTypeId = (int)reader["TreatmentTypeId"],

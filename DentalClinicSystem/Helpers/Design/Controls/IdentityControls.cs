@@ -1,6 +1,3 @@
-using DentalClinicSystem.Helpers.Design.Motion;
-using MotionSystem = DentalClinicSystem.Helpers.Design.Motion.Motion;
-
 namespace DentalClinicSystem.Helpers.Design.Controls;
 
 public sealed class Avatar : DesignControl

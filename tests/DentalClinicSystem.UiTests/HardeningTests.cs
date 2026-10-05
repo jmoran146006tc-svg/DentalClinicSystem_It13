@@ -35,5 +35,11 @@ public sealed class HardeningTests
         stub.Results[method] = original; retry.PerformClick(); Application.DoEvents();
         Assert.False(alert.Visible); Assert.Equal("Refresh", retry.Text); Assert.True(page.Enabled);
         Assert.NotEmpty(UiThread.Controls(page).OfType<ClinicTable>().Single().Records);
+        var loadedRows = UiThread.Controls(page).OfType<ClinicTable>().Single().Records.Count;
+        stub.Results[method] = failure; retry.PerformClick(); Application.DoEvents();
+        Assert.True(alert.Visible);
+        var search = UiThread.Controls(page).OfType<AntdUI.Input>().Single(input => input.PlaceholderText?.StartsWith("Search ", StringComparison.Ordinal) == true);
+        search.Text = "no matching record"; search.Clear(); Application.DoEvents();
+        Assert.Equal(loadedRows, UiThread.Controls(page).OfType<ClinicTable>().Single().Records.Count);
     });
 }

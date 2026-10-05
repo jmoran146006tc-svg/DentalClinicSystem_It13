@@ -22,7 +22,7 @@ public sealed class LoadingOverlay : DesignControl
         if (Width <= 0 || Height <= 0) return;
         DesignPaint.Begin(e.Graphics, this);
         if (_snapshot is not null) e.Graphics.DrawImage(_snapshot, ClientRectangle);
-        using var veil = new SolidBrush(Palette.WithAlpha(Palette.Surface, .86f));
+        using var veil = new SolidBrush(Palette.LoadingVeil);
         e.Graphics.FillRectangle(veil, ClientRectangle);
         DesignPaint.Prepare(e.Graphics);
         using var pen = new Pen(Palette.Brand, Metrics.FocusRing);

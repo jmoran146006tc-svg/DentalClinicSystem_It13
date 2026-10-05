@@ -46,7 +46,7 @@ public sealed class LoginHero : DesignControl
         AccessibleName = "Welcome back. Sign in to your clinic account.";
     }
     private int S(int value) => Metrics.Scale(this, value);
-    private Font PixelFont(Font font) => new(font.FontFamily, font.SizeInPoints * DeviceDpi / 72f, font.Style, GraphicsUnit.Pixel);
+    private Font PixelFont(Font font) => Typography.PixelFont(font, DeviceDpi);
     private void BackdropChanged(object? sender, EventArgs e) => Relayout();
     public void SetCapsLock(bool enabled) { if (_capsLock == enabled) return; _capsLock = enabled; Relayout(); }
     protected override void OnSizeChanged(EventArgs e) { base.OnSizeChanged(e); if (_username is not null) Relayout(); }

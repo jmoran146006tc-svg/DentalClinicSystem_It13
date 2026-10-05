@@ -23,7 +23,7 @@ public partial class ucUserManagement : UserControl
         InitializeComponent(); _userService = userService; _dentistService = dentistService; _currentUser = currentUser;
         _layout = new(this, "Users", "user", "Accounts, permissions and dentist links", dgvUsers, btnAdd, btnClear, ClearForm);
         _layout.AddRow(UiFactory.Field(txtUsername, "Username")); _layout.AddRow(UiFactory.Field(txtPassword, "Password", FieldKind.Password));
-        _layout.AddRow(UiFactory.Field(cboRole, "Role", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(cboDentist, "Dentist", FieldKind.Choice));
+        _layout.AddRow(UiFactory.Field(cboRole, "Role", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(cboDentist, Roles.Dentist, FieldKind.Choice));
         InputRules.ApplyMaxLengths((txtUsername, FieldLimits.Username), (txtPassword, FieldLimits.Password));
         cboRole.Items.Clear(); cboRole.Items.AddRange([Roles.Admin, Roles.Receptionist, Roles.Dentist]);
         cboRole.SelectedIndexChanged += (_, _) => cboDentist.Enabled = RoleAccess.RequiresDentist(cboRole.SelectedItem as string ?? "");
@@ -49,12 +49,13 @@ public partial class ucUserManagement : UserControl
     private async Task RefreshGridAsync()
     {
         var result = await _userService.GetAllUsersAsync(_currentUser);
-        if (IsDisposed || !UiMessages.TryItems(result, out _users)) return;
+        if (IsDisposed || !UiMessages.TryItems(result, out var users)) return;
+        _users = users;
         BindRows();
     }
     private void BindRows()
     {
-        var rows = _users.Where(u => new[] { u.Username, u.Role }.Any(v => v.Contains(_layout.Search.Text.Trim(), StringComparison.OrdinalIgnoreCase)))
+        var rows = _users.Where(u => RecordSearch.Matches(_layout.Search.Text, u.Username, u.Role))
             .Select(u => new UserRow(u.UserId, u.Username, u.Role, u.DentistId is int id ? _dentistNames.GetValueOrDefault(id, "Unlinked") : "n/a", u.IsActive, u));
         GridHelper.Bind(dgvUsers, rows, row => row.UserId, "No users match your search.", "UserId", "Record");
         GridHelper.IdentityColumn<UserRow>(dgvUsers, "Username", row => (row.Username, row.IsActive ? "Active account" : "Inactive account")); ClearForm();
@@ -77,8 +78,10 @@ public partial class ucUserManagement : UserControl
     }
     private async Task AfterSaveAsync()
     {
-        var user = _savedUser!;
-        await RefreshGridAsync(); UiMessages.ShowSuccess("User saved.");
+        if (_savedUser is not { } user || IsDisposed) return;
+        await RefreshGridAsync();
+        if (IsDisposed) return;
+        UiMessages.ShowSuccess("User saved.");
         var saved = _users.FirstOrDefault(u => u.Username == user.Username); if (saved is not null) GridTheme.SelectAndFlash(dgvUsers, saved.UserId);
     }
     private async Task DeactivateAsync()

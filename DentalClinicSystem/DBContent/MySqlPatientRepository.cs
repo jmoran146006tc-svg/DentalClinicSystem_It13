@@ -39,10 +39,6 @@ namespace DentalClinicSystem.DBContent
                 Parameter("@p_GuardianName", patient.GuardianName), Parameter("@p_GuardianContact", patient.GuardianContact),
                 Parameter("@p_Allergies", patient.Allergies), Parameter("@p_MedicalNotes", patient.MedicalNotes));
 
-        public Task DeleteAsync(int patientId)
-            => ExecuteAsync("sp_Patient_Delete",
-                Parameter("@p_PatientId", patientId));
-
         public Task<IReadOnlyList<Patient>> GetAllIncludingInactiveAsync()
             => QueryAsync("sp_Patient_GetAllIncludingInactive", MapPatient);
 

@@ -36,21 +36,26 @@ namespace DentalClinicSystem
             async Task StartAsync()
             {
                 Application.Idle -= Start;
-                try
+                await OpenLoginAsync(context);
+            }
+        }
+
+        private static async Task OpenLoginAsync(ApplicationContext context)
+        {
+            try
+            {
+                if (!await DbConnectionHelper.CanConnectAsync())
                 {
-                    if (!await DbConnectionHelper.CanConnectAsync())
-                    {
-                        UiMessages.ShowFatal("Could not connect to the database. Make sure MySQL is running and that you have run the scripts in the Database folder (see README), then check the connection settings in DBContent/DbConnectionHelper.cs.");
-                        return;
-                    }
-                    var login = new frmLogin(BuildServices());
-                    context.MainForm = login;
-                    login.Show();
+                    UiMessages.ShowFatal("Could not connect to the database. Make sure MySQL is running and that you have run the scripts in the Database folder (see README), then check the connection settings in DBContent/DbConnectionHelper.cs.");
+                    return;
                 }
-                finally
-                {
-                    if (context.MainForm is null) context.ExitThread();
-                }
+                var login = new frmLogin(BuildServices());
+                context.MainForm = login;
+                login.Show();
+            }
+            finally
+            {
+                if (context.MainForm is null) context.ExitThread();
             }
         }
 

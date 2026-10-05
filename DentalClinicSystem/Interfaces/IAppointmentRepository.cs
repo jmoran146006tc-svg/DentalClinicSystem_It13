@@ -8,8 +8,6 @@ namespace DentalClinicSystem.Interfaces
         Task<Appointment?> GetByIdAsync(int appointmentId);
         Task AddAsync(Appointment appointment);
         Task UpdateAsync(Appointment appointment);
-        Task DeleteAsync(int appointmentId);
-        Task<IReadOnlyList<Appointment>> GetByDentistAndDateAsync(int dentistId, DateTime date);
         Task<IReadOnlyList<Appointment>> GetByPatientIdAsync(int patientId);
         Task<IReadOnlyList<Appointment>> GetByRangeAsync(DateTime from, DateTime to);
         Task<IReadOnlyList<Appointment>> GetByDentistAndRangeAsync(int dentistId, DateTime from, DateTime to);

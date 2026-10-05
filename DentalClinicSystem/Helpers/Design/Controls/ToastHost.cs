@@ -22,7 +22,7 @@ public sealed class ToastHost : IDisposable
             Semantic.Success => AntdUI.TType.Success, Semantic.Warning => AntdUI.TType.Warn,
             Semantic.Danger => AntdUI.TType.Error, _ => AntdUI.TType.Info
         };
-        var config = new AntdUI.Notification.Config(_owner, "Dental clinic", text, icon, AntdUI.TAlignFrom.TR, Typography.Body, 6)
+        var config = new AntdUI.Notification.Config(_owner, "Dental clinic", text, icon, AntdUI.TAlignFrom.TR, Typography.Body, (int)Math.Ceiling(Motion.Motion.ToastLifetime.TotalSeconds))
         {
             ID = id, Radius = Metrics.CardRadius, EnableSound = false, ShowInWindow = true,
             OnClose = () => _ids.TryRemove(id, out _)

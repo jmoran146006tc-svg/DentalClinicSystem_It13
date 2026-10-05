@@ -9,7 +9,7 @@ public static class CalendarGeometry
     public const int StartHour = 8, EndHour = 18;
     public static int Height(int dpi) => Scale(Metrics.CalendarHeaderHeight + (EndHour - StartHour) * Metrics.CalendarHourHeight + Space.Xl, dpi);
     public static int MinimumWidth(int dpi) => Scale(Metrics.CalendarGutter + DashboardPresentation.DaysInWeek * Metrics.CalendarDayWidth, dpi);
-    public static int Scale(int value, int dpi) => (int)Math.Round(value * dpi / 96d);
+    public static int Scale(int value, int dpi) => (int)Math.Round(value * dpi / (double)Metrics.BaselineDpi);
     public static IReadOnlyList<CalendarBlock> Blocks(IEnumerable<Appointment> appointments, DateTime monday, int width, int dpi)
     {
         var gutter = Scale(Metrics.CalendarGutter, dpi);

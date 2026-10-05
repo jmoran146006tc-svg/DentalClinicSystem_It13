@@ -34,5 +34,5 @@ public static class ReportsPresentation
         new("Appointments by status", ["Status", "Count"], snapshot.Status.Select(row => (IReadOnlyList<object?>)[AppointmentStatus.Display(row.Status), row.Total]).ToArray()),
         new("Billed by day", ["Date", "Billed (PHP)"], snapshot.Days.Select(row => (IReadOnlyList<object?>)[row.Day, row.Billed]).ToArray()),
         new("Top treatment types", ["Treatment", "Count", "Billed (PHP)"], snapshot.Types.Select(row => (IReadOnlyList<object?>)[row.Name, row.Total, row.Billed]).ToArray()),
-        new("Dentist workload", ["Dentist", "Total", "Completed", "Billed (PHP)"], snapshot.Workload.Select(row => (IReadOnlyList<object?>)[row.Dentist, row.Total, row.Completed, row.Billed]).ToArray())]);
+        new("Dentist workload", [nameof(DentistWorkload.Dentist), "Total", AppointmentStatus.Display(AppointmentStatus.Completed), "Billed (PHP)"], snapshot.Workload.Select(row => (IReadOnlyList<object?>)[row.Dentist, row.Total, row.Completed, row.Billed]).ToArray())]);
 }

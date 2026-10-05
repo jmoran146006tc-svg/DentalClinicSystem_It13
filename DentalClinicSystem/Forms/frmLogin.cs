@@ -29,7 +29,7 @@ namespace DentalClinicSystem
         private void BuildLoginLayout()
         {
             SuspendLayout();
-            AutoSize = false; AutoScaleMode = AutoScaleMode.Dpi; AutoScaleDimensions = new SizeF(96, 96);
+            AutoSize = false; AutoScaleMode = AutoScaleMode.Dpi; AutoScaleDimensions = new SizeF(Metrics.BaselineDpi, Metrics.BaselineDpi);
             BackgroundImage = null; BackColor = Palette.Canvas;
             pictureBox1.Visible = false; panel1.Visible = false;
             label1.Visible = label2.Visible = label3.Visible = false;

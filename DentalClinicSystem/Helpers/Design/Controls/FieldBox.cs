@@ -24,7 +24,7 @@ public sealed class FieldBox : Panel
         _editor = input as AntdUI.Input;
         Theme.MarkPrimitive(this); Input = input;
         Height = Metrics.ControlHeight; Width = Metrics.FormWidth;
-        BackColor = Color.Transparent; TabStop = false;
+        BackColor = Palette.Transparent; TabStop = false;
         input.Visible = true; input.Dock = DockStyle.Fill; input.Margin = Padding.Empty;
         input.Font = Typography.Body;
         Controls.Add(input);
@@ -69,14 +69,14 @@ public sealed class FormField : TableLayoutPanel
     public FormField(string caption, FieldBox box)
     {
         Theme.MarkPrimitive(this);
-        Box = box; ColumnCount = 1; RowCount = 3; Width = Metrics.FormWidth; BackColor = Color.Transparent;
+        Box = box; ColumnCount = 1; RowCount = 3; Width = Metrics.FormWidth; BackColor = Palette.Transparent;
         Margin = new Padding(0, Space.Sm, 0, Space.Sm);
         AutoSize = false;
         ColumnStyles.Add(new(SizeType.Percent, 100));
         RowStyles.Add(new(SizeType.AutoSize)); RowStyles.Add(new(SizeType.AutoSize)); RowStyles.Add(new(SizeType.AutoSize));
         var label = new Label { Text = caption, Font = Typography.Label, ForeColor = Palette.Ink500, AutoSize = true, Margin = new Padding(Space.Xs, 0, 0, Space.Xs) }; _caption = label;
         box.Input.AccessibleName = caption; box.Dock = DockStyle.Fill; box.Margin = Padding.Empty;
-        label.BackColor = _message.BackColor = Color.Transparent; _message.Margin = Padding.Empty; _message.Visible = false;
+        label.BackColor = _message.BackColor = Palette.Transparent; _message.Margin = Padding.Empty; _message.Visible = false;
         Controls.Add(label, 0, 0); Controls.Add(box, 0, 1); Controls.Add(_message, 0, 2);
         box.SizeChanged += (_, _) => FitHeight(); FitHeight();
         if (box.Input is TextBox { Multiline: true } text) text.TextChanged += (_, _) => SetHelper(text.Text.Length >= text.MaxLength * .8 ? $"{text.Text.Length}/{text.MaxLength}" : string.Empty);

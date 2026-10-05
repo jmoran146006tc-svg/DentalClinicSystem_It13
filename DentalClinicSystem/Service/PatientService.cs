@@ -16,12 +16,6 @@ namespace DentalClinicSystem.Service
             if (!RoleAccess.Can(actor, Permission.ViewPatients)) return RoleAccess.Denied<IReadOnlyList<Patient>>();
             return ServiceResult<IReadOnlyList<Patient>>.Ok(await repository.GetAllIncludingInactiveAsync());
         }
-        public async Task<ServiceResult<Patient>> GetPatientByIdAsync(User actor, int patientId)
-        {
-            if (!RoleAccess.Can(actor, Permission.ViewPatients)) return RoleAccess.Denied<Patient>();
-            var patient = await repository.GetByIdAsync(patientId);
-            return patient is null ? ServiceResult<Patient>.Fail("Patient not found.") : ServiceResult<Patient>.Ok(patient);
-        }
         public Task<ServiceResult> AddPatientAsync(User actor, Patient patient) => SaveAsync(actor, patient, false);
         public Task<ServiceResult> UpdatePatientAsync(User actor, Patient patient) => SaveAsync(actor, patient, true);
 

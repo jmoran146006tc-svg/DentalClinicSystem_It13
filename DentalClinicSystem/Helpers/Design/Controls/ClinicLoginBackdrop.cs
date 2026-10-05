@@ -44,33 +44,13 @@ public sealed class ClinicLoginBackdrop : DesignControl
         SettleEntrance(); DisposeCache();
         if (Width <= 0 || Height <= 0) return;
         _cacheKey = (Size, DeviceDpi);
-        _photo = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
-        using (var graphics = Graphics.FromImage(_photo))
-        {
-            DesignPaint.Prepare(graphics);
-            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            var photo = LoginArtwork.Photo;
-            var scale = Math.Max((float)Width / photo.Width, (float)Height / photo.Height);
-            PhotoBounds = new((Width - photo.Width * scale) / 2, (Height - photo.Height * scale) / 2, photo.Width * scale, photo.Height * scale);
-            graphics.DrawImage(photo, PhotoBounds);
-            using var tint = new SolidBrush(Palette.LoginTint);
-            graphics.FillRectangle(tint, ClientRectangle);
-            using var ellipse = new GraphicsPath();
-            var surround = ClientRectangle; surround.Inflate(Width / 4, Height / 4);
-            ellipse.AddEllipse(surround);
-            using var vignette = new PathGradientBrush(ellipse)
-            {
-                CenterPoint = new(Width / 2f, Height / 2f), CenterColor = Palette.WithAlpha(Palette.Ink900, 0),
-                SurroundColors = [Palette.LoginVignette]
-            };
-            graphics.FillRectangle(vignette, ClientRectangle);
-        }
+        var photo = RebuildPhoto();
         _softDecor = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
         using (var graphics = Graphics.FromImage(_softDecor)) LoginDecoration.DrawSoft(graphics, this);
         _composite = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
         using (var graphics = Graphics.FromImage(_composite))
         {
-            Blit(graphics, _photo); Blit(graphics, _softDecor);
+            Blit(graphics, photo); Blit(graphics, _softDecor);
         }
         // Capture only photo + luminous gradients. Crisp motifs never enter the frost.
         _blurred = new Bitmap(Math.Max(1, Width / Metrics.LoginBlurScale), Math.Max(1, Height / Metrics.LoginBlurScale), PixelFormat.Format32bppArgb);
@@ -85,6 +65,29 @@ public sealed class ClinicLoginBackdrop : DesignControl
         using (var graphics = Graphics.FromImage(_crispDecor)) LoginDecoration.DrawCrisp(graphics, this, Decorations);
         using (var graphics = Graphics.FromImage(_composite)) Blit(graphics, _crispDecor);
         Invalidate(); CompositionChanged?.Invoke(this, EventArgs.Empty);
+    }
+    private Bitmap RebuildPhoto()
+    {
+        _photo = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
+        using var graphics = Graphics.FromImage(_photo);
+        DesignPaint.Prepare(graphics);
+        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        var photo = LoginArtwork.Photo;
+        var scale = Math.Max((float)Width / photo.Width, (float)Height / photo.Height);
+        PhotoBounds = new((Width - photo.Width * scale) / 2, (Height - photo.Height * scale) / 2, photo.Width * scale, photo.Height * scale);
+        graphics.DrawImage(photo, PhotoBounds);
+        using var tint = new SolidBrush(Palette.LoginTint);
+        graphics.FillRectangle(tint, ClientRectangle);
+        using var ellipse = new GraphicsPath();
+        var surround = ClientRectangle; surround.Inflate(Width / 4, Height / 4);
+        ellipse.AddEllipse(surround);
+        using var vignette = new PathGradientBrush(ellipse)
+        {
+            CenterPoint = new(Width / 2f, Height / 2f), CenterColor = Palette.WithAlpha(Palette.Ink900, 0),
+            SurroundColors = [Palette.LoginVignette]
+        };
+        graphics.FillRectangle(vignette, ClientRectangle);
+        return _photo;
     }
     private static void Blur(Bitmap image)
     {
@@ -139,15 +142,15 @@ public sealed class ClinicLoginBackdrop : DesignControl
     {
         var source = new Rectangle(origin, destination.Size);
         if (_composite is null) { graphics.Clear(Palette.Canvas); return; }
-        if (DecorationProgress >= 1)
+        if (DecorationProgress >= 1 || _photo is not { } photo || _softDecor is not { } softDecor || _crispDecor is not { } crispDecor)
         {
             graphics.DrawImage(_composite, destination, source, GraphicsUnit.Pixel); return;
         }
-        graphics.DrawImage(_photo!, destination, source, GraphicsUnit.Pixel);
+        graphics.DrawImage(photo, destination, source, GraphicsUnit.Pixel);
         if (DecorationProgress <= 0) return;
         _decorAlpha.Matrix33 = DecorationProgress; _decorAttributes.SetColorMatrix(_decorAlpha);
-        graphics.DrawImage(_softDecor!, destination, source.X, source.Y, source.Width, source.Height, GraphicsUnit.Pixel, _decorAttributes);
-        graphics.DrawImage(_crispDecor!, destination, source.X, source.Y, source.Width, source.Height, GraphicsUnit.Pixel, _decorAttributes);
+        graphics.DrawImage(softDecor, destination, source.X, source.Y, source.Width, source.Height, GraphicsUnit.Pixel, _decorAttributes);
+        graphics.DrawImage(crispDecor, destination, source.X, source.Y, source.Width, source.Height, GraphicsUnit.Pixel, _decorAttributes);
     }
     public void StartEntrance()
     {

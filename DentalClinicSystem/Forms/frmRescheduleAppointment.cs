@@ -1,5 +1,4 @@
 using DentalClinicSystem.Helpers;
-using DentalClinicSystem.Helpers.Design;
 using DentalClinicSystem.Helpers.Design.Controls;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
@@ -22,7 +21,7 @@ public sealed class frmRescheduleAppointment : DialogShell
         _appointment = appointment; _appointments = appointments; _actor = actor;
         var fields = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1 };
         fields.ColumnStyles.Add(new(SizeType.Percent, 100));
-        foreach (var field in new[] { UiFactory.Field(_dentist, "Dentist", FieldKind.Choice), UiFactory.Field(_when, "Date and time", FieldKind.Date) })
+        foreach (var field in new[] { UiFactory.Field(_dentist, Roles.Dentist, FieldKind.Choice), UiFactory.Field(_when, "Date and time", FieldKind.Date) })
         { field.Dock = DockStyle.Top; fields.Controls.Add(field); }
         var alert = new InlineAlert { Dock = DockStyle.Top, Visible = false };
         Body.Controls.Add(fields); Body.Controls.Add(alert); UiMessages.RegisterAlertHost(this, alert);

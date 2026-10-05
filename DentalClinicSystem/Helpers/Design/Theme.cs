@@ -30,6 +30,12 @@ public static class Theme
         return Color.FromArgb(Channel(a.A, b.A), Channel(a.R, b.R), Channel(a.G, b.G), Channel(a.B, b.B));
         int Channel(byte start, byte end) => (int)Math.Round(start + (end - start) * t);
     }
+    public static Color Composite(Color foreground, Color background)
+    {
+        var alpha = foreground.A / 255d;
+        return Color.FromArgb(Channel(foreground.R, background.R), Channel(foreground.G, background.G), Channel(foreground.B, background.B));
+        int Channel(byte front, byte back) => (int)Math.Round(front * alpha + back * (1 - alpha));
+    }
     public static void Apply(Control root)
     {
         if (ReferenceEquals(root.Tag, PrimitiveTag)) return;

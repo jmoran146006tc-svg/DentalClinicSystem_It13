@@ -43,15 +43,16 @@ public partial class ucDentistRecords : UserControl
     private async Task RefreshGridAsync()
     {
         var result = await _dentistService.GetAllDentistsAsync(_currentUser);
-        if (IsDisposed || !UiMessages.TryItems(result, out _dentists)) return;
+        if (IsDisposed || !UiMessages.TryItems(result, out var dentists)) return;
+        _dentists = dentists;
         BindRows();
     }
     private void BindRows()
     {
-        var rows = _dentists.Where(d => new[] { d.FullName, d.Specialization ?? "", d.ContactNumber ?? "", d.LicenseNumber ?? "" }.Any(v => v.Contains(_layout.Search.Text.Trim(), StringComparison.OrdinalIgnoreCase)))
+        var rows = _dentists.Where(d => RecordSearch.Matches(_layout.Search.Text, d.FullName, d.Specialization, d.ContactNumber, d.LicenseNumber))
             .Select(d => new DentistRow(d.DentistId, d.FullName, d.Specialization, d.ContactNumber, d.LicenseNumber, d));
         GridHelper.Bind(dgvDentists, rows, row => row.DentistId, "No dentists match your search.", "DentistId", "Record");
-        GridHelper.IdentityColumn<DentistRow>(dgvDentists, "Name", row => (row.Name, row.Specialization ?? "Dentist")); ClearForm();
+        GridHelper.IdentityColumn<DentistRow>(dgvDentists, "Name", row => (row.Name, row.Specialization ?? Roles.Dentist)); ClearForm();
     }
     private void SelectionChanged(object? sender, EventArgs e)
     {
@@ -70,8 +71,10 @@ public partial class ucDentistRecords : UserControl
     }
     private async Task AfterSaveAsync()
     {
-        var dentist = _savedDentist!;
-        await RefreshGridAsync(); UiMessages.ShowSuccess("Dentist saved.");
+        if (_savedDentist is not { } dentist || IsDisposed) return;
+        await RefreshGridAsync();
+        if (IsDisposed) return;
+        UiMessages.ShowSuccess("Dentist saved.");
         var saved = _dentists.Where(d => d.FullName == dentist.FullName && d.LicenseNumber == dentist.LicenseNumber).MaxBy(d => d.DentistId);
         if (saved is not null) GridTheme.SelectAndFlash(dgvDentists, dentist.DentistId > 0 ? dentist.DentistId : saved.DentistId);
     }

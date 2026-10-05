@@ -145,9 +145,9 @@ namespace DentalClinicSystem.Forms
         }
         private void MoveIndicator()
         {
-            if (_activeNavigation is not { Visible: true } button || !_navigation.Visible) return;
+            if (_activeNavigation is not { Visible: true, Parent: { } parent } button || !_navigation.Visible) return;
             // The indicator is a sidebar sibling so the FlowLayoutPanel never reflows for its animation.
-            var point = pnlSidebar.PointToClient(button.Parent!.PointToScreen(button.Location));
+            var point = pnlSidebar.PointToClient(parent.PointToScreen(button.Location));
             _indicator.Visible = point.Y >= _navigation.Top && point.Y + button.Height <= _navigation.Bottom;
             _indicator.Left = Space.Sm;
             if (_indicator.Visible) _indicator.MoveTo(point.Y, button.Height);

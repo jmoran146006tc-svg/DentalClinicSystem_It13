@@ -17,7 +17,7 @@ public sealed class frmDentistTimeOff : DialogShell
     private readonly int _dentistId;
     private readonly AppButton _remove = UiFactory.Button("Remove", ButtonVariant.Danger);
     private sealed record Row(int TimeOffId, DateTime From, DateTime To, string? Reason);
-    public frmDentistTimeOff(Dentist dentist, IDentistService service, User actor) : base($"Time off: {dentist.FullName}", "Add", new Size(720, 720))
+    public frmDentistTimeOff(Dentist dentist, IDentistService service, User actor) : base($"Time off: {dentist.FullName}", "Add", new Size(Metrics.TimeOffDialogSize, Metrics.TimeOffDialogSize))
     {
         _service = service; _actor = actor; _dentistId = dentist.DentistId;
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3 };

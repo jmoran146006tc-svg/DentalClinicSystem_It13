@@ -1,5 +1,4 @@
 using DentalClinicSystem.Models;
-using DentalClinicSystem.Service;
 
 namespace DentalClinicSystem.Helpers
 {

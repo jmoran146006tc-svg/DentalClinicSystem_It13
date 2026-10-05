@@ -6,8 +6,5 @@ namespace DentalClinicSystem.Interfaces
     {
         Task<IReadOnlyList<TreatmentType>> GetAllAsync();
         Task<TreatmentType?> GetByIdAsync(int treatmentTypeId);
-        Task AddAsync(TreatmentType treatmentType);
-        Task UpdateAsync(TreatmentType treatmentType);
-        Task DeleteAsync(int treatmentTypeId);
     }
 }
