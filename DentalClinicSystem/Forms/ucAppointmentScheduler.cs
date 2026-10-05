@@ -71,7 +71,7 @@ public partial class ucAppointmentScheduler : UserControl
         dgvAppointments.SelectionChanged += (_, _) => _details.Enabled = dgvAppointments.SelectedRecord is not null;
         dtpAppointmentDateTime.ValueChanged += AvailabilityChanged; cboDentist.SelectedIndexChanged += AvailabilityChanged;
         _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManageAppointments);
-        _layout.UseModal(ScheduleAsync, AfterScheduleAsync, allowEdit: false);
+        _layout.UseModal(ScheduleAsync, AfterScheduleAsync, allowEdit: false, onOpen: RefreshAvailabilityAsync);
         _layout.UseRefresh(LoadAsync);
         Enabled = RoleAccess.Can(currentUser, Permission.ViewAppointments);
         ClearForm();
@@ -79,6 +79,7 @@ public partial class ucAppointmentScheduler : UserControl
     private async void ucAppointmentScheduler_Load(object? sender, EventArgs e) => await UiAction.RunAsync(this, async () => { using var loading = _layout.Loading(); await LoadAsync(); });
     private async Task LoadAsync()
     {
+        _lookupsLoaded = false;
         if (RoleAccess.Can(_currentUser, Permission.ManageAppointments))
         {
             var patientResult = await _patientService.GetAllIncludingInactiveAsync(_currentUser);
@@ -95,7 +96,7 @@ public partial class ucAppointmentScheduler : UserControl
             var reasonResult = await _treatmentTypes.GetVisitReasonsAsync(_currentUser);
             if (IsDisposed || !UiMessages.TryItems(reasonResult, out var reasons)) return;
             cmbReason.DataSource = reasons.Where(reason => reason.Name != OtherChoice.Other).Cast<object>().Append(OtherChoice.Other).ToArray(); cmbReason.SelectedIndex = -1;
-            _lookupsLoaded = true; await RefreshAvailabilityAsync();
+            _lookupsLoaded = true;
         }
         await RefreshGridAsync();
     }
@@ -125,11 +126,12 @@ public partial class ucAppointmentScheduler : UserControl
     }
     private async void AvailabilityChanged(object? sender, EventArgs e)
     {
-        if (_lookupsLoaded && !_updatingAvailability)
+        if (_lookupsLoaded && !_updatingAvailability && _layout.IsEditorOpen)
             await UiAction.RunAsync((sender as Control)?.FindForm() is RecordDialog dialog ? dialog : this, RefreshAvailabilityAsync);
     }
     private async Task RefreshAvailabilityAsync()
     {
+        if (!_lookupsLoaded || !_layout.IsEditorOpen) return;
         var duration = cboDuration.SelectedItem is int minutes ? minutes : ClinicRules.DefaultDurationMinutes;
         var version = ++_availabilityVersion; var when = dtpAppointmentDateTime.Value; var selected = cboDentist.SelectedValue as int?;
         var options = await Task.WhenAll(_dentists.Where(d => d.IsActive).Select(async d =>
@@ -137,7 +139,7 @@ public partial class ucAppointmentScheduler : UserControl
             var available = await _appointmentService.IsDentistAvailableAsync(d.DentistId, when, duration);
             return new DisplayOption(d.DentistId, d.FullName + (available ? "" : " (unavailable)"), !available);
         }));
-        if (IsDisposed || version != _availabilityVersion) return;
+        if (IsDisposed || !_layout.IsEditorOpen || version != _availabilityVersion) return;
         _updatingAvailability = true;
         try { cboDentist.DataSource = options; if (selected is int id) cboDentist.SelectedValue = id; }
         finally { _updatingAvailability = false; }
@@ -162,7 +164,6 @@ public partial class ucAppointmentScheduler : UserControl
         ClearForm(); UiMessages.ShowSuccess("Appointment scheduled.");
         var saved = _appointments.Where(a => a.PatientId == appointment.PatientId && a.DentistId == appointment.DentistId && a.AppointmentDateTime == appointment.AppointmentDateTime).MaxBy(a => a.AppointmentId);
         if (saved is not null) GridTheme.SelectAndFlash(dgvAppointments, saved.AppointmentId);
-        await RefreshAvailabilityAsync();
     }
     private async Task ShowDetailsAsync()
     {

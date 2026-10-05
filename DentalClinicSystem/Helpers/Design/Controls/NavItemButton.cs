@@ -9,10 +9,10 @@ public sealed class NavItemButton : DesignControl
     private readonly IconKind _icon;
     private Color _fill = Palette.SidebarBg;
     private bool _selected, _hovered;
-    public Rectangle IconBounds => new(0, (Height - Metrics.Scale(this, Metrics.IconSize)) / 2,
+    public Rectangle IconBounds => new(Metrics.Scale(this, Space.Sm), (Height - Metrics.Scale(this, Metrics.IconSize)) / 2,
         Metrics.Scale(this, Metrics.IconSize), Metrics.Scale(this, Metrics.IconSize));
     public Rectangle TextBounds => new(IconBounds.Right + Metrics.Scale(this, Space.Md), 0,
-        Math.Max(0, Width - IconBounds.Right - Metrics.Scale(this, Space.Md)), Height);
+        Math.Max(0, Width - IconBounds.Right - Metrics.Scale(this, Space.Md + Space.Sm)), Height);
     [System.ComponentModel.DefaultValue(false)]
     public bool Selected { get => _selected; set { _selected = value; UpdateFill(); } }
     public NavItemButton(string text, IconKind icon)

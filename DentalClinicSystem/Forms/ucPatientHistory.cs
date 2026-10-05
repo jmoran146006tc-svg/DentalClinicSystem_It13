@@ -6,7 +6,7 @@ using DentalClinicSystem.Models;
 
 namespace DentalClinicSystem.Forms;
 
-public sealed class ucPatientHistory : UserControl
+public sealed class ucPatientHistory : BufferedPage
 {
     private readonly TableLayoutPanel _content = new() { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, BackColor = Palette.Canvas };
     private readonly IPatientHistoryService _history;

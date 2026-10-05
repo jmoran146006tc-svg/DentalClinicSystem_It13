@@ -8,7 +8,7 @@ using DentalClinicSystem.Service;
 
 namespace DentalClinicSystem.Forms;
 
-public sealed class ucReports : UserControl
+public sealed class ucReports : BufferedPage
 {
     private readonly IReportService _reports;
     private readonly User _actor;
@@ -151,7 +151,6 @@ public sealed class ucReports : UserControl
     }
     private void Bind(ReportSnapshot snapshot)
     {
-        using var before = _snapshot is null ? ContentReveal.Snapshot(_cards) : null;
         _snapshot = snapshot; _cards.Visible = _kpis.Visible = true; SuspendLayout();
         try
         {
@@ -165,7 +164,6 @@ public sealed class ucReports : UserControl
             _export.Enabled = true;
         }
         finally { ResumeLayout(true); }
-        ContentReveal.Play(_cards, before is null ? null : (Bitmap)before.Clone());
     }
     private void BindKpis(ReportSnapshot snapshot)
     {

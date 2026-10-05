@@ -8,7 +8,7 @@ using MotionSystem = DentalClinicSystem.Helpers.Design.Motion.Motion;
 
 namespace DentalClinicSystem.Forms;
 
-public sealed class ucDashboardHome : UserControl
+public sealed class ucDashboardHome : BufferedPage
 {
     private readonly IAppointmentService _appointments;
     private readonly IPatientService _patients;
@@ -105,7 +105,6 @@ public sealed class ucDashboardHome : UserControl
         foreach (var patient in patientRows) _patientNames[patient.PatientId] = patient.FullName;
         foreach (var dentist in dentistRows) _dentistNames[dentist.DentistId] = dentist.FullName;
         if (!await AddHistoricalDentistsAsync(rows)) return false;
-        using var before = !_loaded ? ContentReveal.Snapshot(_body) : null;
         if (!_loaded) BuildStaff();
         var counts = DashboardPresentation.Counts(rows, _patientRows, _today);
         _cards[0].SetValue(counts.TodayAppointments); _cards[1].SetValue(counts.ActivePatients); _cards[2].SetValue(counts.WeekCancellations);
@@ -113,9 +112,8 @@ public sealed class ucDashboardHome : UserControl
         var selectedWeek = _loaded ? _calendar?.WeekStart ?? week : week;
         if (selectedWeek == week) _calendar?.SetAppointments(week, _today, rows, _patientNames, _dentistNames);
         else if (!await LoadWeekAsync(selectedWeek, 0)) return false;
-        _loaded = true; Replay(before); return true;
+        _loaded = true; return true;
     }
-    private void Replay(Bitmap? before) => ContentReveal.Play(_body, before is null ? null : (Bitmap)before.Clone());
     private void BuildStaff()
     {
         ClearBody(); _cards.Clear();
@@ -180,11 +178,11 @@ public sealed class ucDashboardHome : UserControl
             if (!detail.Success || detail.Data is null) { UiMessages.ShowError(detail); return false; }
             details.Add(detail.Data);
         }
-        using var before = ContentReveal.Snapshot(_body); ClearBody(); _header.SetTitle($"Your patients today, {dentist.Data.FullName}");
+        ClearBody(); _header.SetTitle($"Your patients today, {dentist.Data.FullName}");
         var worklist = new DentistWorklist(details, _actor, _time.GetLocalNow().DateTime);
         worklist.HistoryRequested += async id => await UiAction.RunAsync(this, () => OpenHistoryAsync(id));
         worklist.CompletionRequested += async id => await UiAction.RunAsync(this, () => CompleteAsync(id));
-        _body.Controls.Add(worklist); _loaded = true; Replay(before); return true;
+        _body.Controls.Add(worklist); _loaded = true; return true;
     }
     private Task OpenHistoryAsync(int id)
     {

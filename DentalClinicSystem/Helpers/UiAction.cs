@@ -17,7 +17,7 @@ namespace DentalClinicSystem.Helpers
             owner.UseWaitCursor = true;
             MotionSystem.Animator.Schedule(owner, "loading-delay", MotionSystem.LoadingDelay, () =>
             {
-                if (owner.IsDisposed || !owner.Visible || owner.FindForm() is null || owner.Width <= 0 || owner.Height <= 0) return;
+                if (owner.IsDisposed || !owner.Visible || owner.FindForm() is null || owner.Width <= 0 || owner.Height <= 0 || ShowsSkeleton(owner)) return;
                 overlay = new LoadingOverlay(owner);
                 owner.Controls.Add(overlay); overlay.BringToFront();
             });
@@ -40,5 +40,7 @@ namespace DentalClinicSystem.Helpers
                 }
             }
         }
+        private static bool ShowsSkeleton(Control owner) => owner is Skeleton { Visible: true }
+            || owner.Controls.Cast<Control>().Any(child => child.Visible && ShowsSkeleton(child));
     }
 }

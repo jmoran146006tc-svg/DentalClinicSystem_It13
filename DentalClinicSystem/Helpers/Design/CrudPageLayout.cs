@@ -17,10 +17,12 @@ public sealed class CrudPageLayout
     private readonly ClinicTable _grid;
     private Func<Task<bool>>? _saveModal;
     private Func<Task>? _afterSave;
+    private Func<Task>? _onEditorOpened;
     private bool _editing;
     private bool _dialogOpen;
     private RecordDialog? _dialog;
     public InlineAlert ActiveAlert => _dialog?.Alert ?? Alert;
+    public bool IsEditorOpen => _dialog is { IsDisposed: false };
     private readonly AppButton _edit = UiFactory.Button("Edit", ButtonVariant.Secondary, IconKind.Edit);
     private bool _loaded;
     public FlowLayoutPanel Toolbar { get; }
@@ -69,9 +71,9 @@ public sealed class CrudPageLayout
         page.Disposed += (_, _) => { FormCard.Dispose(); _title.Dispose(); };
         Toolbar.Name = "recordsToolbar"; ToolbarLayout.Attach(Toolbar);
     }
-    public void UseModal(Func<Task<bool>> save, Func<Task> afterSave, bool allowEdit = true)
+    public void UseModal(Func<Task<bool>> save, Func<Task> afterSave, bool allowEdit = true, Func<Task>? onOpen = null)
     {
-        _saveModal = save; _afterSave = afterSave; FormCard.Visible = false;
+        _saveModal = save; _afterSave = afterSave; _onEditorOpened = onOpen; FormCard.Visible = false;
         _edit.Text = $"Edit {_singular}"; _edit.Visible = allowEdit && NewButton.Visible; _edit.Enabled = false;
         Toolbar.Controls.Add(_edit); Actions.BackColor = Palette.Canvas; Actions.Dock = DockStyle.None; Toolbar.Controls.Add(Actions);
         _edit.Click += async (_, _) => { if (_editing) await OpenEditorAsync(); };
@@ -98,6 +100,8 @@ public sealed class CrudPageLayout
             using RecordDialog dialog = _singular == "patient" ? new PatientDialog(_fields, _saveModal, _editing)
                 : new RecordDialog($"{(_editing ? "Edit" : "New")} {_singular}", _fields, _saveModal);
             _dialog = dialog;
+            if (_onEditorOpened is { } onOpen)
+                dialog.Shown += async (_, _) => await UiAction.RunAsync(dialog, onOpen);
             var result = dialog.ShowDialog(_page.FindForm());
             // The reusable fields belong to the page, not to the temporary dialog.
             _fields.Parent?.Controls.Remove(_fields); FormCard.Content.Controls.Add(_fields);
@@ -119,45 +123,15 @@ public sealed class CrudPageLayout
     {
         if (_loaded) return new LoadScope(() => { });
         _loaded = true; var skeleton = new Skeleton { Dock = DockStyle.Fill };
+        _grid.Visible = false;
         _gridContent.Controls.Add(skeleton); skeleton.BringToFront();
-        return new LoadScope(() => Reveal(skeleton));
+        return new LoadScope(() =>
+        {
+            skeleton.Dispose();
+            if (!_gridContent.IsDisposed) { _grid.Visible = true; _gridContent.Invalidate(true); }
+        });
     }
     private sealed class LoadScope(Action finish) : IDisposable { public void Dispose() => finish(); }
-    private void Reveal(Skeleton skeleton)
-    {
-        Bitmap? previous = null; Bitmap? next = null;
-        try
-        {
-            if (_gridContent.IsDisposed || !_gridContent.Visible || _gridContent.FindForm()?.WindowState == FormWindowState.Minimized || !Motion.Motion.Enabled || _gridContent.Width <= 0 || _gridContent.Height <= 0) return;
-            previous = DesignPaint.Snapshot(_gridContent);
-            skeleton.Dispose(); next = DesignPaint.Snapshot(_gridContent);
-            var reveal = new RecordReveal(previous, next) { Dock = DockStyle.Fill }; previous = next = null;
-            _gridContent.Controls.Add(reveal); reveal.BringToFront();
-            if (reveal.FindForm() is { } form)
-            {
-                EventHandler minimized = (_, _) => { if (form.WindowState == FormWindowState.Minimized) reveal.Dispose(); };
-                form.Resize += minimized; reveal.Disposed += (_, _) => form.Resize -= minimized;
-            }
-            Motion.Motion.Animator.Run(reveal, "records-reveal", 0, 1, Motion.Motion.Fast, Motion.Easing.EaseOutCubic, value => { reveal.Progress = value; reveal.Invalidate(); }, reveal.Dispose);
-        }
-        catch (Exception error) { AppLog.Write(error); }
-        finally { skeleton.Dispose(); previous?.Dispose(); next?.Dispose(); }
-    }
-    private sealed class RecordReveal(Bitmap previous, Bitmap next) : DesignControl
-    {
-        [System.ComponentModel.DefaultValue(0f)] public float Progress { get; set; }
-        protected override void OnVisibleChanged(EventArgs e) { base.OnVisibleChanged(e); if (!Visible && !Disposing && !IsDisposed) Dispose(); }
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            if (Width <= 0 || Height <= 0) return;
-            DesignPaint.Begin(e.Graphics, this);
-            e.Graphics.DrawImage(next, ClientRectangle);
-            using var attributes = new System.Drawing.Imaging.ImageAttributes();
-            attributes.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix { Matrix33 = Math.Clamp(1 - Progress, 0, 1) });
-            e.Graphics.DrawImage(previous, ClientRectangle, 0, 0, previous.Width, previous.Height, GraphicsUnit.Pixel, attributes);
-        }
-        protected override void Dispose(bool disposing) { if (disposing) { previous.Dispose(); next.Dispose(); } base.Dispose(disposing); }
-    }
     public void SetEditing(bool editing)
     {
         _editing = editing;

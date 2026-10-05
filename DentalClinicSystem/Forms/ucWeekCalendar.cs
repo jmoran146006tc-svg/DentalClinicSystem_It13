@@ -9,7 +9,7 @@ public sealed class ucWeekCalendar : UserControl
 {
     private readonly ComboBox _dentist = new() { Name = "cboCalendarDentist", DropDownStyle = ComboBoxStyle.DropDownList, DisplayMember = nameof(DisplayOption.Display) };
     private readonly Label _range = new() { AutoSize = true, Font = Typography.Label, ForeColor = Palette.Ink700, Margin = new Padding(Space.Sm, Space.Md, Space.Sm, 0) };
-    private readonly Panel _viewport = new() { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Palette.Surface };
+    private readonly BufferedPanel _viewport = new() { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Palette.Surface };
     private readonly WeekCalendarCanvas _canvas = new();
     private readonly EmptyState _empty = new("No appointments this week", "Choose another week or dentist to view appointments.", IconKind.Appointments) { Visible = false };
     private IReadOnlyList<Appointment> _appointments = [];

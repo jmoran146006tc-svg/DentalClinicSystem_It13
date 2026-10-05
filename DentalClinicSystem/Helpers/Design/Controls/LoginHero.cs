@@ -158,12 +158,7 @@ public sealed class LoginHero : DesignControl
         _badge = (Bitmap)ShadowCache.Get(new(BadgeBounds.Width + padding * 2, BadgeBounds.Height + padding * 2), Metrics.LoginBadgeSize / 2, ElevationLevel.E2, DeviceDpi).Clone();
         using var graphics = Graphics.FromImage(_badge); DesignPaint.Prepare(graphics);
         var circle = new Rectangle(padding, padding, BadgeBounds.Width, BadgeBounds.Height);
-        using var gradient = new LinearGradientBrush(circle, Palette.Brand, Palette.BrandHover, LinearGradientMode.Vertical);
-        graphics.FillEllipse(gradient, circle);
-        using var ring = new Pen(Palette.GlassEdge, S(Metrics.Border)); graphics.DrawEllipse(ring, circle);
-        var mark = LoginArtwork.Mark; var scale = Math.Min((float)S(Metrics.LoginMarkSize) / mark.Width, (float)S(Metrics.LoginMarkSize) / mark.Height);
-        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-        graphics.DrawImage(mark, new RectangleF(circle.Left + (circle.Width - mark.Width * scale) / 2, circle.Top + (circle.Height - mark.Height * scale) / 2, mark.Width * scale, mark.Height * scale));
+        LoginArtwork.DrawBadge(graphics, circle, S(Metrics.LoginMarkSize), S(Metrics.Border));
     }
     public Color SampleGlass(Point point) => _glass?.GetPixel(Math.Clamp(point.X - CardBounds.Left, 0, _glass.Width - 1), Math.Clamp(point.Y - CardBounds.Top, 0, _glass.Height - 1)) ?? Palette.Surface;
     internal void PaintBase(Graphics graphics)

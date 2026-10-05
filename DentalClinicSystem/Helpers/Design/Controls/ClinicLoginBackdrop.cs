@@ -13,12 +13,37 @@ public static class LoginArtwork
     public static Image Photo => PhotoResource.Value;
     public static Image Mark => MarkResource.Value;
     public static double PhotoAspect => (double)Photo.Width / Photo.Height;
+    public static void DrawBadge(Graphics graphics, Rectangle bounds, int markSize, int borderWidth)
+    {
+        DesignPaint.Prepare(graphics);
+        using var gradient = new LinearGradientBrush(bounds, Palette.Brand, Palette.BrandHover, LinearGradientMode.Vertical);
+        graphics.FillEllipse(gradient, bounds);
+        using var ring = new Pen(Palette.GlassEdge, borderWidth); graphics.DrawEllipse(ring, bounds);
+        var scale = Math.Min((float)markSize / Mark.Width, (float)markSize / Mark.Height);
+        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        graphics.DrawImage(Mark, new RectangleF(bounds.Left + (bounds.Width - Mark.Width * scale) / 2,
+            bounds.Top + (bounds.Height - Mark.Height * scale) / 2, Mark.Width * scale, Mark.Height * scale));
+    }
     private static Image Load(string name)
     {
         using var stream = typeof(LoginArtwork).Assembly.GetManifestResourceStream($"DentalClinicSystem.Resources.{name}")
             ?? throw new InvalidOperationException($"Missing embedded login image: {name}");
         using var source = Image.FromStream(stream);
         return (Image)source.Clone();
+    }
+}
+
+public sealed class BrandMark : DesignControl
+{
+    public BrandMark() { Size = new(Metrics.NavHeight, Metrics.NavHeight); AccessibleName = "Dental Care logo"; AccessibleRole = AccessibleRole.Graphic; }
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        if (Width <= 0 || Height <= 0) return;
+        DesignPaint.Begin(e.Graphics, this);
+        var size = Math.Min(Width, Height) - Metrics.Scale(this, Metrics.Border) * 2;
+        if (size <= 0) return;
+        LoginArtwork.DrawBadge(e.Graphics, new Rectangle((Width - size) / 2, (Height - size) / 2, size, size),
+            size * Metrics.LoginMarkSize / Metrics.LoginBadgeSize, Metrics.Scale(this, Metrics.Border));
     }
 }
 
