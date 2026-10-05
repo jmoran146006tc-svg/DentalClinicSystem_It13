@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace DentalClinicSystem.Helpers.Design;
 
 public static class AntdTheme
@@ -8,12 +10,35 @@ public static class AntdTheme
         AntdUI.Config.Animation = Motion.Motion.Enabled;
         AntdUI.Config.FocusBorderEnabled = true;
         AntdUI.Config.ScrollBarHide = false;
-        AntdUI.Localization.DefaultLanguage = "en-US";
+        var culture = CultureInfo.GetCultureInfo("en-US");
+        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentUICulture = culture;
+        CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = culture;
+        // DefaultLanguage describes the library's fallback strings, which are Chinese.
+        AntdUI.Localization.DefaultLanguage = "zh-CN";
+        AntdUI.Localization.Provider = new EnglishLocalization();
+        AntdUI.Localization.SetLanguage(culture.Name);
         AntdUI.Style.SetPrimary(Palette.Brand);
         AntdUI.Style.SetSuccess(Palette.Success.Text);
         AntdUI.Style.SetError(Palette.Danger.Text);
-        AntdUI.Style.SetWarning(Palette.Warning.Text);
+        AntdUI.Style.SetWarning(Palette.WarningAccent);
         AntdUI.Style.SetInfo(Palette.Info.Text);
+        ConfigureAlerts();
+    }
+
+    private static void ConfigureAlerts()
+    {
+        foreach (var (baseColor, background, border, pair) in new[]
+        {
+            (AntdUI.Colour.Info, AntdUI.Colour.InfoBg, AntdUI.Colour.InfoBorder, Palette.Info),
+            (AntdUI.Colour.Success, AntdUI.Colour.SuccessBg, AntdUI.Colour.SuccessBorder, Palette.Success),
+            (AntdUI.Colour.Warning, AntdUI.Colour.WarningBg, AntdUI.Colour.WarningBorder, Palette.Warning),
+            (AntdUI.Colour.Error, AntdUI.Colour.ErrorBg, AntdUI.Colour.ErrorBorder, Palette.Danger)
+        })
+        {
+            AntdUI.Style.Set(baseColor, pair.Text, "Alert");
+            AntdUI.Style.Set(background, pair.Background);
+            AntdUI.Style.Set(border, pair.Background);
+        }
     }
 
     public static string Svg(IconKind icon)

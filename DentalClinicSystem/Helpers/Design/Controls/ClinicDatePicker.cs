@@ -14,7 +14,7 @@ public sealed class ClinicDatePicker : AntdUI.DatePicker
         Font = Typography.Body; Radius = Metrics.ControlRadius;
         Height = Metrics.ControlHeight; Width = Metrics.FormWidth;
         base.Value = _value; base.Format = DisplayFormat.DatePattern;
-        AllowClear = false;
+        AllowClear = false; EnabledValueTextChange = false; CaretVisible = false;
         base.ValueChanged += (_, _) =>
         {
             if (base.Value is not DateTime date) { base.Value = _value; return; }
@@ -24,6 +24,9 @@ public sealed class ClinicDatePicker : AntdUI.DatePicker
             _value = date; ValueChanged?.Invoke(this, EventArgs.Empty);
         };
     }
+    // AntdUI ReadOnly also closes the calendar. BanInput is its separate native
+    // text-entry guard (also used by Select.List) and leaves the popup usable.
+    protected override bool BanInput => true;
     private DateTime Clamp(DateTime value) => value < MinDate ? MinDate : value > MaxDate ? MaxDate : value;
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public new DateTime Value { get => _value; set => base.Value = Clamp(value); }

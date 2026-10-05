@@ -15,7 +15,7 @@ public sealed class ClinicSelect : AntdUI.Select
     public ClinicSelect()
     {
         Items = new ChoiceCollection(this);
-        List = true; Font = Typography.Body; Radius = Metrics.ControlRadius;
+        List = true; Empty = true; Font = Typography.Body; Radius = Metrics.ControlRadius;
         Height = Metrics.ControlHeight; Width = Metrics.FormWidth;
         base.SelectedIndexChanged += (_, _) => NotifySelection();
     }
@@ -40,7 +40,7 @@ public sealed class ClinicSelect : AntdUI.Select
     [DefaultValue("")]
     public string ValueMember { get => _valueMember; set { _valueMember = value; Rebuild(SelectedItem); } }
     [DefaultValue(ComboBoxStyle.DropDownList)]
-    public ComboBoxStyle DropDownStyle { get => List ? ComboBoxStyle.DropDownList : ComboBoxStyle.DropDown; set => List = value == ComboBoxStyle.DropDownList; }
+    public ComboBoxStyle DropDownStyle { get => ComboBoxStyle.DropDownList; set => List = true; }
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public object? SelectedItem
     {

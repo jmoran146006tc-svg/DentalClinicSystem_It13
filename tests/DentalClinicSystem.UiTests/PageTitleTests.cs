@@ -21,6 +21,7 @@ public sealed class PageTitleTests
         foreach (var command in commands)
         {
             command.PerformClick(); Application.DoEvents();
+            EnglishUi.AssertTree(shell);
             Assert.Equal(command.Text + " - Dental Care", shell.Text);
             Assert.Single(UiThread.Controls(bar).OfType<Label>(), l => l.Visible);
             Assert.DoesNotContain(UiThread.Controls(bar).OfType<Label>(), l => l.Text.Contains(command.Text ?? string.Empty));

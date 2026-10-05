@@ -55,6 +55,7 @@ public static class Palette
     public static SemanticStyle Neutral { get; } = new(Color.FromArgb(0xEC, 0xEF, 0xF3), Color.FromArgb(0x47, 0x55, 0x69));
     public static SemanticStyle Danger { get; } = new(Color.FromArgb(0xFD, 0xE8, 0xE8), Color.FromArgb(0xB2, 0x22, 0x22));
     public static SemanticStyle Warning { get; } = new(Color.FromArgb(0xFE, 0xF3, 0xC7), Color.FromArgb(0x92, 0x40, 0x0E));
+    public static Color WarningAccent { get; } = Color.FromArgb(0xD9, 0x77, 0x06);
     public static IReadOnlyList<SemanticStyle> AvatarColors { get; } = Array.AsReadOnly(new[] { Info, Success, Neutral, Warning, new SemanticStyle(BrandSoft, BrandSoftText) });
     public static Color WithAlpha(Color color, float opacity) => Color.FromArgb((int)(255 * Math.Clamp(opacity, 0, 1)), color);
 }

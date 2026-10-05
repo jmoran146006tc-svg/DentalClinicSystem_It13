@@ -15,6 +15,7 @@ public partial class ucAppointmentScheduler : UserControl
     private readonly IDentistService _dentistService;
     private readonly ITreatmentTypeService _treatmentTypes;
     private readonly CrudPageLayout _layout;
+    private readonly OtherChoice _reason;
     private readonly TextBox _notes = new() { Multiline = true, MaxLength = FieldLimits.Notes };
     private readonly ComboBox _statusFilter = new();
     private readonly ComboBox _dateFilter = new();
@@ -36,6 +37,7 @@ public partial class ucAppointmentScheduler : UserControl
         _layout = new(this, "Appointments", "appointment", "Scheduling and appointment status", dgvAppointments, btnSchedule, _clear, ClearForm);
         _layout.AddRow(UiFactory.Field(cboPatient, "Patient", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(cboDentist, Roles.Dentist, FieldKind.Choice));
         _layout.AddRow(UiFactory.Field(tglWalkIn, "Walk-in"));
+        _reason = new(cmbReason, "Specify reason", FieldLimits.Reason);
         tglWalkIn.CheckedChanged += (_, _) =>
         {
             dtpAppointmentDateTime.Enabled = !tglWalkIn.Checked;
@@ -43,12 +45,12 @@ public partial class ucAppointmentScheduler : UserControl
             {
                 var now = DateTime.Now;
                 dtpAppointmentDateTime.Value = new DateTime((now.Ticks + TimeSpan.TicksPerMinute / 2) / TimeSpan.TicksPerMinute * TimeSpan.TicksPerMinute, now.Kind);
-                if (string.IsNullOrWhiteSpace(cmbReason.Text)) cmbReason.Text = ClinicRules.ConsultationReason;
+                if (string.IsNullOrWhiteSpace(cmbReason.Text)) _reason.SetValue(ClinicRules.ConsultationReason);
             }
         };
         _layout.AddRow(UiFactory.Field(dtpAppointmentDateTime, "Date and time", FieldKind.Date));
-        _layout.AddRow(UiFactory.Field(cmbReason, "Reason", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(_notes, "Notes (optional)"));
-        cmbReason.DropDownStyle = ComboBoxStyle.DropDown; cmbReason.MaxLength = FieldLimits.Reason;
+        _layout.AddRow(UiFactory.Field(cmbReason, "Reason", FieldKind.Choice)); _layout.AddRow(_reason.Details);
+        _layout.AddRow(UiFactory.Field(_notes, "Notes (optional)"));
         _layout.AddRow(UiFactory.Field(cboDuration, "Duration (minutes)", FieldKind.Choice));
         cboDuration.Items.AddRange(ClinicRules.Durations.Cast<object>().ToArray()); cboDuration.SelectedItem = ClinicRules.DefaultDurationMinutes;
         cmbReason.DisplayMember = nameof(VisitReason.Name);
@@ -92,7 +94,7 @@ public partial class ucAppointmentScheduler : UserControl
             cboDentist.DataSource = _dentists.Where(d => d.IsActive).Select(d => new DisplayOption(d.DentistId, d.FullName)).ToList();
             var reasonResult = await _treatmentTypes.GetVisitReasonsAsync(_currentUser);
             if (IsDisposed || !UiMessages.TryItems(reasonResult, out var reasons)) return;
-            cmbReason.DataSource = reasons.ToList(); cmbReason.SelectedIndex = -1;
+            cmbReason.DataSource = reasons.Where(reason => reason.Name != OtherChoice.Other).Cast<object>().Append(OtherChoice.Other).ToArray(); cmbReason.SelectedIndex = -1;
             _lookupsLoaded = true; await RefreshAvailabilityAsync();
         }
         await RefreshGridAsync();
@@ -146,7 +148,8 @@ public partial class ucAppointmentScheduler : UserControl
     private async Task<bool> ScheduleAsync()
     {
         if (cboPatient.SelectedValue is not int patientId || cboDentist.SelectedValue is not int dentistId) { UiMessages.ShowError(ServiceResult.Fail("Pick a patient and a dentist first.")); return false; }
-        var appointment = new Appointment { PatientId = patientId, DentistId = dentistId, AppointmentDateTime = dtpAppointmentDateTime.Value, DurationMinutes = cboDuration.SelectedItem is int minutes ? minutes : ClinicRules.DefaultDurationMinutes, Reason = InputRules.NullIfBlank(cmbReason.Text), Notes = InputRules.NullIfBlank(_notes.Text) };
+        if (!_reason.Validate()) return false;
+        var appointment = new Appointment { PatientId = patientId, DentistId = dentistId, AppointmentDateTime = dtpAppointmentDateTime.Value, DurationMinutes = cboDuration.SelectedItem is int minutes ? minutes : ClinicRules.DefaultDurationMinutes, Reason = InputRules.NullIfBlank(_reason.Value), Notes = InputRules.NullIfBlank(_notes.Text) };
         var result = await _appointmentService.ScheduleAppointmentAsync(_currentUser, appointment);
         if (!result.Success) { UiMessages.ShowError(result); return false; }
         _savedAppointment = appointment; return true;
@@ -170,5 +173,5 @@ public partial class ucAppointmentScheduler : UserControl
         using var dialog = new frmAppointmentDetails(result.Data, _appointmentService, _currentUser, async id => { await RefreshGridAsync(); GridHelper.FlashRow(dgvAppointments, id); }, _dentistService);
         dialog.ShowDialog(FindForm());
     }
-    private void ClearForm() { tglWalkIn.Checked = false; cboDuration.SelectedItem = ClinicRules.DefaultDurationMinutes; cmbReason.SelectedIndex = -1; cmbReason.Text = ""; _notes.Clear(); dgvAppointments.ClearSelection(); _layout?.SetEditing(false); if (_layout is not null) _layout.NewButton.Text = "Schedule"; btnSchedule.Text = "Schedule appointment"; }
+    private void ClearForm() { tglWalkIn.Checked = false; cboDuration.SelectedItem = ClinicRules.DefaultDurationMinutes; _reason.SetValue(null); _notes.Clear(); dgvAppointments.ClearSelection(); _layout?.SetEditing(false); if (_layout is not null) _layout.NewButton.Text = "Schedule"; btnSchedule.Text = "Schedule appointment"; }
 }

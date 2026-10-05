@@ -25,8 +25,11 @@ public sealed class ToastHost : IDisposable
         var config = new AntdUI.Notification.Config(_owner, "Dental clinic", text, icon, AntdUI.TAlignFrom.TR, Typography.Body, (int)Math.Ceiling(Motion.Motion.ToastLifetime.TotalSeconds))
         {
             ID = id, Radius = Metrics.CardRadius, EnableSound = false, ShowInWindow = true,
-            OnClose = () => _ids.TryRemove(id, out _)
+            OnClose = () => _ids.TryRemove(id, out _),
+            Back = Theme.SemanticStyle(semantic).Background, Fore = Theme.SemanticStyle(semantic).Text
         };
+        var symbol = semantic switch { Semantic.Success => IconKind.Check, Semantic.Warning => IconKind.Warning, Semantic.Danger => IconKind.Close, _ => IconKind.Info };
+        config.SetIcon(AntdTheme.Svg(symbol), Theme.SemanticStyle(semantic).Text);
         AntdUI.Notification.open(config);
     }
     private void OwnerDisposed(object? sender, EventArgs e) => Dispose();

@@ -32,6 +32,7 @@ public class AntdIntegrationTests
         Assert.Single(grid.Records);
         Assert.DoesNotContain(grid.Columns, c => c.Key is "PasswordHash" or "Record" or "PatientId" or "DentistId" or "UserId" or "TreatmentId" or "AppointmentId");
         Assert.True(grid.Width > host.ClientSize.Width / 2); Assert.True(grid.Height > 300);
+        EnglishUi.AssertTree(page);
         Assert.Null(grid.SelectedRecord);
         UiThread.Capture(host, name + "-" + width);
         grid.SetSelected(grid.Records[0], true); Application.DoEvents();
@@ -49,6 +50,7 @@ public class AntdIntegrationTests
         var create = UiThread.Controls(page).OfType<AppButton>().Single(b => b.Text == (name == "appointments" ? "Schedule" : "New " + name.TrimEnd('s')));
         InspectDialog(host, create.PerformClick, dialog =>
         {
+            EnglishUi.AssertTree(dialog);
             Assert.NotEmpty(UiThread.Controls(dialog).OfType<AntdUI.Input>());
             Assert.DoesNotContain(UiThread.Controls(dialog), c => c is System.Windows.Forms.TextBox or System.Windows.Forms.ComboBox or System.Windows.Forms.DateTimePicker);
             Assert.NotEmpty(UiThread.Controls(dialog).OfType<AntdUI.Button>());
@@ -117,11 +119,16 @@ public class AntdIntegrationTests
     });
 
     [Fact]
-    public void DropdownSupportsUnlistedSpecializationAndRequiredListChoices() => UiThread.Run(() =>
+    public void DropdownIsPickOnlyAndCustomValuesUseOther() => UiThread.Run(() =>
     {
-        using var editable = new ClinicSelect { DropDownStyle = ComboBoxStyle.DropDown };
-        editable.Items.AddRange(["General dentistry", "Orthodontics"]);
-        editable.Text = "Pediatric dentistry"; Assert.Equal("Pediatric dentistry", editable.Text); Assert.False(editable.List);
+        using var choice = new ClinicSelect { DropDownStyle = ComboBoxStyle.DropDown };
+        choice.Items.AddRange(["General dentistry", "Orthodontics", OtherChoice.Other]);
+        var custom = new OtherChoice(choice, "Specify specialization", FieldLimits.Specialization);
+        using var host = new Form(); host.Controls.Add(choice); host.Controls.Add(custom.Details); UiThread.Show(host);
+        custom.SetValue("Unlisted specialty"); Assert.True(choice.List); Assert.Equal(OtherChoice.Other, choice.Text);
+        Assert.True(custom.Details.Visible); Assert.Equal("Unlisted specialty", custom.Value); Assert.True(custom.Validate());
+        custom.Details.Box.Input.Text = ""; Assert.False(custom.Validate());
+        custom.SetValue("Orthodontics"); Assert.False(custom.Details.Visible); Assert.Equal("Orthodontics", custom.Value);
         using var required = new ClinicSelect(); required.Items.AddRange([15, 30, 45]); required.SelectedItem = 30;
         Assert.Equal(30, required.SelectedItem); Assert.Equal("30", required.Text); Assert.True(required.List);
     });
@@ -249,7 +256,7 @@ public class AntdIntegrationTests
         "users" => new ucUserManagement(services.Users, services.Dentists, actor), "appointments" => new ucAppointmentScheduler(services.Appointments, services.Patients, services.Dentists, services.TreatmentTypes, actor),
         _ => new ucTreatmentRecords(services.Treatments, services.Appointments, services.TreatmentTypes, actor)
     };
-    private static void InspectDialog(Form owner, Action open, Action<Form> inspect)
+    internal static void InspectDialog(Form owner, Action open, Action<Form> inspect)
     {
         Exception? error = null; var inspected = false; var attempts = 0;
         using var timer = new System.Windows.Forms.Timer { Interval = 25 };
