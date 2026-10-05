@@ -20,9 +20,11 @@ public static class Icons
                 foreach (var x in new[] { 3, 14 }) foreach (var y in new[] { 3, 14 }) path.AddRectangle(new(x, y, 7, 7));
                 break;
             case IconKind.Patients:
-            case IconKind.Users:
             case IconKind.User:
                 path.AddEllipse(8, 3, 8, 8); path.StartFigure(); path.AddArc(4, 13, 16, 14, 180, 180); break;
+            case IconKind.Users:
+                Lines(path, new(12, 2), new(21, 6), new(20, 15), new(12, 22), new(4, 15), new(3, 6), new(12, 2));
+                Lines(path, new(7, 11), new(11, 15), new(17, 8)); break;
             case IconKind.Dentist:
                 path.AddBezier(12, 5, 1, -2, 3, 16, 6, 21); path.AddBezier(6, 21, 10, 23, 8, 12, 12, 13);
                 path.AddBezier(12, 13, 16, 12, 14, 23, 18, 21); path.AddBezier(18, 21, 21, 16, 23, -2, 12, 5); break;

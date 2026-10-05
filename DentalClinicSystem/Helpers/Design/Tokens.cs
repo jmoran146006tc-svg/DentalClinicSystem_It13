@@ -69,7 +69,7 @@ public static class Space
 
 public static class Metrics
 {
-    public const int ControlHeight = 40, CompactHeight = 32, NavHeight = 44, SidebarWidth = 248;
+    public const int ControlHeight = 40, CompactHeight = 32, NavHeight = 48, SidebarWidth = 248;
     public const int FormWidth = 380, ControlRadius = 8, CardRadius = 12, IconSize = 20;
     public const int Border = 1, FocusRing = 2, StatusDot = 6, PressOffset = 1;
     public const int MinimumWidth = 1100, MinimumHeight = 700, DialogWidth = 480, DialogHeight = 320;
@@ -127,6 +127,7 @@ public static class Typography
     public static Font Title { get; } = new(Family, 18, FontStyle.Bold);
     public static Font Heading { get; } = new(Family, 13, FontStyle.Bold);
     public static Font Body { get; } = new(Family, 10);
+    public static Font Nav { get; } = new(Family, 11);
     public static Font Label { get; } = new(Family, 9, FontStyle.Bold);
     public static Font Caption { get; } = new(Family, 8.5f);
     public static Font KpiNumber { get; } = new(Family, 26, FontStyle.Bold);

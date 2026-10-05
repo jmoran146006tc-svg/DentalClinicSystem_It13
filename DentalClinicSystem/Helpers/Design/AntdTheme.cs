@@ -42,7 +42,9 @@ public static class AntdTheme
             IconKind.Clock => "ClockCircleOutlined",
             IconKind.Phone => "PhoneOutlined",
             IconKind.Mail => "MailOutlined",
-            IconKind.Dentist or IconKind.Users or IconKind.Patients => "TeamOutlined",
+            IconKind.Dentist => "SmileOutlined",
+            IconKind.Users => "SafetyCertificateOutlined",
+            IconKind.Patients => "UserOutlined",
             _ => "UserOutlined"
         };
     }

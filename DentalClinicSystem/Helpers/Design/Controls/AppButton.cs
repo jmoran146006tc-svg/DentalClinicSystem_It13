@@ -74,9 +74,4 @@ public static class ButtonStyler
         button.Loading = busy;
     }
     public static bool IsBusy(Button button) => button.Loading;
-    public static void NavigationGhost(Button button)
-    {
-        Attach(button, ButtonVariant.Ghost, IconKind.Logout);
-        button.Font = Typography.Body; button.TextAlign = ContentAlignment.MiddleLeft;
-    }
 }

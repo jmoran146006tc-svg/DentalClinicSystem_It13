@@ -96,9 +96,11 @@ namespace DentalClinicSystem.Forms
         {
             pnlSidebar.Width = Metrics.SidebarWidth; pnlSidebar.BackColor = Palette.Surface;
             var brand = new FlowLayoutPanel { Dock = DockStyle.Top, Height = Metrics.EmptyHeight + Space.Xl, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(Space.Xl), BackColor = Palette.Surface };
-            brand.Controls.Add(new IconTile(IconKind.Dentist));
-            brand.Controls.Add(new Label { Text = "Dental Care", Font = Typography.Title, ForeColor = Palette.Ink900, AutoSize = true });
-            brand.Controls.Add(new Label { Text = "Clinic Management", Font = Typography.Caption, ForeColor = Palette.Ink500, AutoSize = true });
+            brand.Controls.Add(new IconTile(IconKind.Dentist) { Margin = Padding.Empty });
+            var brandTitle = new Label { Name = "brandTitle", Text = "Dental Care", Font = Typography.Heading, ForeColor = Palette.Ink900, AutoEllipsis = true, Margin = new Padding(0, Space.Sm, 0, 0) };
+            brandTitle.Height = brandTitle.PreferredHeight; brandTitle.Width = Metrics.SidebarWidth - Space.Xl * 2;
+            brand.Controls.Add(brandTitle);
+            brand.Controls.Add(new Label { Text = "Clinic Management", Font = Typography.Caption, ForeColor = Palette.Ink500, AutoSize = true, Margin = Padding.Empty });
             brand.Controls.Add(new Label { Text = "MENU", Font = Typography.Label, ForeColor = Palette.Ink500, AutoSize = true, Margin = new Padding(0, Space.Lg, 0, 0) });
             var account = new TableLayoutPanel { Dock = DockStyle.Bottom, Height = Metrics.NavHeight * 2 + Space.Sm + Space.Md * 3, ColumnCount = 1, RowCount = 3, Padding = new Padding(Space.Xl, Space.Md, Space.Xl, Space.Md), BackColor = Palette.Surface };
             account.ColumnStyles.Add(new(SizeType.Percent, 100));
@@ -113,7 +115,7 @@ namespace DentalClinicSystem.Forms
             account.Controls.Add(profile, 0, 0);
             var divider = new Panel { Dock = DockStyle.Fill, Margin = new Padding(0, (Space.Md - Metrics.Border) / 2, 0, Space.Md / 2), BackColor = Palette.Line }; account.Controls.Add(divider, 0, 1);
             btnLogout.Dock = DockStyle.None; btnLogout.Text = "Logout";
-            ButtonStyler.NavigationGhost(btnLogout); btnLogout.Size = new(Metrics.SidebarWidth - Space.Xl * 2, Metrics.NavHeight);
+            NavButtonStyler.Attach(btnLogout, IconKind.Logout);
             btnLogout.Dock = DockStyle.Fill; btnLogout.Margin = Padding.Empty; btnLogout.AccessibleName = "Logout";
             account.Controls.Add(btnLogout, 0, 2);
             IconKind[] icons = [IconKind.Dashboard, IconKind.Patients, IconKind.Dentist, IconKind.Appointments, IconKind.Treatments, IconKind.Users, IconKind.Reports];
