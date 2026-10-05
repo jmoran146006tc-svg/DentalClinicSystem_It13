@@ -13,6 +13,7 @@ namespace DentalClinicSystem
         static void Main(string[] args)
         {
             ApplicationConfiguration.Initialize();
+            AntdTheme.Initialize();
             Application.ApplicationExit += (_, _) => { MotionSystem.Animator.Dispose(); ShadowCache.Clear(); DesignPaint.ClearPaths(); };
 #if DEBUG
             if (args.Contains("--style-guide", StringComparer.Ordinal))

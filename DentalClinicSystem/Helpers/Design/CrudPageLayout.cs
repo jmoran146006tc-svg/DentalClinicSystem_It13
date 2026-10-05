@@ -14,7 +14,7 @@ public sealed class CrudPageLayout
     private readonly List<Control> _inputs = [];
     private readonly Panel _gridContent;
     private readonly UserControl _page;
-    private readonly DataGridView _grid;
+    private readonly ClinicTable _grid;
     private Func<Task<bool>>? _saveModal;
     private Func<Task>? _afterSave;
     private bool _editing;
@@ -30,7 +30,7 @@ public sealed class CrudPageLayout
     public Toggle ShowInactive { get; } = new();
     public AppButton NewButton { get; }
     public FlowLayoutPanel Actions { get; }
-    public CrudPageLayout(UserControl page, string title, string singular, string subtitle, DataGridView grid, Button save, Button clear, Action clearForm)
+    public CrudPageLayout(UserControl page, string title, string singular, string subtitle, ClinicTable grid, Button save, Button clear, Action clearForm)
     {
         _singular = singular; _save = save; _page = page; _grid = grid;
         page.SuspendLayout(); foreach (Control old in page.Controls) old.Visible = false;
@@ -45,7 +45,7 @@ public sealed class CrudPageLayout
         Search.PlaceholderText = $"Search {title.ToLowerInvariant()}"; var search = UiFactory.Search(Search); search.Width = Metrics.FormWidth - Space.Xxxl; Toolbar.Controls.Add(search);
         root.Controls.Add(Toolbar, 0, 1);
         var gridCard = UiFactory.Card(); gridCard.Dock = DockStyle.Fill; gridCard.Margin = Padding.Empty; grid.Visible = true; grid.Dock = DockStyle.Fill;
-        grid.ReadOnly = true; grid.AllowUserToAddRows = false; grid.AllowUserToDeleteRows = false; grid.MultiSelect = false;
+        grid.EditMode = AntdUI.TEditMode.None; grid.MultipleRows = false;
         GridTheme.Apply(grid); gridCard.Content.Controls.Add(grid); _gridContent = gridCard.Content;
         FormCard = UiFactory.Card(); FormCard.Content.AutoScroll = true; FormCard.Visible = false;
         _title = new Label { Text = $"New {singular}", Font = Typography.Heading, ForeColor = Palette.Ink900, AutoSize = true, Margin = new Padding(0, 0, 0, Space.Lg) };
@@ -88,8 +88,8 @@ public sealed class CrudPageLayout
         _edit.Text = $"Edit {_singular}"; _edit.Visible = allowEdit && NewButton.Visible; _edit.Enabled = false;
         Toolbar.Controls.Add(_edit); Actions.BackColor = Palette.Canvas; Actions.Dock = DockStyle.None; Toolbar.Controls.Add(Actions);
         _edit.Click += async (_, _) => { if (_editing) await OpenEditorAsync(); };
-        _grid.SelectionChanged += (_, _) => _edit.Enabled = _grid.SelectedRows.Count > 0;
-        if (allowEdit) _grid.CellDoubleClick += async (_, e) => { if (e.RowIndex >= 0 && _editing && NewButton.Visible) await OpenEditorAsync(); };
+        _grid.SelectionChanged += (_, _) => _edit.Enabled = _grid.SelectedRecord is not null;
+        if (allowEdit) _grid.CellDoubleClick += async (_, e) => { if (_grid.Records.Contains(e.Record) && _editing && NewButton.Visible) await OpenEditorAsync(); };
     }
     public async Task OpenEditorAsync()
     {

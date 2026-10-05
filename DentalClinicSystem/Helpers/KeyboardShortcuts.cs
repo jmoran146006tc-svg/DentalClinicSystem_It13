@@ -18,7 +18,7 @@ public sealed class KeyboardShortcuts : IDisposable, IMessageFilter
         {
             var inputs = _formInputs.Where(input => input.Visible && input.Enabled).ToArray();
             var index = Array.FindIndex(inputs, input => input.ContainsFocus);
-            if (index >= 0 && inputs[index] is not TextBox { Multiline: true } && inputs[index] is not ComboBox { DroppedDown: true })
+            if (index >= 0 && inputs[index] is not TextBox { Multiline: true } && inputs[index] is not ComboBox { ExpandDrop: true })
             {
                 if (index + 1 < inputs.Length) inputs[index + 1].Focus(); else _submit?.Invoke();
                 return true;

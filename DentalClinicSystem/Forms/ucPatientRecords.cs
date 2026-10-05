@@ -31,11 +31,11 @@ public partial class ucPatientRecords : UserControl
         _layout.AddRow(_guardianName, _guardianContact);
         _layout.AddRow(UiFactory.Field(txtAllergies, "Allergies")); _layout.AddRow(UiFactory.Field(txtMedicalNotes, "Medical notes"));
         InputRules.ApplyMaxLengths((txtGuardianName, FieldLimits.GuardianName), (txtGuardianContact, FieldLimits.GuardianContact), (txtAllergies, FieldLimits.Allergies), (txtMedicalNotes, FieldLimits.MedicalNotes));
-        txtGuardianContact.KeyPress += InputRules.PhoneKeyPress;
+        txtGuardianContact.VerifyChar += InputRules.PhoneVerifyChar;
         dtpDateOfBirth.ValueChanged += (_, _) => UpdateGuardianHelpers(); UpdateGuardianHelpers();
         dtpDateOfBirth.MaxDate = DateTime.Today; dtpDateOfBirth.Format = DateTimePickerFormat.Custom; dtpDateOfBirth.CustomFormat = DisplayFormat.DatePattern;
         InputRules.ApplyMaxLengths((txtFirstName, FieldLimits.Name), (txtLastName, FieldLimits.Name), (txtContactNumber, FieldLimits.ContactNumber), (txtEmail, FieldLimits.Email), (txtAddress, FieldLimits.Address));
-        txtContactNumber.KeyPress += InputRules.PhoneKeyPress;
+        txtContactNumber.VerifyChar += InputRules.PhoneVerifyChar;
         _layout.Toolbar.Controls.Add(_layout.ShowInactive);
         _layout.ShowInactive.Visible = RoleAccess.Can(currentUser, Permission.ManagePatients);
         _layout.ShowInactive.CheckedChanged += async (_, _) => await UiAction.RunAsync(this, RefreshGridAsync);
@@ -65,10 +65,10 @@ public partial class ucPatientRecords : UserControl
     }
     private void SelectionChanged(object? sender, EventArgs e)
     {
-        if (dgvPatients.SelectedRows.Count == 0 || dgvPatients.CurrentRow?.DataBoundItem is not PatientRow row) return;
-        _selected = row.Record; txtFirstName.Text = _selected.FirstName; txtLastName.Text = _selected.LastName;
-        txtContactNumber.Text = _selected.ContactNumber; txtEmail.Text = _selected.Email; txtAddress.Text = _selected.Address;
-        txtGuardianName.Text = _selected.GuardianName; txtGuardianContact.Text = _selected.GuardianContact; txtAllergies.Text = _selected.Allergies; txtMedicalNotes.Text = _selected.MedicalNotes;
+        if (dgvPatients.SelectedRecord is null || dgvPatients.SelectedRecord is not PatientRow row) return;
+        _selected = row.Record; txtFirstName.Text = _selected.FirstName ?? ""; txtLastName.Text = _selected.LastName ?? "";
+        txtContactNumber.Text = _selected.ContactNumber ?? ""; txtEmail.Text = _selected.Email ?? ""; txtAddress.Text = _selected.Address ?? "";
+        txtGuardianName.Text = _selected.GuardianName ?? ""; txtGuardianContact.Text = _selected.GuardianContact ?? ""; txtAllergies.Text = _selected.Allergies ?? ""; txtMedicalNotes.Text = _selected.MedicalNotes ?? "";
         InputRules.SetDate(dtpDateOfBirth, _selected.DateOfBirth); _layout.SetEditing(true); _reactivate.Visible = !_selected.IsActive;
     }
     private async Task<bool> SaveAsync()

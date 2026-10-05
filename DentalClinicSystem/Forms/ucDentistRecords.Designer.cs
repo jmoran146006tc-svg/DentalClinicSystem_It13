@@ -28,7 +28,7 @@ namespace DentalClinicSystem.Forms
         /// </summary>
         private void InitializeComponent()
         {
-            dgvDentists = new DataGridView();
+            dgvDentists = new ClinicTable();
             label2 = new Label();
             label1 = new Label();
             txtLastName = new TextBox();
@@ -43,15 +43,12 @@ namespace DentalClinicSystem.Forms
             btnDelete = new Button();
             btnUpdate = new Button();
             btnAdd = new Button();
-            ((System.ComponentModel.ISupportInitialize)dgvDentists).BeginInit();
             SuspendLayout();
             // 
             // dgvDentists
             // 
-            dgvDentists.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvDentists.Location = new Point(51, 41);
             dgvDentists.Name = "dgvDentists";
-            dgvDentists.RowHeadersWidth = 62;
             dgvDentists.Size = new Size(629, 142);
             dgvDentists.TabIndex = 1;
             // 
@@ -148,7 +145,6 @@ namespace DentalClinicSystem.Forms
             btnClear.Size = new Size(112, 34);
             btnClear.TabIndex = 21;
             btnClear.Text = "Clear";
-            btnClear.UseVisualStyleBackColor = true;
             // 
             // btnDelete
             // 
@@ -158,7 +154,6 @@ namespace DentalClinicSystem.Forms
             btnDelete.Size = new Size(112, 34);
             btnDelete.TabIndex = 20;
             btnDelete.Text = "Delete";
-            btnDelete.UseVisualStyleBackColor = true;
             // 
             // btnUpdate
             // 
@@ -168,7 +163,6 @@ namespace DentalClinicSystem.Forms
             btnUpdate.Size = new Size(112, 34);
             btnUpdate.TabIndex = 19;
             btnUpdate.Text = "Update";
-            btnUpdate.UseVisualStyleBackColor = true;
             // 
             // btnAdd
             // 
@@ -178,7 +172,6 @@ namespace DentalClinicSystem.Forms
             btnAdd.Size = new Size(112, 34);
             btnAdd.TabIndex = 18;
             btnAdd.Text = "Add";
-            btnAdd.UseVisualStyleBackColor = true;
             // 
             // ucDentistRecords
             // 
@@ -203,14 +196,13 @@ namespace DentalClinicSystem.Forms
             Name = "ucDentistRecords";
             Size = new Size(729, 586);
             Load += ucDentistRecords_Load;
-            ((System.ComponentModel.ISupportInitialize)dgvDentists).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
-        private DataGridView dgvDentists;
+        private ClinicTable dgvDentists;
         private Label label2;
         private Label label1;
         private TextBox txtLastName;

@@ -9,7 +9,7 @@ namespace DentalClinicSystem.Forms;
 
 public sealed class frmDentistTimeOff : DialogShell
 {
-    private readonly DataGridView _grid = new() { Dock = DockStyle.Fill, ReadOnly = true, MultiSelect = false, AllowUserToAddRows = false };
+    private readonly ClinicTable _grid = new() { Dock = DockStyle.Fill };
     private readonly DateTimePicker _from = new(), _to = new();
     private readonly TextBox _reason = new() { MaxLength = FieldLimits.TimeOffReason };
     private readonly IDentistService _service;
@@ -30,10 +30,10 @@ public sealed class frmDentistTimeOff : DialogShell
         root.Controls.Add(alert, 0, 0); root.Controls.Add(_grid, 0, 1); root.Controls.Add(fields, 0, 2); Body.Controls.Add(root);
         foreach (var picker in new[] { _from, _to }) { picker.Format = DateTimePickerFormat.Custom; picker.CustomFormat = DisplayFormat.DatePattern; }
         GridTheme.Apply(_grid); DismissButton.Text = "Close"; Footer.Controls.Add(_remove); _remove.Enabled = false;
-        _grid.SelectionChanged += (_, _) => _remove.Enabled = _grid.SelectedRows.Count > 0;
+        _grid.SelectionChanged += (_, _) => _remove.Enabled = _grid.SelectedRecord is not null;
         _remove.Click += async (_, _) => await UiAction.RunAsync(this, async () =>
         {
-            if (_grid.CurrentRow?.DataBoundItem is not Row row || !UiMessages.Confirm("Remove this time off?", "Remove time off")) return;
+            if (_grid.SelectedRecord is not Row row || !UiMessages.Confirm("Remove this time off?", "Remove time off")) return;
             var result = await _service.RemoveTimeOffAsync(_actor, _dentistId, row.TimeOffId);
             if (!result.Success) { UiMessages.ShowError(result); return; }
             await LoadRowsAsync(); UiMessages.ShowSuccess("Time off removed.");

@@ -54,8 +54,8 @@ public partial class ucUserManagement : UserControl
     }
     private void SelectionChanged(object? sender, EventArgs e)
     {
-        if (dgvUsers.SelectedRows.Count == 0 || dgvUsers.CurrentRow?.DataBoundItem is not UserRow row) return;
-        _selected = row.Record; txtUsername.Text = _selected.Username; txtPassword.Clear(); cboRole.SelectedItem = _selected.Role;
+        if (dgvUsers.SelectedRecord is null || dgvUsers.SelectedRecord is not UserRow row) return;
+        _selected = row.Record; txtUsername.Text = _selected.Username ?? ""; txtPassword.Clear(); cboRole.SelectedItem = _selected.Role;
         if (_selected.DentistId is int id) cboDentist.SelectedValue = id; else cboDentist.SelectedIndex = -1;
         btnDeactivate.Enabled = _selected.IsActive && _selected.UserId != _currentUser.UserId; _layout.SetEditing(true);
     }

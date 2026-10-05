@@ -80,7 +80,6 @@ public sealed class LoginHero : DesignControl
             Copy("Username", label.Height + S(Space.Xs), Palette.LoginBodyInk, S(Space.Xs));
             _username.SetBounds(x, top, inner, Math.Max(S(Metrics.LoginFieldHeight), _username.MinimumSize.Height)); top += _username.Height + gap;
             Copy("Password", label.Height + S(Space.Xs), Palette.LoginBodyInk, S(Space.Xs));
-            _password.Controls.OfType<Button>().Single().MinimumSize = new(S(Metrics.ControlHeight), S(Metrics.ControlHeight));
             _password.SetBounds(x, top, inner, Math.Max(S(Metrics.LoginFieldHeight), _password.MinimumSize.Height)); top += _password.Height + S(Space.Xl);
             if (_capsLock) Copy("Caps Lock is on", S(Space.Xl), Palette.Warning.Text, S(Space.Xs));
             if (_alert.Visible)

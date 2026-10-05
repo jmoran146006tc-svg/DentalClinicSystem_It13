@@ -17,7 +17,7 @@ namespace DentalClinicSystem.Forms
 
         private void InitializeComponent()
         {
-            dgvUsers = new DataGridView();
+            dgvUsers = new ClinicTable();
             lblUsername = new Label();
             txtUsername = new TextBox();
             lblPassword = new Label();
@@ -31,19 +31,13 @@ namespace DentalClinicSystem.Forms
             btnDeactivate = new Button();
             btnClear = new Button();
             lblAdminOnly = new Label();
-            ((System.ComponentModel.ISupportInitialize)dgvUsers).BeginInit();
             SuspendLayout();
             // 
             // dgvUsers
             // 
             dgvUsers.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            dgvUsers.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvUsers.Location = new Point(24, 14);
-            dgvUsers.MultiSelect = false;
             dgvUsers.Name = "dgvUsers";
-            dgvUsers.ReadOnly = true;
-            dgvUsers.RowHeadersWidth = 62;
-            dgvUsers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvUsers.Size = new Size(664, 170);
             dgvUsers.TabIndex = 0;
             // 
@@ -127,7 +121,6 @@ namespace DentalClinicSystem.Forms
             btnAdd.Size = new Size(112, 34);
             btnAdd.TabIndex = 4;
             btnAdd.Text = "ADD";
-            btnAdd.UseVisualStyleBackColor = true;
             // 
             // btnUpdate
             // 
@@ -137,7 +130,6 @@ namespace DentalClinicSystem.Forms
             btnUpdate.Size = new Size(112, 34);
             btnUpdate.TabIndex = 3;
             btnUpdate.Text = "UPDATE";
-            btnUpdate.UseVisualStyleBackColor = true;
             // 
             // btnDeactivate
             // 
@@ -147,7 +139,6 @@ namespace DentalClinicSystem.Forms
             btnDeactivate.Size = new Size(137, 34);
             btnDeactivate.TabIndex = 2;
             btnDeactivate.Text = "DEACTIVATE";
-            btnDeactivate.UseVisualStyleBackColor = true;
             // 
             // btnClear
             // 
@@ -157,7 +148,6 @@ namespace DentalClinicSystem.Forms
             btnClear.Size = new Size(112, 34);
             btnClear.TabIndex = 1;
             btnClear.Text = "CLEAR";
-            btnClear.UseVisualStyleBackColor = true;
             // 
             // lblAdminOnly
             // 
@@ -192,14 +182,13 @@ namespace DentalClinicSystem.Forms
             Name = "ucUserManagement";
             Size = new Size(723, 484);
             Load += ucUserManagement_Load;
-            ((System.ComponentModel.ISupportInitialize)dgvUsers).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
-        private DataGridView dgvUsers;
+        private ClinicTable dgvUsers;
         private Label lblUsername;
         private TextBox txtUsername;
         private Label lblPassword;

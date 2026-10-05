@@ -28,7 +28,7 @@ namespace DentalClinicSystem.Forms
         /// </summary>
         private void InitializeComponent()
         {
-            dgvPatients = new DataGridView();
+            dgvPatients = new ClinicTable();
             txtFirstName = new TextBox();
             txtEmail = new TextBox();
             txtGuardianName = new TextBox { Name = "txtGuardianName" };
@@ -49,15 +49,12 @@ namespace DentalClinicSystem.Forms
             btnUpdate = new Button();
             btnDelete = new Button();
             btnClear = new Button();
-            ((System.ComponentModel.ISupportInitialize)dgvPatients).BeginInit();
             SuspendLayout();
             // 
             // dgvPatients
             // 
-            dgvPatients.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvPatients.Location = new Point(45, 42);
             dgvPatients.Name = "dgvPatients";
-            dgvPatients.RowHeadersWidth = 62;
             dgvPatients.Size = new Size(629, 142);
             dgvPatients.TabIndex = 0;
             // 
@@ -175,7 +172,6 @@ namespace DentalClinicSystem.Forms
             btnAdd.Size = new Size(112, 34);
             btnAdd.TabIndex = 13;
             btnAdd.Text = "ADD";
-            btnAdd.UseVisualStyleBackColor = true;
             // 
             // btnUpdate
             // 
@@ -185,7 +181,6 @@ namespace DentalClinicSystem.Forms
             btnUpdate.Size = new Size(112, 34);
             btnUpdate.TabIndex = 14;
             btnUpdate.Text = "UPDATE";
-            btnUpdate.UseVisualStyleBackColor = true;
             // 
             // btnDelete
             // 
@@ -195,7 +190,6 @@ namespace DentalClinicSystem.Forms
             btnDelete.Size = new Size(112, 34);
             btnDelete.TabIndex = 15;
             btnDelete.Text = "DELETE";
-            btnDelete.UseVisualStyleBackColor = true;
             // 
             // btnClear
             // 
@@ -205,7 +199,6 @@ namespace DentalClinicSystem.Forms
             btnClear.Size = new Size(112, 34);
             btnClear.TabIndex = 16;
             btnClear.Text = "CLEAR";
-            btnClear.UseVisualStyleBackColor = true;
             // 
             // ucPatientRecords
             // 
@@ -232,14 +225,13 @@ namespace DentalClinicSystem.Forms
             Name = "ucPatientRecords";
             Size = new Size(733, 603);
             Load += ucPatientRecords_Load;
-            ((System.ComponentModel.ISupportInitialize)dgvPatients).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
-        private DataGridView dgvPatients;
+        private ClinicTable dgvPatients;
         private TextBox txtFirstName;
         private TextBox txtEmail;
         private TextBox txtGuardianName, txtGuardianContact, txtAllergies, txtMedicalNotes;

@@ -20,7 +20,7 @@ namespace DentalClinicSystem.Forms
             cboDiscountType = new ComboBox { Name = "cboDiscountType" };
             nudDiscountPercent = new NumericUpDown { Name = "nudDiscountPercent", DecimalPlaces = 2, Maximum = 100, Minimum = 0 };
             lblNet = new Label { Name = "lblNet", AutoSize = true };
-            dgvTreatments = new DataGridView();
+            dgvTreatments = new ClinicTable();
             lblAppointment = new Label();
             cboAppointment = new ComboBox();
             lblTreatmentType = new Label();
@@ -34,20 +34,14 @@ namespace DentalClinicSystem.Forms
             lblNotes = new Label();
             txtNotes = new TextBox();
             btnAddTreatment = new Button();
-            ((System.ComponentModel.ISupportInitialize)dgvTreatments).BeginInit();
             SuspendLayout();
             // 
             // dgvTreatments
             // 
             dgvTreatments.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            dgvTreatments.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvTreatments.Location = new Point(36, 16);
             dgvTreatments.Margin = new Padding(2);
-            dgvTreatments.MultiSelect = false;
             dgvTreatments.Name = "dgvTreatments";
-            dgvTreatments.ReadOnly = true;
-            dgvTreatments.RowHeadersWidth = 62;
-            dgvTreatments.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvTreatments.Size = new Size(582, 128);
             dgvTreatments.TabIndex = 0;
             // 
@@ -180,7 +174,6 @@ namespace DentalClinicSystem.Forms
             btnAddTreatment.Size = new Size(181, 27);
             btnAddTreatment.TabIndex = 0;
             btnAddTreatment.Text = "Add Treatment";
-            btnAddTreatment.UseVisualStyleBackColor = false;
             btnAddTreatment.Click += btnAddTreatment_Click;
             // 
             // ucTreatmentRecords
@@ -206,7 +199,6 @@ namespace DentalClinicSystem.Forms
             Name = "ucTreatmentRecords";
             Size = new Size(648, 470);
             Load += ucTreatmentRecords_Load;
-            ((System.ComponentModel.ISupportInitialize)dgvTreatments).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -216,7 +208,7 @@ namespace DentalClinicSystem.Forms
         private ComboBox cboDiscountType;
         private NumericUpDown nudDiscountPercent;
         private Label lblNet;
-        private DataGridView dgvTreatments;
+        private ClinicTable dgvTreatments;
         private Label lblAppointment;
         private ComboBox cboAppointment;
         private Label lblTreatmentType;

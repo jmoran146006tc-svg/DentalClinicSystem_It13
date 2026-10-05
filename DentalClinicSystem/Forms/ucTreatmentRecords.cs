@@ -31,7 +31,7 @@ public partial class ucTreatmentRecords : UserControl
         _layout.AddRow(UiFactory.Field(cboAppointment, "Appointment", FieldKind.Choice)); _layout.AddRow(UiFactory.Field(cboTreatmentType, "Treatment type", FieldKind.Choice));
         var tooth = UiFactory.Field(txtToothNumber, "Tooth #"); tooth.SetHelper("FDI number");
         _layout.AddRow(tooth, UiFactory.Field(txtCost, "Cost"));
-        txtToothNumber.KeyPress += (_, e) => { if (!char.IsControl(e.KeyChar) && e.KeyChar is not (>= '0' and <= '9')) e.Handled = true; };
+        txtToothNumber.VerifyChar += (_, e) => e.Result = char.IsControl(e.Char) || e.Char is >= '0' and <= '9';
         _layout.AddRow(UiFactory.Field(cboDiscountType, "Discount", FieldKind.Choice), UiFactory.Field(nudDiscountPercent, "Discount (%)"));
         _layout.AddRow(UiFactory.Field(lblNet, "Net billed"));
         cboDiscountType.Items.AddRange(DiscountTypes.All.Select(DiscountTypes.Display).Cast<object>().ToArray());
@@ -84,9 +84,9 @@ public partial class ucTreatmentRecords : UserControl
     }
     private void SelectionChanged(object? sender, EventArgs e)
     {
-        if (dgvTreatments.SelectedRows.Count == 0 || dgvTreatments.CurrentRow?.DataBoundItem is not TreatmentRow row) return;
+        if (dgvTreatments.SelectedRecord is null || dgvTreatments.SelectedRecord is not TreatmentRow row) return;
         _selected = row.Record; BindAppointmentOptions(); cboAppointment.SelectedValue = _selected.AppointmentId; cboTreatmentType.SelectedValue = _selected.TreatmentTypeId;
-        txtCost.Text = _selected.Cost.ToString("0.00", CultureInfo.InvariantCulture); txtToothNumber.Text = _selected.ToothNumber; txtNotes.Text = _selected.Notes;
+        txtCost.Text = _selected.Cost.ToString("0.00", CultureInfo.InvariantCulture); txtToothNumber.Text = _selected.ToothNumber ?? ""; txtNotes.Text = _selected.Notes ?? "";
         cboDiscountType.SelectedIndex = Array.IndexOf(DiscountTypes.All, _selected.DiscountType); nudDiscountPercent.Value = Math.Clamp(_selected.DiscountPercent, 0, 100); UpdateNet();
         SetAppointmentDate(); _layout.SetEditing(true);
     }

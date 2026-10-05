@@ -3,8 +3,12 @@ namespace DentalClinicSystem.Helpers.Design.Motion;
 public static class Motion
 {
     private static bool? _enabled;
-    public static bool Enabled { get => _enabled ?? SystemInformation.UIEffectsEnabled; set => _enabled = value; }
-    public static void UseSystemPreference() => _enabled = null;
+    public static bool Enabled
+    {
+        get => _enabled ?? SystemInformation.UIEffectsEnabled;
+        set { _enabled = value; AntdUI.Config.Animation = value; }
+    }
+    public static void UseSystemPreference() { _enabled = null; AntdUI.Config.Animation = Enabled; }
     public static Animator Animator { get; } = new(() => Environment.TickCount64);
     public static TimeSpan Instant => TimeSpan.FromMilliseconds(90);
     public static TimeSpan Fast => TimeSpan.FromMilliseconds(150);

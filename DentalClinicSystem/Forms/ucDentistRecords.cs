@@ -27,7 +27,7 @@ public partial class ucDentistRecords : UserControl
         cboSpecialization.Items.AddRange(DentalSpecializations.All);
         _layout.AddRow(UiFactory.Field(txtContactNumber, "Contact"), UiFactory.Field(txtLicenseNumber, "License"));
         InputRules.ApplyMaxLengths((txtFirstName, FieldLimits.Name), (txtLastName, FieldLimits.Name), (txtContactNumber, FieldLimits.ContactNumber), (txtLicenseNumber, FieldLimits.LicenseNumber));
-        txtContactNumber.KeyPress += InputRules.PhoneKeyPress;
+        txtContactNumber.VerifyChar += InputRules.PhoneVerifyChar;
         btnDelete.Text = "Deactivate"; btnDelete.Visible = true; btnDelete.Height = Metrics.ControlHeight; ButtonStyler.Attach(btnDelete, ButtonVariant.Danger);
         _layout.Actions.Controls.Add(btnDelete);
         _layout.Toolbar.Controls.Add(_timeOff);
@@ -49,10 +49,10 @@ public partial class ucDentistRecords : UserControl
     }
     private void SelectionChanged(object? sender, EventArgs e)
     {
-        _timeOff.Enabled = dgvDentists.SelectedRows.Count > 0;
-        if (dgvDentists.SelectedRows.Count == 0 || dgvDentists.CurrentRow?.DataBoundItem is not DentistRow row) return;
-        _selected = row.Record; txtFirstName.Text = _selected.FirstName; txtLastName.Text = _selected.LastName; cboSpecialization.Text = _selected.Specialization;
-        txtContactNumber.Text = _selected.ContactNumber; txtLicenseNumber.Text = _selected.LicenseNumber; _layout.SetEditing(true); btnDelete.Enabled = true; _timeOff.Enabled = true;
+        _timeOff.Enabled = dgvDentists.SelectedRecord is not null;
+        if (dgvDentists.SelectedRecord is null || dgvDentists.SelectedRecord is not DentistRow row) return;
+        _selected = row.Record; txtFirstName.Text = _selected.FirstName ?? ""; txtLastName.Text = _selected.LastName ?? ""; cboSpecialization.Text = _selected.Specialization ?? "";
+        txtContactNumber.Text = _selected.ContactNumber ?? ""; txtLicenseNumber.Text = _selected.LicenseNumber ?? ""; _layout.SetEditing(true); btnDelete.Enabled = true; _timeOff.Enabled = true;
     }
     private async Task<bool> SaveAsync()
     {

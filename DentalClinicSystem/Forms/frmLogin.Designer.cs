@@ -91,7 +91,6 @@ namespace DentalClinicSystem
             btnLogin.Size = new Size(118, 38);
             btnLogin.TabIndex = 4;
             btnLogin.Text = "LOGIN";
-            btnLogin.UseVisualStyleBackColor = false;
             btnLogin.Click += btnLogin_Click;
             // 
             // panel1

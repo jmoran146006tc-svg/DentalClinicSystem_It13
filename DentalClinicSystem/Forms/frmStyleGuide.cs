@@ -112,10 +112,10 @@ public sealed class frmStyleGuide : Form
     private void Grids()
     {
         var grids = Section("Sample grid · statuses · dates · currency · identity column");
-        var grid = new DataGridView { Size = new(Metrics.FormWidth * 2, Metrics.EmptyHeight), ReadOnly = true, AllowUserToAddRows = false };
+        var grid = new ClinicTable { Size = new(Metrics.FormWidth * 2, Metrics.EmptyHeight) };
         GridHelper.Bind(grid, AppointmentStatus.All.Select((status, index) => new Sample($"Demo patient {index + 1}", status, DateTime.Today.AddHours(9 + index), 1250m)), row => row.Patient, "No sample records");
         GridHelper.IdentityColumn<Sample>(grid, nameof(Sample.Patient), row => (row.Patient, "Patient identity")); grids.Controls.Add(grid);
-        var empty = new DataGridView { Size = new(Metrics.FormWidth, Metrics.EmptyHeight), AllowUserToAddRows = false };
+        var empty = new ClinicTable { Size = new(Metrics.FormWidth, Metrics.EmptyHeight) };
         GridHelper.Bind(empty, Array.Empty<Sample>()); grids.Controls.Add(empty);
     }
     private void Dashboards()

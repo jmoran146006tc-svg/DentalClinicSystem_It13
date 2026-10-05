@@ -73,14 +73,12 @@ namespace DentalClinicSystem.Forms
             var btnReports = new Button
             {
                 Name = "btnReports",
-                FlatStyle = btnDashboard.FlatStyle,
                 Font = btnDashboard.Font,
                 ForeColor = btnDashboard.ForeColor,
                 BackColor = Palette.Surface,
                 Padding = btnDashboard.Padding,
                 Size = btnDashboard.Size,
                 TextAlign = btnDashboard.TextAlign,
-                UseVisualStyleBackColor = false
             };
             return [
                 new("Dashboard", Permission.ViewDashboard, () => PageFactory.CreateDashboard(_services, _currentUser), btnDashboard),

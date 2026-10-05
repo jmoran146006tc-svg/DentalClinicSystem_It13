@@ -10,10 +10,10 @@ namespace DentalClinicSystem.Forms
         private readonly User _currentUser;
         private readonly DateTimePicker _from = new() { Format = DateTimePickerFormat.Short };
         private readonly DateTimePicker _to = new() { Format = DateTimePickerFormat.Short };
-        private readonly DataGridView _status = new();
-        private readonly DataGridView _revenue = new();
-        private readonly DataGridView _types = new();
-        private readonly DataGridView _workload = new();
+        private readonly ClinicTable _status = new();
+        private readonly ClinicTable _revenue = new();
+        private readonly ClinicTable _types = new();
+        private readonly ClinicTable _workload = new();
 
         public ucReports(IReportService reports, User currentUser)
         {
@@ -34,13 +34,13 @@ namespace DentalClinicSystem.Forms
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             var toolbar = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true };
-            var refresh = new Button { Text = "Refresh", AutoSize = true };
+            var refresh = UiFactory.Button("Refresh", Helpers.Design.Controls.ButtonVariant.Secondary);
             refresh.Click += OnRefresh;
             toolbar.Controls.AddRange([
                 new Label { Text = "From", AutoSize = true }, _from,
                 new Label { Text = "To", AutoSize = true }, _to, refresh
             ]);
-            var sections = new TabControl { Dock = DockStyle.Fill };
+            var sections = new AntdUI.Tabs { Dock = DockStyle.Fill, Font = Helpers.Design.Typography.Body, Type = AntdUI.TabType.Line };
             AddSection(sections, "Appointments by status", _status);
             AddSection(sections, "Billed by day", _revenue);
             AddSection(sections, "Top treatment types", _types);
@@ -50,18 +50,12 @@ namespace DentalClinicSystem.Forms
             Controls.Add(layout);
         }
 
-        private static void AddSection(TabControl sections, string title, DataGridView grid)
+        private static void AddSection(AntdUI.Tabs sections, string title, ClinicTable grid)
         {
             grid.Dock = DockStyle.Fill;
-            grid.ReadOnly = true;
-            grid.AllowUserToAddRows = false;
-            grid.AllowUserToDeleteRows = false;
-            grid.RowHeadersVisible = false;
-            grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            var section = new TabPage(title);
+            var section = new AntdUI.TabPage { Text = title, BackColor = Helpers.Design.Palette.Surface };
             section.Controls.Add(grid);
-            sections.TabPages.Add(section);
+            sections.Pages.Add(section);
         }
 
         private async void OnLoad(object? sender, EventArgs e) => await UiAction.RunAsync(this, RefreshAsync);

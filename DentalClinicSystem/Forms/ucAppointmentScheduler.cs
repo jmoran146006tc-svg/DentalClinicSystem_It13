@@ -64,9 +64,9 @@ public partial class ucAppointmentScheduler : UserControl
         _layout.Toolbar.Controls.Add(status); _layout.Toolbar.Controls.Add(dates); _layout.Toolbar.Controls.Add(_details);
         _layout.Search.TextChanged += (_, _) => BindRows(); _statusFilter.SelectedIndexChanged += (_, _) => BindRows(); _dateFilter.SelectedIndexChanged += (_, _) => BindRows();
         _clear.Click += (_, _) => ClearForm();
-        dgvAppointments.CellDoubleClick += async (_, e) => { if (e.RowIndex >= 0) await ShowDetailsAsync(); };
+        dgvAppointments.CellDoubleClick += async (_, e) => { if (e.Record is AppointmentRow) await ShowDetailsAsync(); };
         _details.Click += async (_, _) => await ShowDetailsAsync();
-        dgvAppointments.SelectionChanged += (_, _) => _details.Enabled = dgvAppointments.SelectedRows.Count > 0;
+        dgvAppointments.SelectionChanged += (_, _) => _details.Enabled = dgvAppointments.SelectedRecord is not null;
         dtpAppointmentDateTime.ValueChanged += AvailabilityChanged; cboDentist.SelectedIndexChanged += AvailabilityChanged;
         _layout.NewButton.Visible = RoleAccess.Can(currentUser, Permission.ManageAppointments);
         _layout.UseModal(ScheduleAsync, AfterScheduleAsync, allowEdit: false);
@@ -157,7 +157,7 @@ public partial class ucAppointmentScheduler : UserControl
     }
     private async Task ShowDetailsAsync()
     {
-        if (dgvAppointments.CurrentRow?.DataBoundItem is not AppointmentRow row || dgvAppointments.SelectedRows.Count == 0) return;
+        if (dgvAppointments.SelectedRecord is not AppointmentRow row || dgvAppointments.SelectedRecord is null) return;
         var result = await _appointmentService.GetDetailsAsync(_currentUser, row.AppointmentId);
         if (!result.Success || result.Data is null) { UiMessages.ShowError(result); return; }
         if (IsDisposed) return;

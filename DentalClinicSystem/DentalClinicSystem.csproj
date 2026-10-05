@@ -9,8 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\Licenses\AntdUI-LICENSE.txt" Link="Licenses\AntdUI-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <EmbeddedResource Include="Resources\LoginMark.png" />
     <EmbeddedResource Include="Resources\dentist.jpg" />
+    <PackageReference Include="AntdUI" Version="2.4.12" />
     <!-- Raw ADO.NET provider used by every MySql*Repository class in /DBContent -->
     <PackageReference Include="MySqlConnector" Version="2.6.2" />
     <!-- Password hashing used by authentication and user management -->

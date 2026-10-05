@@ -40,7 +40,6 @@ namespace DentalClinicSystem
             txtUsername.PlaceholderText = "Enter your username"; txtPassword.PlaceholderText = "Enter your password";
             txtUsername.TabIndex = 0; txtPassword.TabIndex = 0;
             InputRules.ApplyMaxLengths((txtUsername, FieldLimits.Username), (txtPassword, FieldLimits.Password));
-            var eye = _password.Controls.OfType<Button>().Single(); eye.TabStop = false;
             btnLogin.Text = "Sign in"; btnLogin.Dock = DockStyle.None; btnLogin.Margin = Padding.Empty; btnLogin.TabIndex = 2;
             ButtonStyler.Attach(btnLogin, ButtonVariant.Primary);
             _hero = new LoginHero(_backdrop, _username, _password, btnLogin, _alert);
@@ -89,7 +88,7 @@ namespace DentalClinicSystem
         }
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (keyData == (Keys.Alt | Keys.P)) { _password.Controls.OfType<Button>().Single().PerformClick(); return true; }
+            if (keyData == (Keys.Alt | Keys.P)) { _password.TogglePassword(); return true; }
             return base.ProcessCmdKey(ref msg, keyData);
         }
 

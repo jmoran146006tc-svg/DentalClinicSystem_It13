@@ -16,7 +16,7 @@ namespace DentalClinicSystem.Forms
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.Panel pnlHost;
         private System.Windows.Forms.Panel pnlFooter;
-        private System.Windows.Forms.Button btnClose;
+        private AntdUI.Button btnClose;
 
         private void InitializeComponent()
         {
@@ -83,7 +83,6 @@ namespace DentalClinicSystem.Forms
             btnClose.Size = new Size(90, 27);
             btnClose.TabIndex = 0;
             btnClose.Text = "CLOSE";
-            btnClose.UseVisualStyleBackColor = true;
             btnClose.Click += btnClose_Click;
             // 
             // frmUserManagement

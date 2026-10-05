@@ -39,7 +39,7 @@ public static class Theme
             switch (root)
             {
                 case Button button: ButtonStyler.Attach(button, Variant(button.Name), preserveFont: !UsesDefaultFont(button)); break;
-                case DataGridView grid: GridTheme.Apply(grid); break;
+                case ClinicTable grid: GridTheme.Apply(grid); break;
                 case Label label when UsesDefaultFont(label): label.Font = Typography.Body; label.ForeColor = Palette.Ink700; break;
                 case TextBoxBase or ComboBox or DateTimePicker when UsesDefaultFont(root): root.Font = Typography.Body; root.ForeColor = Palette.Ink700; break;
                 case Form or Panel or UserControl: root.BackColor = Palette.Canvas; break;
@@ -50,5 +50,5 @@ public static class Theme
     private static ButtonVariant Variant(string name) => name.Contains("Delete", StringComparison.OrdinalIgnoreCase) || name.Contains("Deactivate", StringComparison.OrdinalIgnoreCase) || name.Contains("Cancel", StringComparison.OrdinalIgnoreCase)
         ? ButtonVariant.Danger : name.StartsWith("btnUpdate", StringComparison.Ordinal) || name is "btnAdd" or "btnSchedule" or "btnAddTreatment" or "btnLogin" or "btnSave"
         ? ButtonVariant.Primary : ButtonVariant.Secondary;
-    public static void StyleGrid(DataGridView grid) => GridTheme.Apply(grid);
+    public static void StyleGrid(ClinicTable grid) => GridTheme.Apply(grid);
 }

@@ -21,7 +21,7 @@ namespace DentalClinicSystem.Forms
         {
             cboDuration = new ComboBox { Name = "cboDuration" };
             tglWalkIn = new Helpers.Design.Controls.Toggle("Walk-in (now)") { Name = "tglWalkIn" };
-            dgvAppointments = new DataGridView();
+            dgvAppointments = new ClinicTable();
             lblPatient = new Label();
             cboPatient = new ComboBox();
             lblDentist = new Label();
@@ -34,20 +34,14 @@ namespace DentalClinicSystem.Forms
             cboStatus = new ComboBox();
             btnUpdateStatus = new Button();
             cmbReason = new ComboBox();
-            ((System.ComponentModel.ISupportInitialize)dgvAppointments).BeginInit();
             SuspendLayout();
             // 
             // dgvAppointments
             // 
             dgvAppointments.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            dgvAppointments.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvAppointments.Location = new Point(36, 16);
             dgvAppointments.Margin = new Padding(2);
-            dgvAppointments.MultiSelect = false;
             dgvAppointments.Name = "dgvAppointments";
-            dgvAppointments.ReadOnly = true;
-            dgvAppointments.RowHeadersWidth = 62;
-            dgvAppointments.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvAppointments.Size = new Size(853, 136);
             dgvAppointments.TabIndex = 0;
             // 
@@ -109,7 +103,6 @@ namespace DentalClinicSystem.Forms
             dtpAppointmentDateTime.Location = new Point(36, 243);
             dtpAppointmentDateTime.Margin = new Padding(2);
             dtpAppointmentDateTime.Name = "dtpAppointmentDateTime";
-            dtpAppointmentDateTime.ShowUpDown = true;
             dtpAppointmentDateTime.Size = new Size(215, 27);
             dtpAppointmentDateTime.TabIndex = 6;
             // 
@@ -135,7 +128,6 @@ namespace DentalClinicSystem.Forms
             btnSchedule.Size = new Size(205, 27);
             btnSchedule.TabIndex = 3;
             btnSchedule.Text = "Schedule Appointment";
-            btnSchedule.UseVisualStyleBackColor = false;
             btnSchedule.Click += btnSchedule_Click;
             // 
             // lblStatus
@@ -170,12 +162,10 @@ namespace DentalClinicSystem.Forms
             btnUpdateStatus.Size = new Size(72, 27);
             btnUpdateStatus.TabIndex = 0;
             btnUpdateStatus.Text = "Update ";
-            btnUpdateStatus.UseVisualStyleBackColor = false;
             btnUpdateStatus.Click += btnUpdateStatus_Click;
             // 
             // cmbReason
             // 
-            cmbReason.FormattingEnabled = true;
             cmbReason.Items.AddRange(new object[] { "Oral Prophylaxis Package", "Consultation & Check up", "Promo Bundles" });
             cmbReason.Location = new Point(354, 245);
             cmbReason.Name = "cmbReason";
@@ -204,14 +194,13 @@ namespace DentalClinicSystem.Forms
             Name = "ucAppointmentScheduler";
             Size = new Size(920, 568);
             Load += ucAppointmentScheduler_Load;
-            ((System.ComponentModel.ISupportInitialize)dgvAppointments).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
-        private DataGridView dgvAppointments;
+        private ClinicTable dgvAppointments;
         private Label lblPatient;
         private ComboBox cboPatient;
         private Label lblDentist;
