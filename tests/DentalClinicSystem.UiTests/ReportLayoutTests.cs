@@ -6,11 +6,28 @@ using DentalClinicSystem.Helpers.Design.Controls;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
 using DentalClinicSystem.Service;
+using System.Reflection;
 
 namespace DentalClinicSystem.UiTests;
 
 public sealed class ReportLayoutTests
 {
+    [Theory]
+    [InlineData(1f)] [InlineData(1.25f)] [InlineData(1.5f)]
+    public void RangeSegmentsFitMeasuredLabels(float scale) => UiThread.Run(() =>
+    {
+        using var toolbar = new ReportToolbar(new(), new(), new("Refresh"), new("Export CSV"));
+        using var host = new Form { ClientSize = new(1280, 400) }; host.Controls.Add(toolbar); UiThread.Show(host);
+        toolbar.Scale(new SizeF(scale, scale));
+        foreach (AntdUI.SegmentedItem item in toolbar.Ranges.Items)
+        {
+            var rectangle = (Rectangle)typeof(AntdUI.SegmentedItem).GetProperty("RectText", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(item)!;
+            Assert.True(TextRenderer.MeasureText(item.Text, toolbar.Ranges.Font).Width <= rectangle.Width);
+            Assert.Equal(0, rectangle.Top); Assert.Equal(toolbar.Ranges.Height, rectangle.Height);
+        }
+        Assert.Equal(AntdUI.TAlignMini.None, toolbar.Ranges.BarPosition);
+        Assert.Equal(AntdUI.TAlignMini.None, toolbar.Ranges.IconAlign); Assert.Equal(Padding.Empty, toolbar.Ranges.Margin);
+    });
     [Theory]
     [InlineData(1280, 2, true)]
     [InlineData(900, 1, true)]
@@ -39,7 +56,7 @@ public sealed class ReportLayoutTests
         var toolbar = UiThread.Named<ReportToolbar>(page, "reportToolbar");
         var centers = toolbar.Controls.Cast<Control>().Where(c => c.Visible).Select(c => c is FormField field
             ? c.Top + field.Box.Top + field.Box.Height / 2d : c.Top + c.Height / 2d).ToArray();
-        Assert.InRange(centers.Max() - centers.Min(), 0, 1);
+        Assert.True(centers.Max() - centers.Min() <= 1, string.Join("; ", toolbar.Controls.Cast<Control>().Select(c => $"{c.Name}/{c.GetType().Name}: {c.Bounds} margin {c.Margin}, available {toolbar.ClientSize.Width}")));
         Assert.Equal(toolbar.ClientSize.Width, UiThread.Named<AppButton>(page, "reportExport").Right);
         Assert.Equal(1, toolbar.Ranges.SelectIndex);
         var from = UiThread.Named<ClinicDatePicker>(page, "reportFrom"); from.Value = from.Value.AddDays(-1);
@@ -74,6 +91,18 @@ public sealed class ReportLayoutTests
             Assert.True(icon.Visible); Assert.True(icon.Parent?.ClientRectangle.Contains(icon.Bounds));
         }
         Assert.Equal(4, UiThread.Controls(page).OfType<KpiCard>().Count());
+    });
+    [Fact]
+    public void NarrowStatusCardStacksAFullSizeDonutAboveTheLegend() => UiThread.Run(() =>
+    {
+        using var page = new ucReports(Data(), ClinicFixture.Actor()); using var host = new Form { ClientSize = new(550, 1000) };
+        host.Controls.Add(page); UiThread.Show(host);
+        var group = UiThread.Named<ReportStatusContent>(page, "reportStatusGroup");
+        var chart = UiThread.Named<DonutChart>(page, "reportStatus"); var legend = UiThread.Named<ReportLegend>(page, "reportLegend");
+        Assert.Equal(chart.Width, chart.Height); Assert.Equal(Metrics.ChartHeight, chart.Height);
+        Assert.True(chart.Bottom <= legend.Top); Assert.True(group.ClientRectangle.Contains(chart.Bounds));
+        Assert.True(group.ClientRectangle.Contains(legend.Bounds));
+        UiThread.Capture(host, "phase10-reports-narrow");
     });
     [Theory]
     [InlineData(1f)]

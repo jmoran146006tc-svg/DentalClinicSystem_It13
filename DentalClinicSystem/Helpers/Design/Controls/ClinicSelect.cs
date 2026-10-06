@@ -55,6 +55,11 @@ public sealed class ClinicSelect : AntdUI.Select
     }
     public new event EventHandler? SelectedIndexChanged;
     public new event EventHandler? SelectedValueChanged;
+    protected override void OnMouseWheel(MouseEventArgs e)
+    {
+        if (ExpandDrop) base.OnMouseWheel(e);
+        else WheelRouting.Forward(this, e);
+    }
     private static object? Member(object? item, string member) => item is null || member.Length == 0 ? item : TypeDescriptor.GetProperties(item)[member]?.GetValue(item);
     private void NotifySelection()
     {

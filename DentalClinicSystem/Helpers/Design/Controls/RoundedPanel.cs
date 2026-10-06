@@ -6,6 +6,14 @@ public class RoundedPanel : Panel
 {
     private Bitmap? _shadow;
     private ElevationLevel _elevation;
+    private Color _faceColor = Palette.Surface;
+    protected Color FaceBorder { get; set; } = Palette.Line;
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public Color FaceColor
+    {
+        get => _faceColor;
+        set { _faceColor = value; Content.BackColor = value; Invalidate(); }
+    }
     public Panel Content { get; } = new() { Dock = DockStyle.Fill, BackColor = Palette.Surface };
     [System.ComponentModel.DefaultValue(ElevationLevel.E0)]
     public ElevationLevel Elevation
@@ -45,7 +53,7 @@ public class RoundedPanel : Panel
         if (_shadow is not null) e.Graphics.DrawImageUnscaled(_shadow, Point.Empty);
         var inset = Metrics.Scale(this, Design.Elevation.Padding(Elevation));
         var bounds = Rectangle.Inflate(ClientRectangle, -inset, -inset);
-        DesignPaint.Surface(e.Graphics, bounds, Metrics.Scale(this, Metrics.CardRadius), Palette.Surface, Palette.Line);
+        DesignPaint.Surface(e.Graphics, bounds, Metrics.Scale(this, Metrics.CardRadius), FaceColor, FaceBorder);
         base.OnPaint(e);
     }
     protected override void Dispose(bool disposing)

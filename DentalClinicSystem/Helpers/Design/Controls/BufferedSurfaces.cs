@@ -21,5 +21,12 @@ public sealed class BufferedPanel : Panel
         get { var parameters = base.CreateParams; parameters.ExStyle |= 0x02000000; return parameters; }
     }
     protected override void OnScroll(ScrollEventArgs e) { base.OnScroll(e); Refresh(); }
-    protected override void OnMouseWheel(MouseEventArgs e) { base.OnMouseWheel(e); Refresh(); }
+    protected override void OnMouseWheel(MouseEventArgs e)
+    {
+        var position = -AutoScrollPosition.Y;
+        var maximum = Math.Max(0, DisplayRectangle.Height - ClientSize.Height);
+        if (AutoScroll && (e.Delta > 0 ? position <= 0 : position >= maximum)) WheelRouting.Forward(this, e);
+        else base.OnMouseWheel(e);
+        Refresh();
+    }
 }

@@ -27,6 +27,11 @@ public sealed class ClinicDatePicker : AntdUI.DatePicker
     // AntdUI ReadOnly also closes the calendar. BanInput is its separate native
     // text-entry guard (also used by Select.List) and leaves the popup usable.
     protected override bool BanInput => true;
+    protected override void OnMouseWheel(MouseEventArgs e)
+    {
+        if (ExpandDrop) base.OnMouseWheel(e);
+        else WheelRouting.Forward(this, e);
+    }
     private DateTime Clamp(DateTime value) => value < MinDate ? MinDate : value > MaxDate ? MaxDate : value;
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public new DateTime Value { get => _value; set => base.Value = Clamp(value); }

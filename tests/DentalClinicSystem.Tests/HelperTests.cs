@@ -60,13 +60,20 @@ public sealed class HelperTests
     {
         var day = new DateTime(2026, 10, 5);
         Appointment[] appointments = [new() { AppointmentId = 1, AppointmentDateTime = day.AddHours(9), DurationMinutes = 90 }, new() { AppointmentId = 2, AppointmentDateTime = day.AddHours(10), DurationMinutes = 30 }];
-        Assert.Empty(CalendarGeometry.Blocks(appointments, day, 0, 96));
+        var geometry = CalendarGeometry.ForWeek(appointments, day);
+        Assert.Equal(ClinicRules.OpeningTime.Hour, geometry.StartHour); Assert.Equal(ClinicRules.ClosingTime.Hour, geometry.EndHour);
+        Assert.Empty(geometry.Blocks(appointments, day, 0, 96));
         foreach (var dpi in new[] { 96, 120, 144 })
         {
-            var blocks = CalendarGeometry.Blocks(appointments, day, CalendarGeometry.MinimumWidth(dpi), dpi);
+            var blocks = geometry.Blocks(appointments, day, CalendarGeometry.MinimumWidth(dpi), dpi);
             Assert.Equal(2, blocks.Count); Assert.All(blocks, block => Assert.True(block.Bounds.Width > 0 && block.Bounds.Height > 0));
             Assert.False(blocks[0].Bounds.IntersectsWith(blocks[1].Bounds));
+            Assert.Equal(CalendarGeometry.Scale(Metrics.CalendarHourHeight * 8, dpi), geometry.Height(dpi));
         }
+        var expanded = CalendarGeometry.ForWeek([new() { AppointmentDateTime = day.AddHours(7.5), DurationMinutes = 90 },
+            new() { AppointmentDateTime = day.AddHours(17.5), DurationMinutes = 90 },
+            new() { AppointmentDateTime = day.AddDays(8).AddHours(5), DurationMinutes = 30 }], day);
+        Assert.Equal(new CalendarGeometry(7, 19), expanded);
     }
     [Fact]
     public void EveryStatusHasSafeStyleAndEveryIconBuildsGeometry()

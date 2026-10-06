@@ -4,5 +4,5 @@ global using TextBox = AntdUI.Input;
 global using TextBoxBase = AntdUI.Input;
 global using ComboBox = DentalClinicSystem.Helpers.Design.Controls.ClinicSelect;
 global using DateTimePicker = DentalClinicSystem.Helpers.Design.Controls.ClinicDatePicker;
-global using NumericUpDown = AntdUI.InputNumber;
+global using NumericUpDown = DentalClinicSystem.Helpers.Design.Controls.ClinicNumber;
 global using ClinicTable = DentalClinicSystem.Helpers.Design.Controls.ClinicTable;

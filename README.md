@@ -18,13 +18,19 @@ Windows, a Visual Studio installation that supports .NET 10 WinForms (desktop de
 Database setup is manual. The application only connects to an existing database and calls stored procedures.
 
 1. Start MySQL Server and connect in MySQL Workbench.
-2. Execute `Database/01_Schema.sql`, then `Database/02_StoredProcedures.sql`, then `Database/03_SeedData.sql`.
+2. Execute `Database/01_Schema.sql`, then `Database/02_StoredProcedures.sql`, then `Database/02b_FunctionsTriggersEvents.sql`, then `Database/03_SeedData.sql`.
 3. Check the connection constants in `DentalClinicSystem/DBContent/DbConnectionHelper.cs` for your local server.
 4. Optionally enable `SET GLOBAL event_scheduler = ON` with DBA permission for automatic patient inactivity. The procedure can also be run manually with `CALL sp_Patient_DeactivateStale();`.
 
-**OPTIONAL — DEMO ONLY:** manually run `Database/05_DemoReportData.sql` after setup to populate Reports for visual review. It adds up to 25 marked Completed appointments over the last 30 days, with 1–3 treatments and example discounts, using the two exact active seed patients and dentists. It skips Sundays, leave, future completion times and overlapping bookings. Re-running tops up the current window without modifying existing rows; crowded/blocked dates can yield fewer visits. Use a development database with the app closed; concurrent booking is not serialized by this demo script. The app never runs it. In Reports choose **Last 30 days** to see the full batch.
+**OPTIONAL — DEVELOPMENT DEMO ONLY:** manually run `Database/05_DemoData.sql` after setup. It adds three dentists and Dentist accounts (`drreyes`, `drdelrosario`, `drnavarro`, `drbautista`, all using the baseline demo password `dentist123`), 24 patients including minors, seniors, medical notes, an inactive patient and a patient with only cancelled visits, plus past/upcoming leave. Marked visits span 45 days before today through 14 days after today, using clinic hours, catalog durations, all five statuses and 1–3 treatments for completed visits. It skips Sundays, leave and dentist/patient overlaps. `Notes = 'Demo data v2'` identifies appointments/treatments; patient identities and dentist licenses identify the other demo rows. It is deterministic for the current date and re-runnable without replacing existing rows. Use a development database with the app closed. The temporary procedure runs a transaction, rolls back on failure, prints summary counts/net billed totals and is dropped afterwards. Today includes a synthetic CheckedIn example at the nearest slot, even when run before opening. Existing bookings/leave may reduce the inserted batch. The app never runs it.
 
-For an existing database, run `Database/04_Migration_RealWorldFixes.sql`, then `Database/02_StoredProcedures.sql`, then `Database/03_SeedData.sql` (04 → 02 → 03). The migration checks existing columns and constraints, keeps existing data, and removes its temporary helper procedures. It is designed to be re-runnable. Run it twice on a backup when verifying an upgrade. Fresh installs use 01 → 02 → 03; these scripts are also designed to be re-runnable.
+For an existing database, run `Database/04_Migration_RealWorldFixes.sql`, then `Database/02_StoredProcedures.sql`, then `Database/02b_FunctionsTriggersEvents.sql`, then `Database/03_SeedData.sql` (04 → 02 → 02b → 03). The migration checks existing columns and constraints, keeps existing data, adds `AuditLog`, and removes its temporary helper procedures. Run it twice on a backup when verifying an upgrade. Fresh installs use 01 → 02 → 02b → 03; these scripts are designed to be re-runnable. Install 02b before using this application version: successful appointment inserts now reactivate inactive patients inside the database statement.
+
+If an older copy of 03 fails with error 1267 at the NoShow `LEAST(...)` expression, reload the updated script: it casts session date variables back to `DATE` before comparison/arithmetic. In the original Workbench connection, check `SELECT @seed_appointments, @juan, @ana, @maria, @carlos, @week_start, @previous_open_day, @demo_day;` (the seed flag must still be 1 and the IDs/dates must be populated). If execution stopped at that error, run from the corrected NoShow INSERT through the end. If Workbench continued with later statements, run only the failed INSERT; the existing treatment INSERT is safe to repeat. Do not restart 03 from the top to finish a partial batch: its empty-appointments guard will skip the missing appointments. If the session was reset or the flag is no longer 1, inspect the existing demo rows before choosing a recovery range; do not delete appointments or force the guard.
+
+02b adds `fn_TreatmentNet` (deterministic, no SQL), `fn_DentistHasConflict` and `fn_DentistOnLeave` (read SQL data). Dentist-row locks serialize appointment inserts and slot updates; conflict/leave functions use locking current reads to avoid stale transaction snapshots. Triggers also guard status transitions and cancelled/no-show treatment parents. C# services retain their friendly validation. Audit triggers record patient changes, treatment inserts/updates/deletes, appointment status/slot changes and user Role/IsActive changes in `AuditLog`, indexed by table/record. They record what and when; actor attribution is a separate task. User password hashes are never included. MySQL 8.0+ and permission to create routines/triggers/events are required; function characteristics address binary-logging error 1418, but DBA privilege requirements still apply. See [MySQL stored-program logging](https://dev.mysql.com/doc/refman/8.0/en/stored-programs-logging.html).
+
+The existing patient-inactivity event remains unchanged. `ev_flag_missed_appointments` would mark Scheduled visits NoShow once their end is at least 24 hours old; it ships **disabled**. Enable only after the clinic/adviser confirms this rule. Enabling the global event scheduler does not enable this disabled event.
 
 **`Database/00_ResetDatabase.sql` destroys all data.** It is not part of an upgrade. Back up anything needed before using it to rebuild a schema. The app never creates or migrates the database.
 
@@ -36,11 +42,11 @@ Login photo by Benyamin Bohlouli on Unsplash.
 
 The sidebar follows each account's role permissions and highlights the active page. Each page owns its title; the top bar shows the clock. Record pages use the shared design system and responsive runtime layouts. Appointments support walk-ins, check-in, rescheduling with a dentist change, visit reasons with an Other field for custom text, duration choices, overlap checks, and dentist time off. Dentist specialization uses the same Other flow. Admins and Receptionists can check in patients; Dentists can complete their own appointments. Only Scheduled appointments can be rescheduled or cancelled; CheckedIn appointments can only become Completed.
 
-The dashboard shows Admins and Receptionists today's appointment count, active patients, cancellations for appointments dated this week, and a Monday–Sunday calendar with week navigation, dentist filtering, overlap columns and appointment details. Only Admins see the weekly net billed amount. Dentists see their own patients today, with patient history and completion actions for Scheduled or CheckedIn appointments. History is read-only and includes treatments and past appointments; Receptionists have no treatment-history access. Refresh reloads dashboard data. The calendar displays 8:00 AM–6:00 PM for context; booking still enforces the clinic hours below.
+The dashboard shows Admins and Receptionists today's appointment count, active patients, cancellations for appointments dated this week, and a Monday–Sunday calendar with week navigation, dentist filtering, overlap columns and appointment details. Only Admins see the weekly net billed amount. Dentists see their own patients today, with patient history and completion actions for Scheduled or CheckedIn appointments. History is read-only and includes treatments and past appointments; Receptionists have no treatment-history access. Refresh reloads dashboard data. The calendar defaults to the clinic's 9:00 AM–5:00 PM range and expands only for displayed appointments outside that range. Day headers stay visible, closed days/non-working hours are shaded, patient names lead the blocks, and a minute-updated line marks now. The default grid fits without an inner vertical scrollbar; expanded ranges scroll with wheel chaining to the page at the boundaries.
 
 Patients have guardian contact fields (required below age 18), allergies and medical notes. Duplicate names plus birthdates are rejected, and booking a valid slot for an inactive patient reactivates the record. Medical details appear in appointment details for Admins and Dentists; Receptionists can view them on the Patients page.
 
-Treatments support Add and Update for eligible appointments through today, require the appointment's date, and validate optional FDI tooth numbers (permanent and primary teeth). Cost is the gross amount. None, Senior Citizen, PWD and Other discounts calculate a net amount; reports show **Billed**, which is not money collected. Net is calculated as `Cost - Cost * DiscountPercent / 100`; displayed currency uses two decimal places. Admin reports total net billed amounts.
+Treatments support Add and Update for eligible appointments through today, require the appointment's date, and validate optional FDI tooth numbers (permanent and primary teeth). Cost is the gross amount. None, Senior Citizen, PWD and Other discounts calculate a net amount; reports show **Billed**, which is not money collected. Net is calculated as `Cost - Cost * DiscountPercent / 100`; displayed currency uses two decimal places. All three report procedures use `fn_TreatmentNet`, returning `DECIMAL(16,6)` to preserve the unrounded C# result for two-decimal costs/percentages (a four-place return type would change fractional-discount totals). Admin reports total net billed amounts.
 
 ## Clinic assumptions
 
@@ -54,12 +60,12 @@ Date-dependent services accept an optional `TimeProvider`; production uses the m
 - No medical history beyond allergies and notes.
 - One clinic-hours configuration, not a separate schedule per dentist.
 - No SMS reminders.
-- Booking, leave and deactivation checks happen before writes and do not serialize concurrent users. Patient reactivation and booking are separate stored-procedure calls; a failed booking write may leave the patient active.
+- Leave/deactivation workflows still perform service checks before their writes. Appointment triggers serialize bookings for the same dentist; concurrent leave creation/deactivation workflows need separate live verification.
 - Automated tests use repository/service fakes. Live MySQL script execution and end-to-end database operations need manual verification.
 
 ## Manual MySQL verification
 
-1. On a backup of an existing database, run 04 twice, then 02 and 03 twice; check preserved records, new columns/constraints and absence of migration helper procedures. On a separate fresh database, run 01 → 02 → 03, then repeat them.
+1. On a backup of an existing database, run 04 twice, then 02 → 02b → 03 twice; check preserved records, new columns/constraints and absence of migration helper procedures. On a separate fresh database, run 01 → 02 → 02b → 03, then repeat them.
 2. Book a walk-in during clinic hours, check in as Receptionist, and complete as Admin or the linked Dentist. Check that terminal statuses cannot be reopened.
 3. Add a treatment to a completed appointment. Try a cancelled/no-show appointment and a future appointment; verify rejection and performed-date locking.
 4. Reschedule a Scheduled appointment with a dentist change; verify unchanged reason/notes/duration, self-exclusion, row refresh and flash. Try an adjacent slot and a one-minute overlap with a long procedure.
@@ -68,6 +74,29 @@ Date-dependent services accept an optional `TimeProvider`; production uses the m
 7. Book an inactive patient into a valid slot and verify reactivation. Try an invalid slot and confirm the patient remains inactive.
 8. Register a minor without guardian details, then with valid details. Check the 18th-birthday boundary and active/inactive duplicates.
 9. Add a gross 1,000 treatment with a 20% discount. Verify Net and Billed equal 800 in daily, top-treatment and dentist reports; verify editing, None and Other discounts too.
+10. Insert an overlapping appointment directly from Workbench; expect the trigger's clear overlap message. Try adjacent half-open intervals and an inclusive leave-date boundary.
+11. In two Workbench sessions, book the same dentist/slot concurrently; exactly one insert should succeed. Repeat with an already-open REPEATABLE READ transaction and concurrent slot updates; the current-read checks must see the winning commit.
+12. Book an inactive patient: the successful statement must reactivate them. An overlapping/failed booking must leave them inactive, including when a later trigger fails and the statement rolls back.
+13. Update Completed → Scheduled directly; expect rejection. Verify Scheduled → CheckedIn/Completed/Cancelled/NoShow and CheckedIn → Completed, with terminal statuses remaining terminal.
+14. Change a patient, treatment, appointment slot/status and user role/active flag; expect one AuditLog row per applicable change, with old/new JSON and no password hash. No-op updates and password-only user changes must not add audit rows. Verify treatment insert/delete auditing too.
+15. Save all three report result sets on the demo data before replacing the report expressions, then compare them afterwards without changing data or date ranges. Also compare the original formula with the function using the queries below; fractional discounts must retain exact totals.
+16. Run 02b and 05 twice on the same date; expect no errors or duplicate demo rows. Check the baseline 03 seed on every weekday, upcoming leave without Scheduled/CheckedIn visits, durations, valid FDI numbers, patient/dentist overlap checks and the inactive/cancelled-only examples.
+17. Check `information_schema.EVENTS`: `ev_flag_missed_appointments` must exist with `STATUS = 'DISABLED'`; the existing inactivity event is unchanged.
+
+Read-only formula comparisons (same treatment rows as each report; both numeric columns must match):
+
+```sql
+SELECT DatePerformed, SUM(Cost - Cost * DiscountPercent / 100) AS BeforeFunction,
+       SUM(fn_TreatmentNet(Cost, DiscountPercent)) AS AfterFunction
+FROM Treatments GROUP BY DatePerformed;
+SELECT TreatmentTypeId, SUM(Cost - Cost * DiscountPercent / 100) AS BeforeFunction,
+       SUM(fn_TreatmentNet(Cost, DiscountPercent)) AS AfterFunction
+FROM Treatments GROUP BY TreatmentTypeId;
+SELECT a.DentistId, SUM(t.Cost - t.Cost * t.DiscountPercent / 100) AS BeforeFunction,
+       SUM(fn_TreatmentNet(t.Cost, t.DiscountPercent)) AS AfterFunction
+FROM Treatments t JOIN Appointments a ON a.AppointmentId = t.AppointmentId GROUP BY a.DentistId;
+SELECT fn_TreatmentNet(1.23, 12.34) AS FractionalExample; -- 1.078218
+```
 
 In Debug, press **Ctrl+Shift+F12** on the dashboard to open the style guide. To review it without a database, run `dotnet run --project DentalClinicSystem/DentalClinicSystem.csproj -- --style-guide`. The guide is not included in Release.
 

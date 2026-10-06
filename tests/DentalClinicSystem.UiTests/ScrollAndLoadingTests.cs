@@ -12,6 +12,38 @@ namespace DentalClinicSystem.UiTests;
 
 public sealed class ScrollAndLoadingTests
 {
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern IntPtr SendMessage(IntPtr handle, int message, IntPtr wParam, IntPtr lParam);
+    [Fact]
+    public void SegmentedNativeWheelScrollsItsPageWithoutChangingRange() => UiThread.Run(() =>
+    {
+        using var host = new Form { ClientSize = new(600, 400) };
+        var page = new BufferedPanel { Dock = DockStyle.Fill, AutoScroll = true, AutoScrollMinSize = new(0, 1000) };
+        var segmented = new AntdUI.Segmented { Size = new(400, 44), Full = true, SelectIndex = 1 };
+        segmented.Items.Add(new AntdUI.SegmentedItem { Text = "One" }); segmented.Items.Add(new AntdUI.SegmentedItem { Text = "Two" });
+        page.Controls.Add(segmented); host.Controls.Add(page); UiThread.Show(host); segmented.SelectIndex = 1;
+        SendMessage(segmented.Handle, 0x020A, (IntPtr)(-120 << 16), IntPtr.Zero);
+        Assert.Equal(1, segmented.SelectIndex); Assert.True(page.AutoScrollPosition.Y < 0);
+    });
+    [Theory]
+    [InlineData("choice")] [InlineData("date")] [InlineData("number")]
+    public void ClosedInputsRouteWheelToThePageWithoutChangingValues(string kind) => UiThread.Run(() =>
+    {
+        using var input = kind switch
+        {
+            "choice" => (Control)new ClinicSelect(), "date" => new ClinicDatePicker(), _ => new ClinicNumber()
+        };
+        if (input is ClinicSelect choice) { choice.Items.AddRange(["One", "Two", "Three"]); choice.SelectedIndex = 1; }
+        if (input is ClinicNumber number) number.Value = 20;
+        object Value() => input switch { ClinicSelect c => c.SelectedIndex, ClinicDatePicker d => d.Value, ClinicNumber n => n.Value, _ => throw new InvalidOperationException() };
+        using var host = new Form { ClientSize = new(600, 400) };
+        var page = new BufferedPanel { Dock = DockStyle.Fill, AutoScroll = true, AutoScrollMinSize = new(0, 1000) };
+        page.Controls.Add(input); host.Controls.Add(page); UiThread.Show(host);
+        var initial = Value();
+        input.GetType().GetMethod("OnMouseWheel", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(input,
+            [new HandledMouseEventArgs(MouseButtons.None, 0, 20, 20, -120)]);
+        Assert.Equal(initial, Value()); Assert.True(page.AutoScrollPosition.Y < 0);
+    });
     [Fact]
     public void OpeningAppointmentsDoesNotValidateTheHiddenBookingForm() => UiThread.Run(() =>
     {

@@ -7,9 +7,10 @@ public sealed class ReportLegend : TableLayoutPanel
     private readonly List<Label> _counts = [], _percentages = [];
     public ReportLegend()
     {
-        Name = "reportLegend"; Dock = DockStyle.Fill; ColumnCount = 4; RowCount = AppointmentStatus.All.Length;
+        Name = "reportLegend"; AutoSize = true; AutoSizeMode = AutoSizeMode.GrowAndShrink; ColumnCount = 4; RowCount = AppointmentStatus.All.Length;
+        MaximumSize = new(Metrics.FormWidth - Space.Xxxl, 0);
         BackColor = Palette.Surface; Margin = Padding.Empty;
-        ColumnStyles.Add(new(SizeType.Absolute, Metrics.IconSize)); ColumnStyles.Add(new(SizeType.Percent, 100));
+        ColumnStyles.Add(new(SizeType.Absolute, Metrics.IconSize)); ColumnStyles.Add(new(SizeType.AutoSize));
         ColumnStyles.Add(new(SizeType.Absolute, Metrics.ReportLegendNumberWidth)); ColumnStyles.Add(new(SizeType.Absolute, Metrics.ReportLegendNumberWidth));
         foreach (var status in AppointmentStatus.All)
         {
@@ -33,7 +34,7 @@ public sealed class ReportLegend : TableLayoutPanel
     }
     private static Label Cell(string text, string name, ContentAlignment align) => new()
     {
-        Name = name, Text = text, Dock = DockStyle.Fill, Font = Typography.Caption,
+        Name = name, Text = text, AutoSize = true, Dock = DockStyle.Fill, Font = Typography.Caption,
         ForeColor = Palette.Ink700, TextAlign = align, Margin = Padding.Empty, AutoEllipsis = true
     };
     public void SetValues(IReadOnlyList<double> values)

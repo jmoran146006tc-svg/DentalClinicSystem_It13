@@ -80,11 +80,8 @@ public sealed class ucReports : BufferedPage
     }
     private Control StatusContent()
     {
-        var content = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, BackColor = Palette.Surface };
-        content.ColumnStyles.Add(new(SizeType.Percent, 40)); content.ColumnStyles.Add(new(SizeType.Percent, 60));
-        content.RowStyles.Add(new(SizeType.Percent, 100));
         var legend = new ReportLegend(); _status.ValuesChanged += legend.SetValues;
-        content.Controls.Add(_status, 0, 0); content.Controls.Add(legend, 1, 0); return content;
+        return new ReportStatusContent(_status, legend);
     }
     private void AddSection(string title, Control content, string emptyText, IconKind icon)
     {
@@ -101,6 +98,8 @@ public sealed class ucReports : BufferedPage
             var rows = Math.Clamp(_snapshot?.Workload.Count ?? 3, 3, 8);
             var workloadHeight = Space.Lg * 2 + Metrics.ControlHeight + Metrics.GridHeaderHeight + rows * Metrics.NavHeight;
             ResponsiveCards.Arrange(_cards, _sections.Cast<Control>().ToArray(), columns, Metrics.ReportCardHeight, spanFrom: 2, workloadHeight);
+            if (_sections[0].Width < Metrics.Scale(this, Metrics.ReportStackWidth))
+                _cards.RowStyles[0].Height = Metrics.Scale(this, Metrics.ReportStatusStackHeight + Space.Lg);
         }
         finally { _arranging = false; }
     }

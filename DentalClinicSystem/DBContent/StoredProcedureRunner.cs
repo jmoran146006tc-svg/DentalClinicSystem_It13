@@ -33,6 +33,11 @@ namespace DentalClinicSystem.DBContent
             await using var command = new MySqlCommand(procedure, connection) { CommandType = CommandType.StoredProcedure };
             command.Parameters.AddRange(parameters);
             try { await command.ExecuteNonQueryAsync(); }
+            // MySqlConnector 2.6.2 has no named enum member for ER_SIGNAL_EXCEPTION.
+            catch (MySqlException ex) when ((int)ex.ErrorCode == 1644)
+            {
+                throw new RepositoryConstraintException(ex.Message, ex);
+            }
             catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.RowIsReferenced2)
             {
                 throw new RepositoryConstraintException(constraintMessage, ex);

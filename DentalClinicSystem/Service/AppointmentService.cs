@@ -37,11 +37,7 @@ namespace DentalClinicSystem.Service
             if (!slot.Success) return slot;
             appointment.Status = AppointmentStatus.Scheduled;
             appointment.CancellationReason = null;
-            return await ServiceOperation.SaveAsync(async () =>
-            {
-                if (!patient.IsActive) await patients.ReactivateAsync(patient.PatientId);
-                await appointments.AddAsync(appointment);
-            });
+            return await ServiceOperation.SaveAsync(() => appointments.AddAsync(appointment));
         }
         public async Task<ServiceResult> RescheduleAppointmentAsync(User actor, int appointmentId, DateTime newDateTime, int newDentistId)
         {

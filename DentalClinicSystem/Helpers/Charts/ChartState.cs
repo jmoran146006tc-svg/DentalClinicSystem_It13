@@ -5,12 +5,13 @@ using MotionSystem = DentalClinicSystem.Helpers.Design.Motion.Motion;
 namespace DentalClinicSystem.Helpers.Charts;
 
 // Shared data, accessibility and motion; each control retains its own geometry and renderer.
-internal sealed class ChartState
+internal sealed class ChartState : IMessageFilter
 {
     private readonly Control _owner;
     private double[] _previous = [], _current = [];
     private float[] _opacity = [];
     private bool _stagger;
+    private bool _tabPending, _keyboardFocus;
     public IReadOnlyList<ChartDatum> Data { get; private set; } = [];
     public IReadOnlyList<double> Values => _current;
     public Func<double, string> Format { get; private set; } = value => value.ToString("N0");
@@ -24,15 +25,28 @@ internal sealed class ChartState
     public ChartState(Control owner, string title)
     {
         _owner = owner; owner.AccessibleName = title; owner.AccessibleRole = AccessibleRole.Graphic; owner.TabStop = true;
-        owner.GotFocus += (_, _) => owner.Invalidate(); owner.LostFocus += (_, _) => owner.Invalidate();
+        Application.AddMessageFilter(this);
+        owner.Disposed += (_, _) => Application.RemoveMessageFilter(this);
+        owner.GotFocus += (_, _) => { _keyboardFocus = _tabPending; _tabPending = false; owner.Invalidate(); };
+        owner.LostFocus += (_, _) => { _keyboardFocus = false; owner.Invalidate(); };
         owner.MouseLeave += (_, _) => Hover(-1);
         owner.KeyDown += (_, e) =>
         {
+            _keyboardFocus = true; owner.Invalidate();
             if (Data.Count == 0) return;
             if (e.KeyCode is Keys.Left or Keys.Up or Keys.Right or Keys.Down)
             { Hover(Math.Clamp(Hovered + (e.KeyCode is Keys.Left or Keys.Up ? -1 : 1), 0, Data.Count - 1)); e.Handled = true; }
         };
-        owner.MouseDown += (_, _) => owner.Focus();
+        owner.MouseDown += (_, _) => { _tabPending = _keyboardFocus = false; owner.Focus(); owner.Invalidate(); };
+    }
+    public bool PreFilterMessage(ref Message m)
+    {
+        if (m.Msg == 0x0100 && (Keys)m.WParam.ToInt32() == Keys.Tab && _owner.IsHandleCreated)
+        {
+            _tabPending = true;
+            _owner.BeginInvoke(() => _tabPending = false);
+        }
+        return false;
     }
 
     public void SetData(IReadOnlyList<ChartDatum> data, Func<double, string> format, string emptyMessage, bool stagger = false)
@@ -83,7 +97,7 @@ internal sealed class ChartState
     {
         if (_owner.Width <= 0 || _owner.Height <= 0) return false;
         DesignPaint.Prepare(graphics); graphics.Clear(Palette.Surface);
-        if (_owner.Focused) DesignPaint.Surface(graphics, _owner.ClientRectangle, Metrics.ControlRadius, Palette.Surface, Palette.Brand);
+        if (_owner.Focused && _keyboardFocus) DesignPaint.Surface(graphics, _owner.ClientRectangle, Metrics.ControlRadius, Palette.Surface, Palette.Brand);
         if (!Empty) return true;
         TextRenderer.DrawText(graphics, EmptyMessage, Typography.Caption, _owner.ClientRectangle, Palette.Ink500, DesignPaint.TextFlags | TextFormatFlags.HorizontalCenter);
         return false;

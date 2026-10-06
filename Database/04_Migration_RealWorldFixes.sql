@@ -1,5 +1,16 @@
--- Existing databases: run 04, then 02, then 03 manually in MySQL Workbench.
+-- Existing databases: run 04, then 02, then 02b, then 03 manually in MySQL Workbench.
 USE dentalclinicdb;
+CREATE TABLE IF NOT EXISTS AuditLog (
+    AuditId BIGINT AUTO_INCREMENT PRIMARY KEY,
+    TableName VARCHAR(40) NOT NULL,
+    RecordId INT NOT NULL,
+    Action VARCHAR(10) NOT NULL,
+    OldValues JSON NULL,
+    NewValues JSON NULL,
+    ChangedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX IX_AuditLog_Record (TableName, RecordId),
+    CONSTRAINT CK_AuditLog_Action CHECK (Action IN ('INSERT','UPDATE','DELETE'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 DELIMITER $$
 DROP PROCEDURE IF EXISTS sp_Migrate_AddColumn$$
 CREATE PROCEDURE sp_Migrate_AddColumn(IN p_Table VARCHAR(64), IN p_Column VARCHAR(64), IN p_Definition TEXT)

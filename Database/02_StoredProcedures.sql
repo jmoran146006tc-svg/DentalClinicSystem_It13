@@ -342,14 +342,14 @@ END $$
 DROP PROCEDURE IF EXISTS sp_Report_RevenueByDay $$
 CREATE PROCEDURE sp_Report_RevenueByDay(IN p_From DATE, IN p_To DATE)
 BEGIN
-    SELECT DatePerformed AS Day, SUM(Cost - Cost * DiscountPercent / 100) AS Billed FROM Treatments
+    SELECT DatePerformed AS Day, SUM(fn_TreatmentNet(Cost, DiscountPercent)) AS Billed FROM Treatments
     WHERE DatePerformed BETWEEN p_From AND p_To GROUP BY DatePerformed ORDER BY DatePerformed;
 END $$
 
 DROP PROCEDURE IF EXISTS sp_Report_TopTreatmentTypes $$
 CREATE PROCEDURE sp_Report_TopTreatmentTypes(IN p_From DATE, IN p_To DATE, IN p_Top INT)
 BEGIN
-    SELECT tt.Name, COUNT(*) AS Total, SUM(t.Cost - t.Cost * t.DiscountPercent / 100) AS Billed FROM Treatments t
+    SELECT tt.Name, COUNT(*) AS Total, SUM(fn_TreatmentNet(t.Cost, t.DiscountPercent)) AS Billed FROM Treatments t
     JOIN TreatmentTypes tt ON tt.TreatmentTypeId = t.TreatmentTypeId
     WHERE t.DatePerformed BETWEEN p_From AND p_To
     GROUP BY tt.TreatmentTypeId, tt.Name ORDER BY Total DESC, Billed DESC, tt.Name LIMIT p_Top;
@@ -366,7 +366,7 @@ BEGIN
     LEFT JOIN (SELECT DentistId, COUNT(*) AS Total, SUM(Status = 'Completed') AS Completed
                FROM Appointments WHERE AppointmentDateTime >= p_From AND AppointmentDateTime < DATE_ADD(p_To, INTERVAL 1 DAY)
                GROUP BY DentistId) a ON a.DentistId = d.DentistId
-    LEFT JOIN (SELECT ap.DentistId, SUM(tr.Cost - tr.Cost * tr.DiscountPercent / 100) AS Billed FROM Treatments tr
+    LEFT JOIN (SELECT ap.DentistId, SUM(fn_TreatmentNet(tr.Cost, tr.DiscountPercent)) AS Billed FROM Treatments tr
                JOIN Appointments ap ON ap.AppointmentId = tr.AppointmentId
                WHERE tr.DatePerformed BETWEEN p_From AND p_To GROUP BY ap.DentistId) t ON t.DentistId = d.DentistId
     ORDER BY d.LastName, d.FirstName;

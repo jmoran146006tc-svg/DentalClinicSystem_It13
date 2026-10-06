@@ -10,7 +10,8 @@ public sealed class ReportSection : RoundedPanel
         Dock = DockStyle.Fill; _data = data; _data.Dock = DockStyle.Fill;
         var heading = new Label { Text = title, Dock = DockStyle.Top, Height = Metrics.ControlHeight,
             Font = Typography.Heading, ForeColor = Palette.Ink900 };
-        var body = new Panel { Dock = DockStyle.Fill, BackColor = Palette.Surface };
+        var body = new Panel { Dock = DockStyle.Fill, BackColor = Palette.Surface, Padding = new(0, Metrics.Scale(this, Space.Sm), 0, 0) };
+        DpiChangedAfterParent += (_, _) => body.Padding = new(0, Metrics.Scale(this, Space.Sm), 0, 0);
         _empty = new EmptyState("", emptyText, icon) { Visible = false };
         _empty.RowStyles.Add(new(SizeType.Percent, 50)); _empty.RowStyles.Add(new(SizeType.Absolute, 0));
         _empty.RowStyles.Add(new(SizeType.Percent, 50)); _empty.RowStyles.Add(new(SizeType.Absolute, 0));

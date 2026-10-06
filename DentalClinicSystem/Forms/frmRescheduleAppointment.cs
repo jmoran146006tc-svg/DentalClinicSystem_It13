@@ -1,4 +1,5 @@
 using DentalClinicSystem.Helpers;
+using DentalClinicSystem.Helpers.Design;
 using DentalClinicSystem.Helpers.Design.Controls;
 using DentalClinicSystem.Interfaces;
 using DentalClinicSystem.Models;
@@ -21,8 +22,12 @@ public sealed class frmRescheduleAppointment : DialogShell
         _appointment = appointment; _appointments = appointments; _actor = actor;
         var fields = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1 };
         fields.ColumnStyles.Add(new(SizeType.Percent, 100));
-        foreach (var field in new[] { UiFactory.Field(_dentist, Roles.Dentist, FieldKind.Choice), UiFactory.Field(_when, "Date and time", FieldKind.Date) })
+        fields.Controls.Add(new Label { Text = $"{DisplayFormat.DateTime(appointment.AppointmentDateTime)} · {appointment.DurationMinutes} min",
+            AutoSize = true, Font = Typography.Caption, ForeColor = Palette.Ink500, Margin = new(0, 0, 0, Space.Sm) });
+        foreach (var field in new[] { UiFactory.Field(_when, "Date and time", FieldKind.Date), UiFactory.Field(_dentist, Roles.Dentist, FieldKind.Choice) })
         { field.Dock = DockStyle.Top; fields.Controls.Add(field); }
+        fields.Controls.Add(new Label { Text = "Dentists marked busy or off are unavailable at this time.", AutoSize = true,
+            Font = Typography.Caption, ForeColor = Palette.Ink500, Margin = new(0, Space.Sm, 0, 0) });
         var alert = new InlineAlert { Dock = DockStyle.Top, Visible = false };
         Body.Controls.Add(fields); Body.Controls.Add(alert); UiMessages.RegisterAlertHost(this, alert);
         _when.Value = appointment.AppointmentDateTime;
@@ -36,6 +41,8 @@ public sealed class frmRescheduleAppointment : DialogShell
             if (!IsDisposed) { _dentist.SelectedValue = appointment.DentistId; ConfirmButton.Enabled = true; }
         });
         _when.ValueChanged += async (_, _) => await UiAction.RunAsync(this, RefreshAvailabilityAsync);
+        FitHeightToBody(fields);
+        alert.VisibleChanged += (_, _) => { if (Visible) FitHeightToBody(fields); };
     }
     private async Task RefreshAvailabilityAsync()
     {

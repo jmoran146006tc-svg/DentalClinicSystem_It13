@@ -64,6 +64,19 @@ public class PatientRuleTests
         var appointments = RepositoryStub.Create<IAppointmentRepository>((nameof(IAppointmentRepository.AddAsync), _ => { writes.Add("book"); return Task.CompletedTask; }));
         var result = await SlotRuleTests.Service(appointments, leave, patients).ScheduleAppointmentAsync(RescheduleTests.Admin, new() { PatientId = 1, DentistId = 2, AppointmentDateTime = Now });
         Assert.Equal(expected, result.Success);
-        Assert.Equal(expected ? ["reactivate", "book"] : Array.Empty<string>(), writes);
+        Assert.Equal(expected ? ["book"] : Array.Empty<string>(), writes);
+        Assert.False(RepositoryStub.Of(patients).Calls.ContainsKey(nameof(IPatientRepository.ReactivateAsync)));
+    }
+    [Fact]
+    public async Task BookingBackstopFailureDoesNotIssueASeparateReactivation()
+    {
+        var patient = Patient(Now.AddYears(-25)); patient.IsActive = false;
+        var patients = RepositoryStub.Create<IPatientRepository>((nameof(IPatientRepository.GetByIdAsync), _ => Task.FromResult<Patient?>(patient)));
+        var appointments = RepositoryStub.Create<IAppointmentRepository>((nameof(IAppointmentRepository.AddAsync),
+            _ => throw new RepositoryConstraintException("This dentist is already booked during that appointment.", new InvalidOperationException("Database backstop"))));
+        var result = await SlotRuleTests.Service(appointments, false, patients).ScheduleAppointmentAsync(RescheduleTests.Admin,
+            new() { PatientId = 1, DentistId = 2, AppointmentDateTime = Now });
+        Assert.False(result.Success); Assert.Contains("already booked", result.ErrorMessage);
+        Assert.False(RepositoryStub.Of(patients).Calls.ContainsKey(nameof(IPatientRepository.ReactivateAsync)));
     }
 }

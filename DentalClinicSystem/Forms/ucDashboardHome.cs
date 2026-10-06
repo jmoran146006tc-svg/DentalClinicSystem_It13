@@ -123,8 +123,8 @@ public sealed class ucDashboardHome : BufferedPage
         if (RoleAccess.Can(_actor, Permission.ViewReports)) _cards.Add(new KpiCard("Billed this week", "Net billed · not collected", IconKind.Reports));
         _body.Controls.Add(new KpiStrip(_cards.ToArray()) { Name = "dashboardKpis" });
         var calendarCard = UiFactory.Card(); calendarCard.Name = "dashboardCalendar"; calendarCard.Dock = DockStyle.Top;
-        calendarCard.Margin = Padding.Empty; calendarCard.Height = Metrics.CalendarViewportHeight + Space.Lg * 2;
         _calendar = new ucWeekCalendar { Dock = DockStyle.Fill };
+        calendarCard.Margin = Padding.Empty; calendarCard.Height = _calendar.Height + calendarCard.Padding.Vertical;
         _calendar.WeekRequested += async (week, direction) => await UiAction.RunAsync(this, async () => { await LoadWeekAsync(week, direction); });
         _calendar.AppointmentActivated += async id => await UiAction.RunAsync(this, () => OpenDetailsAsync(id));
         calendarCard.Content.Controls.Add(_calendar); _body.Controls.Add(calendarCard);

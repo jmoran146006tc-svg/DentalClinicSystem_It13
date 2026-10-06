@@ -9,6 +9,11 @@ public class DialogShell : Form
 {
     private bool _closing;
     private bool _accepted;
+    private Control? _fitBodyContent;
+    private bool _arrangingFooter;
+    private readonly Label _heading;
+    private TableLayoutPanel? _footerLayout;
+    private FlowLayoutPanel? _leftActions, _rightActions;
     public Panel Body { get; } = new() { Dock = DockStyle.Fill, BackColor = Palette.Surface, Padding = new Padding(Space.Xl) };
     public FlowLayoutPanel Footer { get; } = new() { Dock = DockStyle.Bottom, FlowDirection = FlowDirection.RightToLeft, Height = Metrics.ControlHeight + Space.Xl, Padding = new Padding(Space.Sm), BackColor = Palette.Surface };
     public AppButton ConfirmButton { get; }
@@ -16,7 +21,7 @@ public class DialogShell : Form
     public DialogShell(string title, string confirmText = "Confirm", Size? size = null)
     {
         Theme.MarkPrimitive(this);
-        Text = title; StartPosition = FormStartPosition.CenterParent; FormBorderStyle = FormBorderStyle.FixedDialog;
+        Text = "Dental Care"; AccessibleName = title; StartPosition = FormStartPosition.CenterParent; FormBorderStyle = FormBorderStyle.FixedDialog;
         MinimizeBox = false; MaximizeBox = false; ShowInTaskbar = false; BackColor = Palette.Surface;
         Size = size ?? new(Metrics.DialogWidth, Metrics.DialogHeight); MinimumSize = Size; Font = Typography.Body;
         ConfirmButton = new AppButton(confirmText); DismissButton = new AppButton("Cancel", ButtonVariant.Secondary) { DialogResult = DialogResult.Cancel };
@@ -35,14 +40,77 @@ public class DialogShell : Form
         };
         Footer.Controls.Add(ConfirmButton); Footer.Controls.Add(DismissButton);
         Controls.Add(Body); Controls.Add(Footer);
-        Controls.Add(new Label { Text = title, Dock = DockStyle.Top, Height = Metrics.ControlHeight + Space.Xl, Padding = new Padding(Space.Xl, Space.Md, 0, 0), Font = Typography.Heading, ForeColor = Palette.Ink900 });
+        _heading = new Label { Text = title, Dock = DockStyle.Top, Height = Metrics.ControlHeight + Space.Xl, Padding = new Padding(Space.Xl, Space.Md, 0, 0), Font = Typography.Heading, ForeColor = Palette.Ink900 };
+        Controls.Add(_heading);
         AcceptButton = ConfirmButton; CancelButton = DismissButton; WindowChrome.Apply(this);
+    }
+    protected void GroupFooter(AppButton[] left, AppButton[] right)
+    {
+        Footer.Controls.Clear(); Footer.WrapContents = false; Footer.FlowDirection = FlowDirection.LeftToRight;
+        _footerLayout = new TableLayoutPanel { Name = "dialogActions", ColumnCount = 3, RowCount = 1, Margin = Padding.Empty, BackColor = Palette.Surface };
+        _footerLayout.ColumnStyles.Add(new(SizeType.AutoSize)); _footerLayout.ColumnStyles.Add(new(SizeType.Percent, 100)); _footerLayout.ColumnStyles.Add(new(SizeType.AutoSize));
+        _footerLayout.RowStyles.Add(new(SizeType.Percent, 100));
+        FlowLayoutPanel Group(string name, AppButton[] buttons)
+        {
+            var group = new FlowLayoutPanel { Name = name, AutoSize = true, WrapContents = false, Anchor = AnchorStyles.None, Margin = Padding.Empty, BackColor = Palette.Surface };
+            foreach (var button in buttons) { button.Margin = new(0, 0, Space.Sm, 0); group.Controls.Add(button); }
+            return group;
+        }
+        _leftActions = Group("dialogLeftActions", left); _rightActions = Group("dialogRightActions", right);
+        _footerLayout.Controls.Add(_leftActions, 0, 0); _footerLayout.Controls.Add(_rightActions, 2, 0); Footer.Controls.Add(_footerLayout);
+        Footer.Paint += (_, e) => { using var pen = new Pen(Palette.Line, Metrics.Scale(this, Metrics.Border)); e.Graphics.DrawLine(pen, 0, 0, Footer.Width, 0); };
+        Footer.SizeChanged += (_, _) => ArrangeFooter();
+        Footer.Layout += (_, _) => ArrangeFooter();
+        Shown += (_, _) => ArrangeFooter(); DpiChanged += (_, _) => ArrangeFooter();
+        foreach (var button in left.Concat(right)) button.VisibleChanged += (_, _) => ArrangeFooter();
+    }
+    private void ArrangeFooter()
+    {
+        if (!Visible || _arrangingFooter || _footerLayout is null || _leftActions is null || _rightActions is null) return;
+        _arrangingFooter = true;
+        try
+        {
+            var height = Metrics.Scale(this, Metrics.ControlHeight);
+            foreach (var group in new[] { _leftActions, _rightActions })
+            {
+                var buttons = group.Controls.OfType<AppButton>().Where(b => b.Visible).ToArray();
+                group.Visible = buttons.Length > 0;
+                foreach (var button in buttons) { button.Size = new(button.MinimumSize.Width, height); button.Margin = new(0, 0, button == buttons.Last() ? 0 : Metrics.Scale(this, Space.Sm), 0); }
+            }
+            Footer.Height = height + Footer.Padding.Vertical;
+            _footerLayout.Size = new(Math.Max(0, Footer.ClientSize.Width - Footer.Padding.Horizontal), height);
+            var required = _leftActions.PreferredSize.Width + _rightActions.PreferredSize.Width + Metrics.Scale(this, Space.Lg) + Footer.Padding.Horizontal;
+            MinimumSize = new(required + Width - ClientSize.Width, MinimumSize.Height);
+            _footerLayout.PerformLayout();
+        }
+        finally { _arrangingFooter = false; }
+    }
+    protected void FitHeightToBody(Control content) { _fitBodyContent = content; FitBody(); }
+    private void FitBody()
+    {
+        if (_fitBodyContent is null) return;
+        Body.PerformLayout();
+        var width = Math.Max(1, Body.ClientSize.Width - Body.Padding.Horizontal);
+        // Measure the supplied top-docked content even before the form is
+        // visible; Control.Visible otherwise includes its hidden parent.
+        var preferred = _fitBodyContent.GetPreferredSize(new(width, 0)).Height +
+            Body.Controls.Cast<Control>().Where(c => c != _fitBodyContent && c.Dock == DockStyle.Top && c.Visible)
+                .Sum(c => c.GetPreferredSize(new(width, 0)).Height);
+        var desired = preferred + Body.Padding.Vertical + _heading.Height + Footer.Height;
+        var maximum = Screen.FromControl(this).WorkingArea.Height - Height + ClientSize.Height;
+        ClientSize = new(ClientSize.Width, Math.Min(desired, maximum));
+        Body.AutoScroll = desired > maximum;
+    }
+    protected override void OnLoad(EventArgs e) { base.OnLoad(e); if (_fitBodyContent is not null) FitBody(); }
+    protected override void OnLayout(LayoutEventArgs e)
+    {
+        base.OnLayout(e); ArrangeFooter();
     }
     protected virtual bool CanConfirm() => true;
     protected virtual Task<bool> ConfirmAsync() => Task.FromResult(CanConfirm());
     protected override void OnShown(EventArgs e)
     {
-        base.OnShown(e); var destination = Top;
+        base.OnShown(e); if (_fitBodyContent is not null) FitBody(); var destination = Top;
         MotionSystem.Animator.Run(this, "dialog-enter", 0, 1, MotionSystem.Fast, Easing.EaseOutCubic, t => Opacity = Math.Clamp(t, 0, 1));
         MotionSystem.Animator.Run(this, "dialog-settle", 0, 1, MotionSystem.Base, Easing.EaseOutCubic, t => Top = destination + (int)(Metrics.Settle * (1 - t)));
     }
