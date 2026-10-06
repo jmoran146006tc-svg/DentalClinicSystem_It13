@@ -129,22 +129,28 @@ public sealed class frmStyleGuide : Form
             var kpi = new KpiCard(title, "Style guide sample", IconKind.Appointments); kpis.Controls.Add(kpi);
             kpi.VisibleChanged += (_, _) => { if (kpi.Visible) kpi.SetValue(value); };
         }
-        var calendars = Section("Week calendar · overlap, filter, scroll and keyboard activation");
-        var calendar = new ucWeekCalendar { Dock = DockStyle.None, Width = Metrics.FormWidth * 2, Height = Metrics.CalendarViewportHeight };
+        var calendars = Section("Appointment calendar · Day columns, Week summary, filter and full screen");
+        var calendar = new ucWeekCalendar { Dock = DockStyle.None, Width = Metrics.FormWidth * 3 };
+        calendar.PreferredHeightChanged += () => calendar.Height = calendar.PreferredCalendarHeight;
         calendars.Controls.Add(calendar);
-        void ShowWeek(DateTime week, int direction)
+        void ShowWeek(ucWeekCalendar target, DateTime week, int direction)
         {
-            Appointment[] appointments = [
-                new() { AppointmentId = 1, PatientId = 1, DentistId = 1, AppointmentDateTime = week.AddHours(9), DurationMinutes = 90, Reason = "Consultation", Status = AppointmentStatus.Scheduled },
-                new() { AppointmentId = 2, PatientId = 2, DentistId = 2, AppointmentDateTime = week.AddHours(9).AddMinutes(15), DurationMinutes = 60, Reason = "Cleaning", Status = AppointmentStatus.CheckedIn },
-                new() { AppointmentId = 3, PatientId = 1, DentistId = 1, AppointmentDateTime = week.AddDays(2).AddHours(14), DurationMinutes = 60, Status = AppointmentStatus.Completed },
-                new() { AppointmentId = 4, PatientId = 2, DentistId = 2, AppointmentDateTime = week.AddDays(4).AddHours(11), DurationMinutes = 45, Status = AppointmentStatus.Cancelled }];
-            calendar.SetAppointments(week, DateTime.Today, appointments, new Dictionary<int, string> { [1] = "Ana Santos", [2] = "Miguel Cruz" },
-                new Dictionary<int, string> { [1] = "Dr. Reyes", [2] = "Dr. Santos" }, direction);
+            var appointments = Enumerable.Range(0, 6).SelectMany(day => Enumerable.Range(1, 5).SelectMany(dentist =>
+                Enumerable.Range(0, 3).Select(slot => new Appointment { AppointmentId = day * 100 + dentist * 10 + slot,
+                    PatientId = slot + 1, DentistId = dentist, AppointmentDateTime = week.AddDays(day).AddHours(9 + slot * 2),
+                    DurationMinutes = slot == 0 ? 15 : slot == 1 ? 90 : 45, Reason = "Dental Cleaning", Status = AppointmentStatus.All[(day + dentist + slot) % 5] }))).ToArray();
+            target.SetAppointments(week, DateTime.Today, appointments, new Dictionary<int, string> { [1] = "Mark Gonzales", [2] = "Alyssa Rivera", [3] = "Teresita Aquino" },
+                new Dictionary<int, string> { [1] = "Dr. Maria Santos", [2] = "Dr. Carlos Reyes", [3] = "Dr. Isabel del Rosario", [4] = "Dr. Paolo Navarro", [5] = "Dr. Teresa Bautista" }, direction);
         }
-        calendar.WeekRequested += ShowWeek;
+        calendar.WeekRequested += (week, direction) => ShowWeek(calendar, week, direction);
         calendar.AppointmentActivated += id => { using var owner = UiMessages.UseOwner(this); UiMessages.ShowInfo($"Sample appointment #{id} selected."); };
-        Shown += (_, _) => ShowWeek(DashboardPresentation.WeekStart(DateTime.Today), 0);
+        calendar.ExpandRequested += () =>
+        {
+            using var full = new frmCalendarFullScreen(calendar, (target, week, direction) => { ShowWeek(target, week, direction); return Task.FromResult(true); },
+                (id, owner) => { using var scope = UiMessages.UseOwner(owner as Control ?? this); UiMessages.ShowInfo($"Sample appointment #{id} selected."); return Task.CompletedTask; });
+            full.ShowDialog(this);
+        };
+        Shown += (_, _) => ShowWeek(calendar, DashboardPresentation.WeekStart(DateTime.Today), 0);
     }
     private void Charts()
     {

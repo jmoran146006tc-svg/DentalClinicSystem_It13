@@ -54,6 +54,7 @@ public static class AntdTheme
             IconKind.Lock => "LockOutlined",
             IconKind.Edit => "EditOutlined",
             IconKind.Download => "DownloadOutlined",
+            IconKind.Expand => "FullscreenOutlined",
             IconKind.ChevronDown => "DownOutlined",
             IconKind.Logout => "LogoutOutlined",
             IconKind.Appointments => "CalendarOutlined",

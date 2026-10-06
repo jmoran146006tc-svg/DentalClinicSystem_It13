@@ -168,6 +168,8 @@ public sealed class ReportLayoutTests
     [Theory]
     [InlineData(1280)]
     [InlineData(900)]
+    [InlineData(1100)]
+    [InlineData(1440)]
     public void DashboardHeaderKpiFacesAndCalendarSharePageEdges(int width) => UiThread.Run(() =>
     {
         var services = ClinicFixture.Services();

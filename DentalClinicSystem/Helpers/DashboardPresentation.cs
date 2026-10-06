@@ -17,7 +17,11 @@ public static class DashboardPresentation
         return $"Good {period}, {first}";
     }
     public static string TodayLabel(DateTime today) => today.ToString("dddd, MMMM d, yyyy", CultureInfo.InvariantCulture);
-    public static string WeekLabel(DateTime monday) => $"{DisplayFormat.Date(monday)} – {DisplayFormat.Date(monday.AddDays(6))}";
+    public static string WeekLabel(DateTime monday)
+    {
+        var end = monday.AddDays(6);
+        return $"{monday.ToString(monday.Year == end.Year ? "MMM d" : "MMM d, yyyy", CultureInfo.InvariantCulture)} – {DisplayFormat.Date(end)}";
+    }
     public static DashboardCounts Counts(IEnumerable<Appointment> appointments, IEnumerable<Patient> patients, DateTime today)
     {
         var week = WeekStart(today);

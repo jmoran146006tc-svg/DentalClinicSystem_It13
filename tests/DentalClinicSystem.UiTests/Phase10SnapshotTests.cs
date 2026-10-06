@@ -44,7 +44,7 @@ public sealed class Phase10SnapshotTests
             calendar.SetAppointments(DashboardPresentation.WeekStart(DateTime.Today), DateTime.Today, [appointment, late],
                 new Dictionary<int, string> { [3] = patient.FullName }, new Dictionary<int, string> { [2] = dentist.FullName });
             var canvas = UiThread.Controls(calendar).OfType<WeekCalendarCanvas>().Single();
-            ((ScrollableControl)canvas.Parent!).AutoScrollPosition = new(0, Metrics.CalendarHourHeight * 4);
+            ((ScrollableControl)canvas.Parent!).AutoScrollPosition = new(0, canvas.HourHeight * 4);
             Application.DoEvents(); UiThread.Capture(host, "phase10-calendar-scrolled-" + suffix);
         }
         appointment.AppointmentDateTime = DateTime.Today.AddHours(14); appointment.DurationMinutes = 45;

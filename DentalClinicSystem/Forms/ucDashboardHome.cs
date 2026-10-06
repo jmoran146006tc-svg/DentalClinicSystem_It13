@@ -24,6 +24,7 @@ public sealed class ucDashboardHome : BufferedPage
     private readonly AppButton _retry = UiFactory.Button("Retry", ButtonVariant.Secondary);
     private readonly List<KpiCard> _cards = [];
     private readonly Dictionary<int, string> _patientNames = [], _dentistNames = [];
+    private IReadOnlySet<int> _activeDentistIds = new HashSet<int>();
     private ucWeekCalendar? _calendar;
     private IReadOnlyList<Patient> _patientRows = [];
     private bool _loaded;
@@ -104,13 +105,14 @@ public sealed class ucDashboardHome : BufferedPage
         _patientRows = patientRows; _patientNames.Clear(); _dentistNames.Clear();
         foreach (var patient in patientRows) _patientNames[patient.PatientId] = patient.FullName;
         foreach (var dentist in dentistRows) _dentistNames[dentist.DentistId] = dentist.FullName;
+        _activeDentistIds = dentistRows.Where(d => d.IsActive).Select(d => d.DentistId).ToHashSet();
         if (!await AddHistoricalDentistsAsync(rows)) return false;
         if (!_loaded) BuildStaff();
         var counts = DashboardPresentation.Counts(rows, _patientRows, _today);
         _cards[0].SetValue(counts.TodayAppointments); _cards[1].SetValue(counts.ActivePatients); _cards[2].SetValue(counts.WeekCancellations);
         if (_cards.Count > 3) _cards[3].SetValue((double)billed, value => DisplayFormat.Currency((decimal)value));
         var selectedWeek = _loaded ? _calendar?.WeekStart ?? week : week;
-        if (selectedWeek == week) _calendar?.SetAppointments(week, _today, rows, _patientNames, _dentistNames);
+        if (selectedWeek == week) _calendar?.SetAppointments(week, _today, rows, _patientNames, _dentistNames, activeDentistIds: _activeDentistIds);
         else if (!await LoadWeekAsync(selectedWeek, 0)) return false;
         _loaded = true; return true;
     }
@@ -125,8 +127,10 @@ public sealed class ucDashboardHome : BufferedPage
         var calendarCard = UiFactory.Card(); calendarCard.Name = "dashboardCalendar"; calendarCard.Dock = DockStyle.Top;
         _calendar = new ucWeekCalendar { Dock = DockStyle.Fill };
         calendarCard.Margin = Padding.Empty; calendarCard.Height = _calendar.Height + calendarCard.Padding.Vertical;
+        _calendar.PreferredHeightChanged += () => calendarCard.Height = _calendar.PreferredCalendarHeight + calendarCard.Padding.Vertical;
         _calendar.WeekRequested += async (week, direction) => await UiAction.RunAsync(this, async () => { await LoadWeekAsync(week, direction); });
         _calendar.AppointmentActivated += async id => await UiAction.RunAsync(this, () => OpenDetailsAsync(id));
+        _calendar.ExpandRequested += async () => await UiAction.RunAsync(this, OpenFullScreenAsync);
         calendarCard.Content.Controls.Add(_calendar); _body.Controls.Add(calendarCard);
     }
     private async Task<bool> AddHistoricalDentistsAsync(IReadOnlyList<Appointment> rows)
@@ -140,22 +144,32 @@ public sealed class ucDashboardHome : BufferedPage
         }
         return true;
     }
-    private async Task<bool> LoadWeekAsync(DateTime week, int direction)
+    private async Task<bool> LoadWeekAsync(DateTime week, int direction, ucWeekCalendar? target = null)
     {
         var result = await _appointments.GetAppointmentsInRangeAsync(_actor, week, week.AddDays(DashboardPresentation.DaysInWeek));
         if (IsDisposed) return false;
         if (!result.Success || result.Data is null) { UiMessages.ShowError(result); return false; }
         if (!await AddHistoricalDentistsAsync(result.Data)) return false;
-        _calendar?.SetAppointments(week, _today, result.Data, _patientNames, _dentistNames, direction); return true;
+        var calendar = target ?? _calendar;
+        if (calendar is { IsDisposed: false }) calendar.SetAppointments(week, _today, result.Data, _patientNames, _dentistNames, direction, _activeDentistIds);
+        return true;
     }
-    private async Task OpenDetailsAsync(int id)
+    private async Task OpenFullScreenAsync()
+    {
+        if (_calendar is null) return;
+        using var fullScreen = new frmCalendarFullScreen(_calendar,
+            (target, week, direction) => LoadWeekAsync(week, direction, target), (id, owner) => OpenDetailsAsync(id, owner));
+        fullScreen.ShowDialog(this);
+        if (!IsDisposed) await LoadStaffAsync();
+    }
+    private async Task OpenDetailsAsync(int id, IWin32Window? owner = null)
     {
         var result = await _appointments.GetDetailsAsync(_actor, id);
         if (IsDisposed) return;
         if (!result.Success || result.Data is null) { UiMessages.ShowError(result); return; }
         using var dialog = new frmAppointmentDetails(result.Data, _appointments, _actor,
             async _ => { await LoadStaffAsync(); }, _dentists);
-        dialog.ShowDialog(this);
+        dialog.ShowDialog(owner ?? this);
     }
     private async Task<bool> LoadDentistAsync()
     {

@@ -113,7 +113,8 @@ public static class Metrics
         new(LoginDecorKind.DotGrid, .85f, .88f, 64)
     });
     public const int CalendarHeaderHeight = 48, CalendarHourHeight = 64, CalendarGutter = 64;
-    public const int CalendarDayWidth = 100, CalendarViewportHeight = 560, CalendarStatusBar = 3;
+    public const int CalendarDayWidth = 110, CalendarDayHourHeight = 80, CalendarDentistColumnWidth = 180;
+    public const int CalendarViewportHeight = 560, CalendarStatusBar = 3, CalendarSummaryRowHeight = 64;
     public const int CalendarDentistWidth = 240, CalendarLegendWidth = 900, CalendarNarrowBlockWidth = 72, CalendarNowInterval = 60000;
     public const int WorklistHeight = 88, WorklistWrapWidth = 560, WorklistColumnsWidth = 1100, WorklistTimeWidth = 88, HistoryRowHeight = 156;
     public const int ChartHeight = 240, ReportCardHeight = 360, ChartAxisWidth = 80, ChartLabelWidth = 132;
