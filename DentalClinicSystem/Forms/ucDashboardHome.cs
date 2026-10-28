@@ -47,6 +47,9 @@ public sealed class ucDashboardHome : UserControl
         AddSkeletons(); _body.SizeChanged += (_, _) => ResizeKpis();
         Load += async (_, _) => { FadeGreeting(); await LoadDashboardAsync(); };
     }
+    // DesignPaint.Enable sets ControlStyles.Opaque, which suppresses OnPaintBackground, so paint the canvas here
+    // or the page padding shows up black.
+    protected override void OnPaint(PaintEventArgs e) { e.Graphics.Clear(BackColor); base.OnPaint(e); }
     private void AddSkeletons()
     {
         if (!RoleAccess.IsDentist(_actor)) _body.Controls.Add(new Skeleton { Dock = DockStyle.Top, Height = Metrics.DashboardKpiHeight });
