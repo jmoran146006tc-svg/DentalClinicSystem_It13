@@ -62,16 +62,7 @@ public sealed class frmAppointmentDetails : DialogShell
         _checkIn.Click += async (_, _) => await UiAction.RunAsync(this, CheckInAsync, _checkIn);
         ConfirmButton.Click += async (_, _) => await UiAction.RunAsync(this, CompleteAsync, ConfirmButton);
         _cancel.Click += async (_, _) => await UiAction.RunAsync(this, CancelAsync, _cancel);
-        _history.CellContentClick += async (_, e) =>
-        {
-            if (e.RowIndex < 0 || _history.Columns[e.ColumnIndex].Name != "Open" || _history.Rows[e.RowIndex].DataBoundItem is not HistoryRow row) return;
-            await UiAction.RunAsync(this, async () =>
-            {
-                var result = await _appointments.GetDetailsAsync(_actor, row.AppointmentId);
-                if (!result.Success || result.Data is null) { UiMessages.ShowError(result); return; }
-                ApplyDetails(result.Data);
-            });
-        };
+       
         Shown += async (_, _) => await UiAction.RunAsync(this, LoadHistoryAsync);
     }
 
@@ -167,8 +158,7 @@ public sealed class frmAppointmentDetails : DialogShell
         var rows = all.Where(x => x.PatientId == _details.Patient.PatientId).OrderByDescending(x => x.AppointmentDateTime)
             .Select(x => new HistoryRow(x.AppointmentId, x.AppointmentDateTime, names.GetValueOrDefault(x.DentistId, $"Dentist #{x.DentistId}"), x.Reason ?? "Appointment", x.Status)).ToList();
         GridHelper.Bind(_history, rows, r => r.AppointmentId, "No appointments for this patient.", "AppointmentId");
-        if (!_history.Columns.Contains("Open"))
-            _history.Columns.Add(new DataGridViewButtonColumn { Name = "Open", HeaderText = "", Text = "Open", UseColumnTextForButtonValue = true, Width = 90 });
+       
         _history.Height = 48 + Math.Clamp(rows.Count, 1, 5) * 70;
         ApplyDetails(_details);   // re-highlight the selected row
     }
