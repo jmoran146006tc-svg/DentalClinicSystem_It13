@@ -11,13 +11,22 @@ namespace DentalClinicSystem.DBContent
         public static async Task<IReadOnlyList<T>> QueryAsync<T>(string procedure,
             Func<MySqlDataReader, T> map, params MySqlParameter[] parameters)
         {
-            await using var connection = await DbConnectionHelper.GetOpenConnectionAsync();
-            await using var command = new MySqlCommand(procedure, connection) { CommandType = CommandType.StoredProcedure };
-            command.Parameters.AddRange(parameters);
-            await using var reader = await command.ExecuteReaderAsync();
-            List<T> rows = [];
-            while (await reader.ReadAsync()) rows.Add(map(reader));
-            return rows;
+            try
+            {
+                await using var connection = await DbConnectionHelper.GetOpenConnectionAsync();
+                await using var command = new MySqlCommand(procedure, connection) { CommandType = CommandType.StoredProcedure };
+                command.Parameters.AddRange(parameters);
+                await using var reader = await command.ExecuteReaderAsync();
+                List<T> rows = [];
+                while (await reader.ReadAsync()) rows.Add(map(reader));
+                return rows;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DB ERROR] Procedure: {procedure}");
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+                throw;
+            }
         }
 
         public static async Task<T?> QuerySingleAsync<T>(string procedure,

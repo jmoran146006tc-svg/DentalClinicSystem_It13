@@ -35,7 +35,15 @@ namespace DentalClinicSystem.Helpers
         }
         public static void ShowSuccess(string text) => Feedback(text, Semantic.Success);
         public static void ShowInfo(string text) => Feedback(text, Semantic.Info);
-        public static void ShowUnexpectedError() => ShowError(ServiceResult.Fail("The action could not be completed. Check the database connection and try again."));
+        public static void ShowUnexpectedError(Exception ex = null)
+        {
+            if (ex != null)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.ToString());
+            }
+
+            ShowError(ServiceResult.Fail("The action could not be completed. Check the database connection and try again."));
+        }
         public static void ShowFatal(string text)
         {
             var form = Application.OpenForms.Cast<Form>().FirstOrDefault(form => !form.IsDisposed && form.IsHandleCreated);
